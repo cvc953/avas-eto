@@ -1,20 +1,11 @@
 import 'package:flutter/material.dart';
+import 'tareas_inicio.dart'; // Importamos la lógica de TareasInicio
 
 class Tareas extends StatelessWidget {
   const Tareas({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(10),
-      child: Container(
-        padding: EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          //color: Colors.blue[200],
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Row(children: []),
-      ),
-    );
+    return const TareasInicio(); // Muestra la vista de TareasInicio
   }
 }

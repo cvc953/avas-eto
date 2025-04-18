@@ -186,9 +186,7 @@ class _ViscalendarioState extends State<Viscalendario> {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () {
-          // _showAddActivityDialog();
-          TareasInicio agnadirTareas = TareasInicio();
-          agnadirTareas.addTareas();
+          _showAddActivityDialog();
         },
       ),
     );
