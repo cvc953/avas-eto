@@ -42,7 +42,7 @@ class _TareasInicioState extends State<TareasInicio> {
     }
   }
 
-  void addTareas() {
+  /*void addTareas() {
     TextEditingController tareaController = TextEditingController();
     Color colorSeleccionado = coloresDisponibles[0];
     int selectedHour = TimeOfDay.now().hour;
@@ -124,6 +124,129 @@ class _TareasInicioState extends State<TareasInicio> {
                         color: colorSeleccionado,
                       );
                       final clave = _getTaskKey(_selectedDay, selectedHour);
+
+                      setState(() {
+                        _tareas.putIfAbsent(clave, () => []).add(nuevaTarea);
+                      });
+
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Guardar"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }*/
+
+  void addTareas() {
+    TextEditingController tareaController = TextEditingController();
+    Color colorSeleccionado = coloresDisponibles[0];
+    int selectedHour = TimeOfDay.now().hour;
+    DateTime selectedDate = _selectedDay;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text("Nueva Tarea"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: tareaController,
+                    decoration: const InputDecoration(
+                      hintText: "Nombre de la tarea",
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: () async {
+                      final pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime.now().subtract(
+                          const Duration(days: 365),
+                        ),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (pickedDate != null) {
+                        setStateDialog(() {
+                          selectedDate = pickedDate;
+                        });
+                      }
+                    },
+                    child: Text(
+                      "Fecha: ${selectedDate.day.toString().padLeft(2, '0')}/"
+                      "${selectedDate.month.toString().padLeft(2, '0')}/"
+                      "${selectedDate.year}",
+                    ),
+                  ),
+                  DropdownButton<int>(
+                    value: selectedHour,
+                    onChanged: (value) {
+                      if (value != null) {
+                        setStateDialog(() {
+                          selectedHour = value;
+                        });
+                      }
+                    },
+                    items: List.generate(24, (index) {
+                      return DropdownMenuItem(
+                        value: index,
+                        child: Text("${index.toString().padLeft(2, '0')}:00"),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 10,
+                    children:
+                        coloresDisponibles.map((color) {
+                          return GestureDetector(
+                            onTap: () {
+                              setStateDialog(() {
+                                colorSeleccionado = color;
+                              });
+                            },
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                                border:
+                                    colorSeleccionado == color
+                                        ? Border.all(
+                                          color: Colors.white,
+                                          width: 3,
+                                        )
+                                        : null,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancelar"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (tareaController.text.isNotEmpty) {
+                      final nuevaTarea = Tarea(
+                        title: tareaController.text,
+                        color: colorSeleccionado,
+                      );
+                      final clave = _getTaskKey(selectedDate, selectedHour);
 
                       setState(() {
                         _tareas.putIfAbsent(clave, () => []).add(nuevaTarea);
@@ -229,7 +352,8 @@ class _TareasInicioState extends State<TareasInicio> {
                   final claveCorrecta = entrada.key;
 
                   return Card(
-                    color: Colors.grey[800],
+                    //color: Colors.grey[800],
+                    color: Theme.of(context).cardColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -281,7 +405,7 @@ class _TareasInicioState extends State<TareasInicio> {
   }
 }
 
-class TareaSearchDelegate extends SearchDelegate {
+/*class TareaSearchDelegate extends SearchDelegate {
   final Map<String, List<Tarea>> tareas;
 
   TareaSearchDelegate({required this.tareas});
@@ -309,6 +433,15 @@ class TareaSearchDelegate extends SearchDelegate {
           (tarea) => tarea.title.toLowerCase().contains(query.toLowerCase()),
         );
 
+    if (resultados.isEmpty) {
+      return const Center(
+        child: Text(
+          'No se ha encontrado ninguna tarea.',
+          style: TextStyle(fontSize: 18),
+        ),
+      );
+    }
+
     return ListView(
       children:
           resultados.map((tarea) {
@@ -327,6 +460,98 @@ class TareaSearchDelegate extends SearchDelegate {
         .where(
           (tarea) => tarea.title.toLowerCase().startsWith(query.toLowerCase()),
         );
+
+    if (sugerencias.isEmpty) {
+      return const Center(
+        child: Text(
+          'No se ha encontrado ninguna tarea.',
+          style: TextStyle(fontSize: 18),
+        ),
+      );
+    }
+
+    return ListView(
+      children:
+          sugerencias.map((tarea) {
+            return ListTile(
+              title: Text(tarea.title),
+              leading: CircleAvatar(backgroundColor: tarea.color),
+            );
+          }).toList(),
+    );
+  }
+}*/
+
+class TareaSearchDelegate extends SearchDelegate {
+  final Map<String, List<Tarea>> tareas;
+
+  TareaSearchDelegate({required this.tareas});
+
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      IconButton(onPressed: () => query = '', icon: const Icon(Icons.clear)),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      onPressed: () => close(context, null),
+      icon: const Icon(Icons.arrow_back),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    final resultados =
+        tareas.entries
+            .expand((entry) => entry.value)
+            .where(
+              (tarea) =>
+                  tarea.title.toLowerCase().contains(query.toLowerCase()),
+            )
+            .toList();
+
+    if (resultados.isEmpty) {
+      return const Center(
+        child: Text(
+          'No se ha encontrado ninguna tarea.',
+          style: TextStyle(fontSize: 18),
+        ),
+      );
+    }
+
+    return ListView(
+      children:
+          resultados.map((tarea) {
+            return ListTile(
+              title: Text(tarea.title),
+              leading: CircleAvatar(backgroundColor: tarea.color),
+            );
+          }).toList(),
+    );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    final sugerencias =
+        tareas.entries
+            .expand((entry) => entry.value)
+            .where(
+              (tarea) =>
+                  tarea.title.toLowerCase().startsWith(query.toLowerCase()),
+            )
+            .toList();
+
+    if (sugerencias.isEmpty) {
+      return const Center(
+        child: Text(
+          'No se ha encontrado ninguna tarea.',
+          style: TextStyle(fontSize: 18),
+        ),
+      );
+    }
 
     return ListView(
       children:

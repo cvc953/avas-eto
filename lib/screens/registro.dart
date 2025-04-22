@@ -56,7 +56,7 @@ class Registro extends StatelessWidget {
                   ),
                 ),
                 onTap: () {
-                  if (password.toString() != password2.toString()) {
+                  if (password.text != password2.text) {
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
