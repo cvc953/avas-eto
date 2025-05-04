@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "595438480456",
+    "project_id": "app-para-la-gestion-de-treas",
+    "storage_bucket": "app-para-la-gestion-de-treas.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:595438480456:android:30a8e319b091eb532cfc7d",
+        "android_client_info": {
+          "package_name": "com.cvc.tareas"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "595438480456-nvcafqlsafatbu6es2hfjrvilkg8k7lr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmGTFT_AoN2CZhYY2sijUeSsTvvltvFTQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "595438480456-nvcafqlsafatbu6es2hfjrvilkg8k7lr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

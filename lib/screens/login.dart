@@ -1,6 +1,6 @@
-// ignore_for_file: depend_on_referenced_packages
-
+import 'package:ap/screens/paginaprincipal.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/login_input.dart';
 import '../widgets/google.dart';
 import '../widgets/boton_inicio.dart';
@@ -43,7 +43,7 @@ class Login extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              Botoninicio(onTap: inicio),
+              Botoninicio(onTap: () => inicio(context)),
               const SizedBox(height: 20),
 
               Text('o', style: TextStyle(color: Colors.grey[600])),
@@ -58,7 +58,10 @@ class Login extends StatelessWidget {
                 style: TextStyle(color: Colors.grey[600]),
               ),
               GestureDetector(
-                child: const Text('Registrate', style: TextStyle(color: Colors.blue)),
+                child: const Text(
+                  'Registrate',
+                  style: TextStyle(color: Colors.blue),
+                ),
                 onTap: () {
                   Navigator.of(
                     context,
@@ -72,7 +75,40 @@ class Login extends StatelessWidget {
     );
   }
 
-  void inicio() {
-    MyApp();
+  void inicio(BuildContext context) async {
+    final auth = FirebaseAuth.instance;
+    final email = username.text.trim();
+    final pass = password.text.trim();
+
+    if (email.isEmpty || pass.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Por favor, completa todos los campos')),
+      );
+      return;
+    }
+
+    try {
+      await auth.signInWithEmailAndPassword(email: email, password: pass);
+
+      // Si todo sale bien, navega al home (reemplaza esto con tu pantalla principal)
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => Paginaprincipal(),
+        ), // Cambia esto si tienes otra pantalla principal
+      );
+    } on FirebaseAuthException catch (e) {
+      String mensaje = 'Error al iniciar sesión';
+
+      if (e.code == 'user-not-found') {
+        mensaje = 'Usuario no encontrado';
+      } else if (e.code == 'wrong-password') {
+        mensaje = 'Contraseña incorrecta';
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(mensaje)));
+    }
   }
 }
