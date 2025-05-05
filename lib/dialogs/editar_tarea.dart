@@ -6,6 +6,12 @@ Future<Tarea?> mostrarDialogoEditarTarea({
   required Tarea tarea,
   required List<Color> coloresDisponibles,
 }) {
+  TextEditingController descripcionController = TextEditingController();
+  TextEditingController profesorController = TextEditingController();
+  TextEditingController creditosController = TextEditingController();
+  TextEditingController nrcController = TextEditingController();
+  String prioridadSeleccionada = "alta"; // o "media" o "baja"
+
   TextEditingController tareaController = TextEditingController(
     text: tarea.title,
   );
@@ -68,7 +74,24 @@ Future<Tarea?> mostrarDialogoEditarTarea({
                   if (tareaController.text.isNotEmpty) {
                     Navigator.pop(
                       context,
-                      Tarea(title: tareaController.text, color: tempColor),
+                      Tarea(
+                        title: tareaController.text,
+                        descripcion:
+                            descripcionController
+                                .text, // Asegúrate de definir el controlador para la descripción
+                        profesor:
+                            profesorController
+                                .text, // Asegúrate de definir el controlador para el profesor
+                        creditos:
+                            int.tryParse(creditosController.text) ??
+                            0, // Asegúrate de tener el controlador de créditos
+                        nrc:
+                            int.tryParse(nrcController.text) ??
+                            0, // Asegúrate de tener el controlador para el NRC
+                        prioridad:
+                            prioridadSeleccionada, // Asegúrate de que prioridadSeleccionada tenga un valor como "alta", "media" o "baja"
+                        color: tempColor,
+                      ),
                     );
                   }
                 },
