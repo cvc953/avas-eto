@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      //home: const Tareas(), // Aquí se establece Tareas como la pantalla inicial
+      //home: const Tareas(),
       home: Autenticacion(),
     );
   }
