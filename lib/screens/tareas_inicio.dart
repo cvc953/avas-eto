@@ -248,11 +248,11 @@ class _TareasInicioState extends State<TareasInicio> {
   Widget build(BuildContext context) {
     final List<Tarea> tareasDelDia = [];
     _tareas.forEach((key, tareas) {
-      if (key.startsWith(
-        '${_selectedDay.year}-${_selectedDay.month}-${_selectedDay.day}-',
-      )) {
-        tareasDelDia.addAll(tareas);
-      }
+      //if (key.startsWith(
+      // '${_selectedDay.year}-${_selectedDay.month}-${_selectedDay.day}-',
+      //)) {
+      tareasDelDia.addAll(tareas);
+      //}
     });
 
     return Scaffold(

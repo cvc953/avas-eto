@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "595438480456-7r4cmaa82s2hflftdvmq6kjp9k6rl0vp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cvc.tareas",
+            "certificate_hash": "3dde4958069f3fabbb9f5b9861627efd221649a2"
+          }
+        },
+        {
           "client_id": "595438480456-nvcafqlsafatbu6es2hfjrvilkg8k7lr.apps.googleusercontent.com",
           "client_type": 3
         }
