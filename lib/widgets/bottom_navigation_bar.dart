@@ -1,5 +1,5 @@
+import 'package:ap/screens/cuentas.dart';
 import 'package:flutter/material.dart';
-import '../screens/login.dart';
 import '../screens/Viscalendario.dart';
 import '../screens/Vissemana.dart';
 
@@ -39,9 +39,14 @@ class CustomBottomNavBar extends StatelessWidget {
           icon: IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
-              Navigator.of(
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CuentaScreen()),
+              );
+              /*Navigator.of(
                 context,
               ).push(MaterialPageRoute(builder: (context) => Login()));
+              */
             },
           ),
           label: "Cuenta",

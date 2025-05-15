@@ -1,0 +1,15 @@
+version: '3.9'
+services:
+  flutter-dev:
+    build: .
+    volumes:
+      - .:/app
+      - flutter_cache:/root/.pub-cache
+    ports:
+      - "8080:8080"   # para flutter web
+    stdin_open: true
+    tty: true
+
+volumes:
+  flutter_cache:
+
