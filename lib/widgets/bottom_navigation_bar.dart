@@ -9,6 +9,7 @@ class CustomBottomNavBar extends StatelessWidget {
   final VoidCallback onSearch;
 
   const CustomBottomNavBar({
+    super.key,
     required this.parentContext,
     required this.onAdd,
     required this.onSearch,

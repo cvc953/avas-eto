@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/tarea.dart';
 import '../dialogs/editar_tarea.dart';
 import '../widgets/bottom_navigation_bar.dart';
-import 'login.dart';
-import 'Viscalendario.dart';
-import 'Vissemana.dart';
 
 class TareasInicio extends StatefulWidget {
   const TareasInicio({super.key});
@@ -23,8 +20,8 @@ class _TareasInicioState extends State<TareasInicio> {
     Colors.purpleAccent,
   ];
 
-  DateTime _selectedDay = DateTime.now();
-  Map<String, List<Tarea>> _tareas = {};
+  final DateTime _selectedDay = DateTime.now();
+  final Map<String, List<Tarea>> _tareas = {};
 
   String _getTaskKey(DateTime day, int hour) {
     return '${day.year}-${day.month}-${day.day}-$hour';

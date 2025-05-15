@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'screens/tareas.dart'; // Importamos la pantalla de Tareas
-import '../utils/theme.dart';
 
 void main() {
   runApp(const MyApp());
