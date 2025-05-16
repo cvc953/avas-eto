@@ -72,6 +72,18 @@ class _TareasInicioState extends State<TareasInicio> {
   void initState() {
     super.initState();
 
+    FirebaseMessaging.instance.requestPermission();
+
+    // Inicializar configuración del canal de notificaciones
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+    // Escuchar mensajes en primer plano
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
@@ -81,7 +93,7 @@ class _TareasInicioState extends State<TareasInicio> {
           notification.hashCode,
           notification.title,
           notification.body,
-          NotificationDetails(
+          const NotificationDetails(
             android: AndroidNotificationDetails(
               'canal_tareas',
               'Tareas',
@@ -94,6 +106,7 @@ class _TareasInicioState extends State<TareasInicio> {
       }
     });
 
+    // Obtener el token FCM (para pruebas o registro en backend)
     FirebaseMessaging.instance.getToken().then((token) {
       print('FCM Token: $token');
     });
