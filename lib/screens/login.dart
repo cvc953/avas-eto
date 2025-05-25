@@ -1,4 +1,5 @@
 import 'package:ap/screens/paginaprincipal.dart';
+import 'package:ap/services/password_reset.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/login_input.dart';
@@ -36,10 +37,21 @@ class Login extends StatelessWidget {
                 obscureText: true,
               ),
               const SizedBox(height: 10),
-              Text(
-                '¿Olvidaste tu contraseña?',
-                style: TextStyle(color: Colors.grey[600]),
+
+              GestureDetector(
+                child: const Text(
+                  '¿Olvidaste tu contraseña?',
+                  style: TextStyle(color: Colors.blue),
+                ),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ForgotPasswordScreen(),
+                    ),
+                  );
+                },
               ),
+
               const SizedBox(height: 20),
 
               Botoninicio(onTap: () => inicio(context)),
@@ -73,7 +85,6 @@ class Login extends StatelessWidget {
       ),
     );
   }
-
   void inicio(BuildContext context) async {
     final auth = FirebaseAuth.instance;
     final email = username.text.trim();

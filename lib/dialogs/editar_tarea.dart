@@ -162,7 +162,7 @@ Future<Tarea?> mostrarDialogoEditarTarea({
               TextButton(
                 onPressed: () {
                   if (tareaController.text.isNotEmpty) {
-                    final tareaEditada = Tarea(
+                    final tareaEditada = tarea.copyWith(
                       title: tareaController.text,
                       descripcion: descripcionController.text,
                       profesor: profesorController.text,
@@ -183,4 +183,3 @@ Future<Tarea?> mostrarDialogoEditarTarea({
     },
   );
 }
-

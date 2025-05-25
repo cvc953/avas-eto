@@ -1,13 +1,20 @@
 import 'package:ap/screens/tareas.dart';
+import 'package:ap/services/local_database.dart';
+import 'package:ap/services/local_storage_service.dart';
+import 'package:ap/services/tarea_repository.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:ap/screens/login.dart';
 
 class Autenticacion extends StatelessWidget {
   const Autenticacion({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final firestore = FirebaseFirestore.instance;
+    final localDb = LocalDatabase();
+    final localStorage = LocalStorageService(localDb);
+    final tareaRepository = TareaRepository(firestore, localStorage);
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
@@ -17,11 +24,11 @@ class Autenticacion extends StatelessWidget {
 
         if (snapshot.hasData) {
           // Usuario logueado
-          return Tareas();
+          return Tareas(tareaRepository: tareaRepository);
         } else {
           // Usuario no logueado
           //return Login();
-          return Tareas();
+          return Tareas(tareaRepository: tareaRepository);
         }
       },
     );
