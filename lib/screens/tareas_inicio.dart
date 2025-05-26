@@ -663,7 +663,7 @@ class _TareasInicioState extends State<TareasInicio> {
               'creditos': tarea.creditos,
               'nrc': tarea.nrc,
               'prioridad': tarea.prioridad,
-              'color': tarea.color.value.toRadixString(16),
+              'color': tarea.color.value,
               'completada': tarea.completada,
               'fecha': clave,
             });
