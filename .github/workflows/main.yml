@@ -9,7 +9,11 @@ on:
       - master
       - develop
       - new 
-      - pruebas2
+      - pruebas
+  commit:    
+    branches:
+      - main
+      - pruebas
 name: "Build & Release"
 jobs:
   build:
