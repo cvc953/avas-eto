@@ -10,10 +10,7 @@ on:
       - develop
       - new 
       - pruebas
-  commit:    
-    branches:
-      - main
-      - pruebas
+
 name: "Build & Release"
 jobs:
   build:
