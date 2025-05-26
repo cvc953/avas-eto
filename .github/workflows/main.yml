@@ -9,6 +9,7 @@ on:
       - master
       - develop
       - new 
+      - pruebas2
 name: "Build & Release"
 jobs:
   build:
@@ -25,7 +26,7 @@ jobs:
           channel: 'stable'
           architecture: x64
 
-      - run: flutter pub remove firebase_auth
+      - run: flutter pub get
       - run: flutter build apk --release --split-per-abi
       
       - name: Push to Releases
