@@ -1,34 +1,33 @@
 import 'package:flutter/material.dart';
 import '../models/tarea.dart';
 
-Future<Tarea?> mostrarDialogoEditarTarea({
+Future<Map<String, dynamic>?> mostrarDialogoEditarTarea({
   required BuildContext context,
   required Tarea tarea,
   required List<Color> coloresDisponibles,
+  required String horaActual,
+  required DateTime fechaActual, // Recibir fecha actual como parámetro
 }) async {
-  TextEditingController tareaController = TextEditingController(
-    text: tarea.title,
-  );
-  TextEditingController descripcionController = TextEditingController(
-    text: tarea.descripcion,
-  );
-  TextEditingController profesorController = TextEditingController(
-    text: tarea.profesor,
-  );
-  TextEditingController creditosController = TextEditingController(
+  // Convertir la hora actual a entero
+  int horaInicial = int.tryParse(horaActual) ?? 12;
+
+  // Controladores con los valores actuales
+  final tareaController = TextEditingController(text: tarea.title);
+  final materia = TextEditingController(text: tarea.materia);
+  final descripcionController = TextEditingController(text: tarea.descripcion);
+  final profesorController = TextEditingController(text: tarea.profesor);
+  final creditosController = TextEditingController(
     text: tarea.creditos.toString(),
   );
-  TextEditingController nrcController = TextEditingController(
-    text: tarea.nrc.toString(),
-  );
+  final nrcController = TextEditingController(text: tarea.nrc.toString());
 
+  // Estado del diálogo
   Color colorSeleccionado = tarea.color;
   String prioridadSeleccionada = tarea.prioridad;
-  int selectedHour =
-      12; // Hora por defecto, podrías extraerla de la clave si es necesario
-  DateTime selectedDate = DateTime.now(); // Fecha por defecto
+  int selectedHour = horaInicial;
+  DateTime selectedDate = fechaActual; // Usar la fecha actual de la tarea
 
-  return await showDialog<Tarea>(
+  return await showDialog<Map<String, dynamic>>(
     context: context,
     builder: (context) {
       return StatefulBuilder(
@@ -41,6 +40,10 @@ Future<Tarea?> mostrarDialogoEditarTarea({
                 children: [
                   TextField(
                     controller: tareaController,
+                    decoration: const InputDecoration(hintText: "tarea"),
+                  ),
+                  TextField(
+                    controller: materia,
                     decoration: const InputDecoration(
                       hintText: "Nombre de la materia",
                     ),
@@ -77,14 +80,12 @@ Future<Tarea?> mostrarDialogoEditarTarea({
                       }
                     },
                     items:
-                        ['Alta', 'Media', 'Baja']
-                            .map(
-                              (prioridad) => DropdownMenuItem(
-                                value: prioridad,
-                                child: Text(prioridad),
-                              ),
-                            )
-                            .toList(),
+                        ['Alta', 'Media', 'Baja'].map((prioridad) {
+                          return DropdownMenuItem(
+                            value: prioridad,
+                            child: Text(prioridad),
+                          );
+                        }).toList(),
                   ),
                   const SizedBox(height: 10),
                   TextButton(
@@ -125,31 +126,29 @@ Future<Tarea?> mostrarDialogoEditarTarea({
                   Wrap(
                     spacing: 10,
                     children:
-                        coloresDisponibles
-                            .map(
-                              (color) => GestureDetector(
-                                onTap:
-                                    () => setStateDialog(
-                                      () => colorSeleccionado = color,
-                                    ),
-                                child: Container(
-                                  width: 30,
-                                  height: 30,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                    border:
-                                        colorSeleccionado == color
-                                            ? Border.all(
-                                              color: Colors.white,
-                                              width: 3,
-                                            )
-                                            : null,
-                                  ),
+                        coloresDisponibles.map((color) {
+                          return GestureDetector(
+                            onTap:
+                                () => setStateDialog(
+                                  () => colorSeleccionado = color,
                                 ),
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                                border:
+                                    colorSeleccionado == color
+                                        ? Border.all(
+                                          color: Colors.white,
+                                          width: 3,
+                                        )
+                                        : null,
                               ),
-                            )
-                            .toList(),
+                            ),
+                          );
+                        }).toList(),
                   ),
                 ],
               ),
@@ -164,6 +163,7 @@ Future<Tarea?> mostrarDialogoEditarTarea({
                   if (tareaController.text.isNotEmpty) {
                     final tareaEditada = tarea.copyWith(
                       title: tareaController.text,
+                      materia: materia.text,
                       descripcion: descripcionController.text,
                       profesor: profesorController.text,
                       creditos: int.tryParse(creditosController.text) ?? 0,
@@ -171,7 +171,11 @@ Future<Tarea?> mostrarDialogoEditarTarea({
                       prioridad: prioridadSeleccionada,
                       color: colorSeleccionado,
                     );
-                    Navigator.pop(context, tareaEditada);
+                    Navigator.pop(context, {
+                      'tarea': tareaEditada,
+                      'hora': selectedHour,
+                      'fecha': selectedDate,
+                    });
                   }
                 },
                 child: const Text("Guardar"),

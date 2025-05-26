@@ -43,12 +43,14 @@ class LocalStorageService {
           return Tarea(
             id: record.key,
             title: 'Error',
+            materia: '',
             descripcion: '',
             profesor: '',
             creditos: 0,
             nrc: 0,
             prioridad: 'media',
             color: Colors.grey,
+            fechaCreacion: DateTime.now(),
           );
         }
       }).toList();
@@ -69,4 +71,3 @@ class LocalStorageService {
     }
   }
 }
-

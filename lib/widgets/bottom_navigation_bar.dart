@@ -1,18 +1,20 @@
 import 'package:ap/screens/cuentas.dart';
 import 'package:flutter/material.dart';
-import '../screens/Viscalendario.dart';
-import '../screens/Vissemana.dart';
+import '../screens/vista_calendario.dart';
+import '../screens/vista_semana.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final BuildContext parentContext;
   final VoidCallback onAdd;
   final VoidCallback onSearch;
+  final List<Color> coloresDisponibles;
 
   const CustomBottomNavBar({
     super.key,
     required this.parentContext,
     required this.onAdd,
     required this.onSearch,
+    required this.coloresDisponibles,
   });
 
   @override
@@ -68,7 +70,10 @@ class CustomBottomNavBar extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const Viscalendario(),
+                    builder:
+                        (context) => CalendarioTareas(
+                          coloresDisponibles: coloresDisponibles,
+                        ),
                   ),
                 );
               },
@@ -79,7 +84,11 @@ class CustomBottomNavBar extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const Vissemana()),
+                  MaterialPageRoute(
+                    builder:
+                        (context) =>
+                            VisSemana(coloresDisponibles: coloresDisponibles),
+                  ),
                 );
               },
             ),

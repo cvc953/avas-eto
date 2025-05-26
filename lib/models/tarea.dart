@@ -3,28 +3,60 @@ import 'package:flutter/material.dart';
 class Tarea {
   final String id;
   final String title;
+  final String materia;
   final String descripcion;
   final String profesor;
   final int creditos;
   final int nrc;
-  final String prioridad; // "alta", "media", "baja"
+  final String prioridad;
   final Color color;
+  final bool completada; // Nuevo campo
+  final DateTime fechaCreacion; // Nuevo campo
 
   Tarea({
-    String? id,
+    required this.id,
     required this.title,
-    required this.descripcion,
-    required this.profesor,
-    required this.creditos,
-    required this.nrc,
-    required this.prioridad,
+    this.materia = '',
+    this.descripcion = '',
+    this.profesor = '',
+    this.creditos = 0,
+    this.nrc = 0,
+    this.prioridad = 'Media',
     required this.color,
-  }) : id = id ?? _generateId();
+    this.completada = false,
+    required this.fechaCreacion,
+  });
 
-  static String _generateId() {
-    return DateTime.now().millisecondsSinceEpoch.toString();
+  // Actualiza copyWith
+  Tarea copyWith({
+    String? id,
+    String? title,
+    String? materia,
+    String? descripcion,
+    String? profesor,
+    int? creditos,
+    int? nrc,
+    String? prioridad,
+    Color? color,
+    bool? completada,
+    DateTime? fechaCreacion,
+  }) {
+    return Tarea(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      materia: materia ?? this.materia,
+      descripcion: descripcion ?? this.descripcion,
+      profesor: profesor ?? this.profesor,
+      creditos: creditos ?? this.creditos,
+      nrc: nrc ?? this.nrc,
+      prioridad: prioridad ?? this.prioridad,
+      color: color ?? this.color,
+      completada: completada ?? this.completada,
+      fechaCreacion: fechaCreacion ?? this.fechaCreacion,
+    );
   }
 
+  // Actualiza toMap
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -34,76 +66,25 @@ class Tarea {
       'creditos': creditos,
       'nrc': nrc,
       'prioridad': prioridad,
-      'color': color.value, // Guardamos el valor int del color
+      'color': color.value.toRadixString(16),
+      'completada': completada,
+      'fechaCreacion': fechaCreacion.toIso8601String(),
     };
   }
 
-  // Método para crear Tarea desde Map (desde Firestore/Sembast)
+  // Actualiza fromMap
   factory Tarea.fromMap(Map<String, dynamic> map) {
     return Tarea(
-      id: map['id']?.toString() ?? '',
-      title: map['title']?.toString() ?? '',
-      descripcion: map['descripcion']?.toString() ?? '',
-      profesor: map['profesor']?.toString() ?? '',
-      creditos: map['creditos']?.toInt() ?? 0,
-      nrc: map['nrc']?.toInt() ?? 0,
-      prioridad: map['prioridad']?.toString() ?? 'media',
-      color: Color(map['color'] ?? Colors.blue.value),
+      id: map['id'],
+      title: map['title'],
+      descripcion: map['descripcion'] ?? '',
+      profesor: map['profesor'] ?? '',
+      creditos: map['creditos'] ?? 0,
+      nrc: map['nrc'] ?? 0,
+      prioridad: map['prioridad'] ?? 'Media',
+      color: Color(int.parse(map['color'] ?? '0xFF000000', radix: 16)),
+      completada: map['completada'] ?? false,
+      fechaCreacion: DateTime.parse(map['fechaCreacion']),
     );
-  }
-
-  // Método para clonar la tarea con cambios opcionales
-  Tarea copyWith({
-    String? id,
-    String? title,
-    String? descripcion,
-    String? profesor,
-    int? creditos,
-    int? nrc,
-    String? prioridad,
-    Color? color,
-  }) {
-    return Tarea(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      descripcion: descripcion ?? this.descripcion,
-      profesor: profesor ?? this.profesor,
-      creditos: creditos ?? this.creditos,
-      nrc: nrc ?? this.nrc,
-      prioridad: prioridad ?? this.prioridad,
-      color: color ?? this.color,
-    );
-  }
-
-  // Método para comparar tareas (útil para pruebas y operaciones)
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-
-    return other is Tarea &&
-        other.title == title &&
-        other.descripcion == descripcion &&
-        other.profesor == profesor &&
-        other.creditos == creditos &&
-        other.nrc == nrc &&
-        other.prioridad == prioridad &&
-        other.color.value == color.value;
-  }
-
-  @override
-  int get hashCode {
-    return title.hashCode ^
-        descripcion.hashCode ^
-        profesor.hashCode ^
-        creditos.hashCode ^
-        nrc.hashCode ^
-        prioridad.hashCode ^
-        color.value.hashCode;
-  }
-
-  @override
-  String toString() {
-    return 'Tarea(title: $title, descripcion: $descripcion, profesor: $profesor, '
-        'creditos: $creditos, nrc: $nrc, prioridad: $prioridad, color: $color)';
   }
 }

@@ -1,4 +1,5 @@
 import 'package:ap/services/local_database.dart';
+import '../dialogs/agregar_tarea.dart';
 import 'package:flutter/material.dart';
 import '../models/tarea.dart';
 import '../dialogs/editar_tarea.dart';
@@ -10,97 +11,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../services/local_storage_service.dart';
-
-class TareaSearchDelegate extends SearchDelegate {
-  final Map<String, List<Tarea>> tareas;
-
-  TareaSearchDelegate({required this.tareas});
-
-  @override
-  List<Widget>? buildActions(BuildContext context) {
-    return [
-      IconButton(onPressed: () => query = '', icon: const Icon(Icons.clear)),
-    ];
-  }
-
-  @override
-  Widget? buildLeading(BuildContext context) {
-    return IconButton(
-      onPressed: () => close(context, null),
-      icon: const Icon(Icons.arrow_back),
-    );
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
-    final resultados =
-        tareas.entries
-            .expand((entry) => entry.value)
-            .where(
-              (tarea) =>
-                  tarea.title.toLowerCase().contains(query.toLowerCase()),
-            )
-            .toList();
-
-    if (resultados.isEmpty) {
-      return const Center(
-        child: Text(
-          'No se ha encontrado ninguna tarea.',
-          style: TextStyle(fontSize: 18),
-        ),
-      );
-    }
-
-    return ListView(
-      children:
-          resultados.map((tarea) {
-            return ListTile(
-              title: Text(tarea.title),
-              leading: CircleAvatar(
-                backgroundColor: tarea.color,
-                child: const Icon(Icons.menu_book, color: Colors.white),
-              ),
-            );
-          }).toList(),
-    );
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    final sugerencias =
-        tareas.entries
-            .expand((entry) => entry.value)
-            .where(
-              (tarea) =>
-                  tarea.title.toLowerCase().startsWith(query.toLowerCase()),
-            )
-            .toList();
-
-    if (sugerencias.isEmpty) {
-      return const Center(
-        child: Text(
-          'No se ha encontrado ninguna tarea.',
-          style: TextStyle(fontSize: 18),
-        ),
-      );
-    }
-
-    return ListView(
-      children:
-          sugerencias.map((tarea) {
-            return ListTile(
-              title: Text(tarea.title),
-              leading: CircleAvatar(
-                backgroundColor: tarea.color,
-                child: Icon(Icons.menu_book, color: Colors.white),
-              ),
-            );
-          }).toList(),
-    );
-  }
-}
+import 'package:intl/intl.dart';
+import '../widgets/buscar_tareas.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -219,7 +132,7 @@ class _TareasInicioState extends State<TareasInicio> {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
-    _tareasSubscription?.cancel(); // Cancela cualquier suscripción previa
+    _tareasSubscription?.cancel();
 
     _tareasSubscription = FirebaseFirestore.instance
         .collection('tareas')
@@ -235,8 +148,9 @@ class _TareasInicioState extends State<TareasInicio> {
             for (var doc in snapshot.docs) {
               final data = doc.data();
               final tarea = Tarea(
-                id: doc.id, // Asegúrate de incluir el ID del documento
+                id: doc.id,
                 title: data['titulo'] ?? '',
+                materia: data['materia'] ?? '',
                 descripcion: data['descripcion'] ?? '',
                 profesor: data['profesor'] ?? '',
                 creditos: data['creditos'] ?? 0,
@@ -245,6 +159,8 @@ class _TareasInicioState extends State<TareasInicio> {
                 color: Color(
                   int.parse(data['color'] ?? '0xFF000000', radix: 16),
                 ),
+                completada: data['completada'] ?? false,
+                fechaCreacion: (data['creadoEn'] as Timestamp).toDate(),
               );
 
               final clave = data['fecha'] as String;
@@ -325,12 +241,62 @@ class _TareasInicioState extends State<TareasInicio> {
     }
   }
 
+  Future<void> _marcarTareaComoCompletada(Tarea tarea, bool completada) async {
+    try {
+      // Actualización optimista en la UI
+      setState(() {
+        _tareas.forEach((key, tareas) {
+          final index = tareas.indexWhere((t) => t.id == tarea.id);
+          if (index != -1) {
+            tareas[index] = tarea.copyWith(completada: completada);
+          }
+        });
+      });
+
+      // Actualizar en Firestore (si está online y no es local)
+      if (_isOnline && !tarea.id.startsWith('local_')) {
+        await FirebaseFirestore.instance
+            .collection('tareas')
+            .doc(tarea.id)
+            .update({'completada': completada});
+      }
+
+      // Actualizar en almacenamiento local
+      await _localStorage.saveTarea(tarea.copyWith(completada: completada));
+    } catch (e, stackTrace) {
+      debugPrint('Error marcando tarea: $e\n$stackTrace');
+
+      // Revertir cambios en caso de error
+      if (mounted) {
+        setState(() {
+          _tareas.forEach((key, tareas) {
+            final index = tareas.indexWhere((t) => t.id == tarea.id);
+            if (index != -1) {
+              tareas[index] = tarea; // Volver a la versión original
+            }
+          });
+        });
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error al ${completada ? 'completar' : 'desmarcar'} tarea',
+          ),
+          action: SnackBarAction(
+            label: 'Reintentar',
+            onPressed: () => _marcarTareaComoCompletada(tarea, completada),
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _guardarTareaEnFirestore(Tarea tarea, String clave) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('Usuario no autenticado');
 
-      // Creamos una copia de la tarea para mostrar inmediatamente
       final tareaTemporal = tarea.copyWith(
         id:
             tarea.id.startsWith('local_')
@@ -338,7 +304,6 @@ class _TareasInicioState extends State<TareasInicio> {
                 : tarea.id,
       );
 
-      // Actualizamos el estado local primero
       if (mounted) {
         setState(() {
           _tareas.putIfAbsent(clave, () => []).add(tareaTemporal);
@@ -346,44 +311,39 @@ class _TareasInicioState extends State<TareasInicio> {
       }
 
       if (_isOnline) {
-        // Guardar en Firestore
         final docRef = await FirebaseFirestore.instance
             .collection('tareas')
             .add({
               'titulo': tarea.title,
+              'materia': tarea.materia,
               'descripcion': tarea.descripcion,
               'profesor': tarea.profesor,
               'creditos': tarea.creditos,
               'nrc': tarea.nrc,
               'prioridad': tarea.prioridad,
               'color': tarea.color.value.toRadixString(16),
+              'completada': tarea.completada, // Nuevo campo
               'fecha': clave,
               'hora': clave.split('-').last,
               'creadoEn': FieldValue.serverTimestamp(),
               'userId': user.uid,
             });
 
-        // Actualizar el estado con el ID real de Firestore
         if (mounted) {
           setState(() {
-            // Removemos la temporal
             _tareas[clave]?.removeWhere((t) => t.id == tareaTemporal.id);
-            // Añadimos la versión con ID real
             _tareas
                 .putIfAbsent(clave, () => [])
                 .add(tarea.copyWith(id: docRef.id));
           });
         }
 
-        // Guardar también localmente por si acaso
         await _localStorage.saveTarea(tarea.copyWith(id: docRef.id));
       } else {
-        // Solo modo offline - guardar localmente
         await _localStorage.saveTarea(tareaTemporal);
       }
     } catch (e) {
       debugPrint('Error al guardar tarea: $e');
-      // Revertir cambios en caso de error
       if (mounted) {
         setState(() {
           _tareas[clave]?.removeWhere((t) => t.id.startsWith('temp_'));
@@ -402,210 +362,12 @@ class _TareasInicioState extends State<TareasInicio> {
     super.dispose();
   }
 
-  /* Future<void> _guardarTareaEnFirestore(Tarea tarea, String clave) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        throw Exception('Usuario no autenticado');
-      }
-
-      await FirebaseFirestore.instance.collection('tareas').doc(clave).set({
-        'titulo': tarea.title,
-        'descripcion': tarea.descripcion,
-        'profesor': tarea.profesor,
-        'creditos': tarea.creditos,
-        'nrc': tarea.nrc,
-        'prioridad': tarea.prioridad,
-        'color': tarea.color.value.toRadixString(16),
-        'fecha': clave,
-        'hora': clave.split('-').last,
-        'creadoEn': FieldValue.serverTimestamp(),
-        'userId': user.uid, // Añadir el ID del usuario
-      });
-
-      print('Tarea guardada en Firestore');
-    } on FirebaseException catch (e) {
-      print('Error de Firebase: ${e.code} - ${e.message}');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error al guardar: ${e.message}')));
-    } catch (e) {
-      print('Error inesperado: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error inesperado: $e')));
-    }
-  }*/
-
   void addTareas() {
-    TextEditingController tareaController = TextEditingController();
-    TextEditingController descripcionController = TextEditingController();
-    TextEditingController profesorController = TextEditingController();
-    TextEditingController creditosController = TextEditingController();
-    TextEditingController nrcController = TextEditingController();
-    Color colorSeleccionado = coloresDisponibles[0];
-    int selectedHour = TimeOfDay.now().hour;
-    DateTime selectedDate = _selectedDay;
-    String prioridadSeleccionada = 'Media';
-
-    showDialog(
+    showAddTaskDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              title: const Text("Nueva Tarea"),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: tareaController,
-                      decoration: const InputDecoration(
-                        hintText: "Nombre de la materia",
-                      ),
-                    ),
-                    TextField(
-                      controller: descripcionController,
-                      decoration: const InputDecoration(
-                        hintText: "Descripción",
-                      ),
-                    ),
-                    TextField(
-                      controller: profesorController,
-                      decoration: const InputDecoration(hintText: "Profesor"),
-                    ),
-                    TextField(
-                      maxLength: 1,
-                      controller: creditosController,
-                      decoration: const InputDecoration(
-                        hintText: "Número de créditos",
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    TextField(
-                      maxLength: 4,
-                      controller: nrcController,
-                      decoration: const InputDecoration(hintText: "NRC"),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 10),
-                    Text('Seleccione la prioridad de la tarea'),
-                    DropdownButton<String>(
-                      value: prioridadSeleccionada,
-                      onChanged: (value) {
-                        if (value != null) {
-                          setStateDialog(() => prioridadSeleccionada = value);
-                        }
-                      },
-                      items:
-                          ['Alta', 'Media', 'Baja']
-                              .map(
-                                (prioridad) => DropdownMenuItem(
-                                  value: prioridad,
-                                  child: Text(prioridad),
-                                ),
-                              )
-                              .toList(),
-                    ),
-                    const SizedBox(height: 10),
-                    TextButton(
-                      onPressed: () async {
-                        final pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: selectedDate,
-                          firstDate: DateTime.now().subtract(
-                            const Duration(days: 365),
-                          ),
-                          lastDate: DateTime.now().add(
-                            const Duration(days: 365),
-                          ),
-                        );
-                        if (pickedDate != null) {
-                          setStateDialog(() => selectedDate = pickedDate);
-                        }
-                      },
-                      child: Text(
-                        "Fecha: ${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}",
-                      ),
-                    ),
-                    DropdownButton<int>(
-                      value: selectedHour,
-                      onChanged: (value) {
-                        if (value != null) {
-                          setStateDialog(() => selectedHour = value);
-                        }
-                      },
-                      items: List.generate(
-                        24,
-                        (index) => DropdownMenuItem(
-                          value: index,
-                          child: Text("${index.toString().padLeft(2, '0')}:00"),
-                        ),
-                      ),
-                    ),
-                    Wrap(
-                      spacing: 10,
-                      children:
-                          coloresDisponibles
-                              .map(
-                                (color) => GestureDetector(
-                                  onTap:
-                                      () => setStateDialog(
-                                        () => colorSeleccionado = color,
-                                      ),
-                                  child: Container(
-                                    width: 30,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      color: color,
-                                      shape: BoxShape.circle,
-                                      border:
-                                          colorSeleccionado == color
-                                              ? Border.all(
-                                                color: Colors.white,
-                                                width: 3,
-                                              )
-                                              : null,
-                                    ),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancelar"),
-                ),
-                TextButton(
-                  onPressed: () {
-                    if (tareaController.text.isNotEmpty) {
-                      final nuevaTarea = Tarea(
-                        title: tareaController.text,
-                        descripcion: descripcionController.text,
-                        profesor: profesorController.text,
-                        creditos: int.tryParse(creditosController.text) ?? 0,
-                        nrc: int.tryParse(nrcController.text) ?? 0,
-                        prioridad: prioridadSeleccionada,
-                        color: colorSeleccionado,
-                      );
-                      final clave = _getTaskKey(selectedDate, selectedHour);
-
-                      _guardarTareaEnFirestore(nuevaTarea, clave);
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text("Guardar"),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      onSave: _guardarTareaEnFirestore,
+      initialDate: _selectedDay,
+      availableColors: coloresDisponibles,
     );
   }
 
@@ -643,6 +405,14 @@ class _TareasInicioState extends State<TareasInicio> {
                   final claveCorrecta = entrada.key;
                   final expandida = _tareasExpandida.contains(tarea);
 
+                  // Extraer fecha y hora de la clave (formato: año-mes-día-hora)
+                  final partesClave = claveCorrecta.split('-');
+                  final fechaTarea = DateTime(
+                    int.parse(partesClave[0]),
+                    int.parse(partesClave[1]),
+                    int.parse(partesClave[2]),
+                  );
+
                   return Card(
                     color: Theme.of(context).cardColor,
                     shape: RoundedRectangleBorder(
@@ -667,6 +437,18 @@ class _TareasInicioState extends State<TareasInicio> {
                               children: [
                                 Row(
                                   children: [
+                                    Checkbox(
+                                      value: tarea.completada,
+                                      onChanged: (bool? value) {
+                                        if (value != null) {
+                                          _marcarTareaComoCompletada(
+                                            tarea,
+                                            value,
+                                          );
+                                        }
+                                      },
+                                      activeColor: tarea.color,
+                                    ),
                                     CircleAvatar(
                                       backgroundColor: tarea.color,
                                       child: const Icon(
@@ -675,12 +457,36 @@ class _TareasInicioState extends State<TareasInicio> {
                                       ),
                                     ),
                                     const SizedBox(width: 10),
-                                    Text(
-                                      tarea.title,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          tarea.title,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            decoration:
+                                                tarea.completada
+                                                    ? TextDecoration.lineThrough
+                                                    : TextDecoration.none,
+                                            color:
+                                                tarea.completada
+                                                    ? Colors.grey
+                                                    : Theme.of(context)
+                                                        .textTheme
+                                                        .titleMedium
+                                                        ?.color,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Fecha: ${_formatarFecha(tarea.fechaCreacion)}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -694,6 +500,7 @@ class _TareasInicioState extends State<TareasInicio> {
                             if (expandida) ...[
                               const SizedBox(height: 8),
                               Text("Descripción: ${tarea.descripcion}"),
+                              Text("materia: ${tarea.materia}"),
                               Text("Profesor: ${tarea.profesor}"),
                               Text("Créditos: ${tarea.creditos}"),
                               Text("NRC: ${tarea.nrc}"),
@@ -701,6 +508,13 @@ class _TareasInicioState extends State<TareasInicio> {
                                 "Hora de finalización: ${_obtenerHoraDeTarea(tarea)}:00",
                               ),
                               _buildPrioridadTexto(tarea.prioridad),
+                              if (tarea.completada)
+                                Text(
+                                  "Completada el: ${DateFormat('dd/MM/yyyy').format(tarea.fechaCreacion)}",
+                                  style: const TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
                             ],
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
@@ -732,20 +546,95 @@ class _TareasInicioState extends State<TareasInicio> {
         parentContext: context,
         onAdd: addTareas,
         onSearch: buscarTareas,
+        coloresDisponibles: coloresDisponibles,
       ),
     );
   }
 
-  void editarTarea(int index, List<Tarea> lista, String key) async {
-    final tareaEditada = await mostrarDialogoEditarTarea(
+  String _formatarFecha(DateTime fecha) {
+    // Formato día/mes/año con 2 dígitos para día y mes, 4 para año
+    return '${fecha.day.toString().padLeft(2, '0')}/'
+        '${fecha.month.toString().padLeft(2, '0')}/'
+        '${fecha.year.toString().padLeft(4, '0')}';
+  }
+
+  void editarTarea(int index, List<Tarea> lista, String claveActual) async {
+    final tareaActual = lista[index];
+    final horaActual = _obtenerHoraDeTarea(tareaActual);
+    final fechaActual = _obtenerFechaDeClave(claveActual);
+
+    final result = await mostrarDialogoEditarTarea(
       context: context,
-      tarea: lista[index],
+      tarea: tareaActual,
       coloresDisponibles: coloresDisponibles,
+      horaActual: horaActual,
+      fechaActual: fechaActual,
     );
 
-    if (tareaEditada != null) {
-      await _actualizarTareaEnFirestore(tareaEditada, key, index);
+    if (result != null) {
+      final tareaEditada = result['tarea'] as Tarea;
+      final nuevaHora = result['hora'] as int;
+      final nuevaFecha = result['fecha'] as DateTime;
+
+      // Crear nueva clave con la nueva fecha y hora
+      final nuevaClave = _getTaskKey(nuevaFecha, nuevaHora);
+
+      // Mover la tarea si cambió la fecha u hora
+      if (nuevaClave != claveActual) {
+        await _moverTarea(tareaEditada, claveActual, nuevaClave, index);
+      } else {
+        await _actualizarTareaEnFirestore(tareaEditada, claveActual, index);
+      }
     }
+  }
+
+  Future<void> _moverTarea(
+    Tarea tarea,
+    String claveVieja,
+    String claveNueva,
+    int index,
+  ) async {
+    try {
+      // 1. Eliminar de la posición vieja
+      setState(() {
+        _tareas[claveVieja]?.removeAt(index);
+        if (_tareas[claveVieja]?.isEmpty ?? false) {
+          _tareas.remove(claveVieja);
+        }
+      });
+
+      // 2. Agregar en la nueva posición
+      await _guardarTareaEnFirestore(tarea, claveNueva);
+
+      // 3. Actualizar en Firestore si es online
+      if (_isOnline && !tarea.id.startsWith('local_')) {
+        await FirebaseFirestore.instance
+            .collection('tareas')
+            .doc(tarea.id)
+            .update({'fecha': claveNueva, 'hora': claveNueva.split('-').last});
+      }
+
+      // 4. Eliminar versión vieja del almacenamiento local
+      await _localStorage.deleteTarea(tarea.id);
+    } catch (e) {
+      debugPrint('Error moviendo tarea: $e');
+      // Revertir cambios si falla
+      if (mounted) {
+        setState(() {
+          _tareas.putIfAbsent(claveVieja, () => []).insert(index, tarea);
+        });
+      }
+    }
+  }
+
+  // Método auxiliar para extraer fecha de la clave
+  DateTime _obtenerFechaDeClave(String clave) {
+    final partes = clave.split('-');
+    return DateTime(
+      int.parse(partes[0]),
+      int.parse(partes[1]),
+      int.parse(partes[2]),
+    );
   }
 
   Future<void> _actualizarTareaEnFirestore(
@@ -768,12 +657,14 @@ class _TareasInicioState extends State<TareasInicio> {
             .doc(tarea.id)
             .update({
               'titulo': tarea.title,
+              'materia': tarea.materia,
               'descripcion': tarea.descripcion,
               'profesor': tarea.profesor,
               'creditos': tarea.creditos,
               'nrc': tarea.nrc,
               'prioridad': tarea.prioridad,
               'color': tarea.color.value.toRadixString(16),
+              'completada': tarea.completada,
               'fecha': clave,
             });
 
