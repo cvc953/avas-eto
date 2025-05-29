@@ -1,4 +1,4 @@
-import 'package:ap/screens/paginaprincipal.dart';
+import 'package:ap/screens/tareas_inicio.dart';
 import 'package:ap/services/password_reset.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -85,6 +85,7 @@ class Login extends StatelessWidget {
       ),
     );
   }
+
   void inicio(BuildContext context) async {
     final auth = FirebaseAuth.instance;
     final email = username.text.trim();
@@ -100,12 +101,10 @@ class Login extends StatelessWidget {
     try {
       await auth.signInWithEmailAndPassword(email: email, password: pass);
 
-      // Si todo sale bien, navega al home (reemplaza esto con tu pantalla principal)
+      // Si todo sale bien, navega a la pantalla de tareas inicio
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => Paginaprincipal(),
-        ), // Cambia esto si tienes otra pantalla principal
+        MaterialPageRoute(builder: (_) => TareasInicio()),
       );
     } on FirebaseAuthException catch (e) {
       String mensaje = 'Error al iniciar sesión';

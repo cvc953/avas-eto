@@ -10,8 +10,8 @@ class Tarea {
   final int nrc;
   final String prioridad;
   final Color color;
-  final bool completada; // Nuevo campo
-  final DateTime fechaCreacion; // Nuevo campo
+  final bool completada;
+  final DateTime fechaCreacion;
 
   Tarea({
     required this.id,

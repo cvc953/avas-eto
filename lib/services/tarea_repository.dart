@@ -15,7 +15,7 @@ class TareaRepository {
     // Luego intentar Firestore si está disponible
     if (_firestore != null) {
       try {
-        await _firestore!.collection('tareas').doc(tarea.id).set(tarea.toMap());
+        await _firestore.collection('tareas').doc(tarea.id).set(tarea.toMap());
       } catch (e) {
         print('Error al sincronizar con Firestore: $e');
         throw Exception('No se pudo guardar en Firestore');
@@ -30,7 +30,7 @@ class TareaRepository {
     }
 
     try {
-      final snapshot = await _firestore!.collection('tareas').get();
+      final snapshot = await _firestore.collection('tareas').get();
       final tareas = <Tarea>[];
 
       // Procesar documentos de Firestore
@@ -61,7 +61,7 @@ class TareaRepository {
     // Eliminar de Firestore si está disponible
     if (_firestore != null) {
       try {
-        await _firestore!.collection('tareas').doc(id).delete();
+        await _firestore.collection('tareas').doc(id).delete();
       } catch (e) {
         print('Error eliminando tarea de Firestore: $e');
         throw Exception('No se pudo eliminar de Firestore');

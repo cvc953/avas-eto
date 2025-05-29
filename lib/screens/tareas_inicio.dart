@@ -35,6 +35,8 @@ class _TareasInicioState extends State<TareasInicio> {
     Colors.purpleAccent,
   ];
 
+  bool _loading = true;
+
   final LocalDatabase _localDb = LocalDatabase();
 
   late final LocalStorageService _localStorage;
@@ -144,6 +146,7 @@ class _TareasInicioState extends State<TareasInicio> {
 
           setState(() {
             _tareas.clear();
+            _loading = false;
 
             for (var doc in snapshot.docs) {
               final data = doc.data();
@@ -266,13 +269,12 @@ class _TareasInicioState extends State<TareasInicio> {
     } catch (e, stackTrace) {
       debugPrint('Error marcando tarea: $e\n$stackTrace');
 
-      // Revertir cambios en caso de error
       if (mounted) {
         setState(() {
           _tareas.forEach((key, tareas) {
             final index = tareas.indexWhere((t) => t.id == tarea.id);
             if (index != -1) {
-              tareas[index] = tarea; // Volver a la versión original
+              tareas[index] = tarea;
             }
           });
         });
@@ -388,7 +390,9 @@ class _TareasInicioState extends State<TareasInicio> {
         ),
       ),
       body:
-          tareasDelDia.isEmpty
+          _loading
+              ? const Center(child: CircularProgressIndicator())
+              : tareasDelDia.isEmpty
               ? const Center(
                 child: Text(
                   'No hay Tareas',
@@ -576,11 +580,9 @@ class _TareasInicioState extends State<TareasInicio> {
       final nuevaHora = result['hora'] as int;
       final nuevaFecha = result['fecha'] as DateTime;
 
-      // Crear nueva clave con la nueva fecha y hora
       final nuevaClave = _getTaskKey(nuevaFecha, nuevaHora);
 
-      // Mover la tarea si cambió la fecha u hora
-      if (nuevaClave != claveActual) {
+      if (nuevaClave == claveActual) {
         await _moverTarea(tareaEditada, claveActual, nuevaClave, index);
       } else {
         await _actualizarTareaEnFirestore(tareaEditada, claveActual, index);
@@ -595,7 +597,6 @@ class _TareasInicioState extends State<TareasInicio> {
     int index,
   ) async {
     try {
-      // 1. Eliminar de la posición vieja
       setState(() {
         _tareas[claveVieja]?.removeAt(index);
         if (_tareas[claveVieja]?.isEmpty ?? false) {
@@ -603,10 +604,8 @@ class _TareasInicioState extends State<TareasInicio> {
         }
       });
 
-      // 2. Agregar en la nueva posición
       await _guardarTareaEnFirestore(tarea, claveNueva);
 
-      // 3. Actualizar en Firestore si es online
       if (_isOnline && !tarea.id.startsWith('local_')) {
         await FirebaseFirestore.instance
             .collection('tareas')
@@ -614,11 +613,10 @@ class _TareasInicioState extends State<TareasInicio> {
             .update({'fecha': claveNueva, 'hora': claveNueva.split('-').last});
       }
 
-      // 4. Eliminar versión vieja del almacenamiento local
       await _localStorage.deleteTarea(tarea.id);
     } catch (e) {
       debugPrint('Error moviendo tarea: $e');
-      // Revertir cambios si falla
+
       if (mounted) {
         setState(() {
           _tareas.putIfAbsent(claveVieja, () => []).insert(index, tarea);
@@ -627,7 +625,6 @@ class _TareasInicioState extends State<TareasInicio> {
     }
   }
 
-  // Método auxiliar para extraer fecha de la clave
   DateTime _obtenerFechaDeClave(String clave) {
     final partes = clave.split('-');
     return DateTime(
@@ -643,7 +640,6 @@ class _TareasInicioState extends State<TareasInicio> {
     int index,
   ) async {
     try {
-      // Actualización optimista - actualizar primero la UI
       if (mounted) {
         setState(() {
           _tareas[clave]?[index] = tarea;
@@ -651,7 +647,6 @@ class _TareasInicioState extends State<TareasInicio> {
       }
 
       if (_isOnline) {
-        // Actualizar en Firestore
         await FirebaseFirestore.instance
             .collection('tareas')
             .doc(tarea.id)
@@ -679,10 +674,7 @@ class _TareasInicioState extends State<TareasInicio> {
 
       // Revertir cambios en caso de error
       if (mounted) {
-        setState(() {
-          // Aquí necesitarías tener acceso a la tarea original para revertir
-          // Podrías guardar la tarea original antes de editar o recuperarla
-        });
+        setState(() {});
       }
 
       ScaffoldMessenger.of(context).showSnackBar(

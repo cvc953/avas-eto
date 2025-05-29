@@ -7,8 +7,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sembast/sembast_io.dart';
-import 'package:path/path.dart';
 import 'services/local_database.dart';
 import 'services/local_storage_service.dart';
 import 'services/tarea_repository.dart';

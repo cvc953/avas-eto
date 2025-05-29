@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../dialogs/agregar_tarea.dart';
 import '../models/tarea.dart';
 
 class AddTaskDialog extends StatefulWidget {

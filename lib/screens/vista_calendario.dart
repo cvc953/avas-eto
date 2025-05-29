@@ -1,204 +1,185 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/tarea.dart';
-import '../dialogs/agregar_tarea.dart';
-import '../services/local_database.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../widgets/bottom_navigation_bar.dart';
+import '../dialogs/agregar_tarea.dart';
+import '../widgets/buscar_tareas.dart';
 
 class CalendarioTareas extends StatefulWidget {
   final List<Color> coloresDisponibles;
-
-  const CalendarioTareas({super.key, required this.coloresDisponibles});
+  const CalendarioTareas({Key? key, required this.coloresDisponibles})
+    : super(key: key);
 
   @override
-  _CalendarioTareasState createState() => _CalendarioTareasState();
+  State<CalendarioTareas> createState() => _CalendarioTareasState();
 }
 
 class _CalendarioTareasState extends State<CalendarioTareas> {
-  late DateTime _focusedDay;
-  late DateTime _selectedDay;
-  late Map<String, List<Tarea>> _tareas;
-  final LocalDatabase _localDb = LocalDatabase();
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  Map<DateTime, List<Tarea>> _tareasPorDia = {};
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _focusedDay = DateTime.now();
-    _selectedDay = DateTime.now();
-    _tareas = {};
-    _cargarTareas();
+    _loadTareas();
   }
 
-  Future<void> _cargarTareas() async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) return;
-
+  Future<void> _loadTareas() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
     final snapshot =
         await FirebaseFirestore.instance
             .collection('tareas')
-            .where('userId', isEqualTo: userId)
+            .where('userId', isEqualTo: user.uid)
             .get();
-
+    final tareasPorDia = <DateTime, List<Tarea>>{};
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final fechaStr = data['fecha'] as String?;
+      if (fechaStr == null) continue;
+      final partes = fechaStr.split('-');
+      if (partes.length < 3) continue;
+      final fecha = DateTime(
+        int.parse(partes[0]),
+        int.parse(partes[1]),
+        int.parse(partes[2]),
+      );
+      final tarea = Tarea(
+        id: doc.id,
+        title: data['titulo'] ?? '',
+        materia: data['materia'] ?? '',
+        descripcion: data['descripcion'] ?? '',
+        profesor: data['profesor'] ?? '',
+        creditos: data['creditos'] ?? 0,
+        nrc: data['nrc'] ?? 0,
+        prioridad: data['prioridad'] ?? 'Media',
+        color: Color(int.parse(data['color'] ?? '0xFF000000', radix: 16)),
+        completada: data['completada'] ?? false,
+        fechaCreacion: DateTime.now(),
+      );
+      tareasPorDia.putIfAbsent(fecha, () => []).add(tarea);
+    }
     setState(() {
-      _tareas.clear();
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        final tarea = Tarea(
-          id: doc.id,
-          title: data['titulo'] ?? '',
-          descripcion: data['descripcion'] ?? '',
-          profesor: data['profesor'] ?? '',
-          creditos: data['creditos'] ?? 0,
-          nrc: data['nrc'] ?? 0,
-          prioridad: data['prioridad'] ?? 'Media',
-          color: Color(int.parse(data['color'] ?? '0xFF000000', radix: 16)),
-          completada: data['completada'] ?? false,
-          fechaCreacion: (data['creadoEn'] as Timestamp).toDate(),
-        );
-
-        final clave = data['fecha'] as String;
-        _tareas.putIfAbsent(clave, () => []).add(tarea);
-      }
+      _tareasPorDia = tareasPorDia;
+      _loading = false;
     });
   }
 
-  String _getTaskKey(DateTime day, int hour) {
-    return '${day.year}-${day.month}-${day.day}-$hour';
-  }
-
-  Future<void> _guardarTarea(Tarea tarea, String clave) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception('Usuario no autenticado');
-
-      await FirebaseFirestore.instance.collection('tareas').add({
-        'titulo': tarea.title,
-        'descripcion': tarea.descripcion,
-        'profesor': tarea.profesor,
-        'creditos': tarea.creditos,
-        'nrc': tarea.nrc,
-        'prioridad': tarea.prioridad,
-        'color': tarea.color.value.toRadixString(16),
-        'completada': tarea.completada,
-        'fecha': clave,
-        'hora': clave.split('-').last,
-        'creadoEn': FieldValue.serverTimestamp(),
-        'userId': user.uid,
-      });
-
-      await _cargarTareas(); // Recargar tareas después de guardar
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al guardar: ${e.toString()}')),
-      );
-    }
-  }
-
-  void _agregarTarea(DateTime selectedDay) {
-    showAddTaskDialog(
-      context: context,
-      onSave: _guardarTarea,
-      initialDate: selectedDay,
-      availableColors: widget.coloresDisponibles,
-    );
-  }
-
-  List<Tarea> _tareasDelDia(DateTime day) {
-    final clave = '${day.year}-${day.month}-${day.day}';
-    return _tareas.entries
-        .where((entry) => entry.key.startsWith(clave))
-        .expand((entry) => entry.value)
-        .toList();
+  List<Tarea> _getTareasDelDia(DateTime day) {
+    return _tareasPorDia[DateTime(day.year, day.month, day.day)] ?? [];
   }
 
   @override
   Widget build(BuildContext context) {
-    final tareasHoy = _tareasDelDia(_selectedDay);
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Calendario de Tareas'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _agregarTarea(_selectedDay),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          TableCalendar(
-            firstDay: DateTime.utc(2020, 1, 1),
-            lastDay: DateTime.utc(2030, 12, 31),
-            focusedDay: _focusedDay,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            onDaySelected: (selectedDay, focusedDay) {
-              setState(() {
-                _selectedDay = selectedDay;
-                _focusedDay = focusedDay;
-              });
-            },
-            onPageChanged: (focusedDay) {
-              _focusedDay = focusedDay;
-            },
-            eventLoader: (day) {
-              return _tareasDelDia(day).isNotEmpty ? ['Tareas'] : [];
-            },
-            calendarStyle: CalendarStyle(
-              markerDecoration: BoxDecoration(
-                color: Colors.blue,
-                shape: BoxShape.circle,
-              ),
-              todayDecoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-              selectedDecoration: BoxDecoration(
-                color: Colors.blue,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: tareasHoy.length,
-              itemBuilder: (context, index) {
-                final tarea = tareasHoy[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: tarea.color,
-                      child: const Icon(Icons.assignment, color: Colors.white),
-                    ),
-                    title: Text(tarea.title),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(tarea.descripcion),
-                        Text('Prioridad: ${tarea.prioridad}'),
-                      ],
-                    ),
-                    trailing: Checkbox(
-                      value: tarea.completada,
-                      onChanged: (value) {
-                        // Implementar lógica para marcar como completada
+      appBar: AppBar(title: const Text('Calendario de Tareas')),
+      body:
+          _loading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TableCalendar(
+                      firstDay: DateTime.utc(2020, 1, 1),
+                      lastDay: DateTime.utc(2030, 12, 31),
+                      focusedDay: _focusedDay,
+                      calendarFormat: _calendarFormat,
+                      selectedDayPredicate:
+                          (day) => isSameDay(_selectedDay, day),
+                      eventLoader: _getTareasDelDia,
+                      onDaySelected: (selectedDay, focusedDay) {
+                        setState(() {
+                          _selectedDay = selectedDay;
+                          _focusedDay = focusedDay;
+                        });
+                      },
+                      onFormatChanged: (format) {
+                        setState(() {
+                          _calendarFormat = format;
+                        });
+                      },
+                      onPageChanged: (focusedDay) {
+                        _focusedDay = focusedDay;
                       },
                     ),
                   ),
-                );
-              },
+                  Expanded(
+                    child:
+                        _selectedDay == null ||
+                                _getTareasDelDia(_selectedDay!).isEmpty
+                            ? const Center(
+                              child: Text('No hay tareas para este día'),
+                            )
+                            : ListView(
+                              children:
+                                  _getTareasDelDia(_selectedDay!)
+                                      .map(
+                                        (tarea) => ListTile(
+                                          leading: CircleAvatar(
+                                            backgroundColor: tarea.color,
+                                            child: const Icon(
+                                              Icons.menu_book,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          title: Text(tarea.title),
+                                          subtitle: Text(
+                                            'prioridad: ${tarea.prioridad}',
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                            ),
+                  ),
+                ],
+              ),
+      bottomNavigationBar: CustomBottomNavBar(
+        parentContext: context,
+        onAdd: () {
+          showAddTaskDialog(
+            context: context,
+            onSave: (tarea, clave) async {
+              // Guardar la tarea en Firestore
+              final user = FirebaseAuth.instance.currentUser;
+              if (user == null) return;
+              await FirebaseFirestore.instance.collection('tareas').add({
+                'titulo': tarea.title,
+                'materia': tarea.materia,
+                'descripcion': tarea.descripcion,
+                'profesor': tarea.profesor,
+                'creditos': tarea.creditos,
+                'nrc': tarea.nrc,
+                'prioridad': tarea.prioridad,
+                'color': tarea.color.value.toRadixString(16),
+                'completada': tarea.completada,
+                'fecha': clave,
+                'hora': clave.split('-').last,
+                'creadoEn': FieldValue.serverTimestamp(),
+                'userId': user.uid,
+              });
+              await _loadTareas();
+            },
+            initialDate: _selectedDay ?? DateTime.now(),
+            availableColors: widget.coloresDisponibles,
+          );
+        },
+        onSearch: () {
+          showSearch(
+            context: context,
+            delegate: TareaSearchDelegate(
+              tareas: _tareasPorDia.map(
+                (k, v) => MapEntry('${k.year}-${k.month}-${k.day}-0', v),
+              ),
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _agregarTarea(_selectedDay),
-        child: const Icon(Icons.add),
+          );
+        },
+        coloresDisponibles: widget.coloresDisponibles,
       ),
     );
   }

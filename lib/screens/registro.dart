@@ -1,4 +1,3 @@
-import 'package:ap/screens/tareas.dart';
 import 'package:ap/screens/tareas_inicio.dart';
 import 'package:ap/widgets/login_input.dart';
 import 'package:flutter/material.dart';
@@ -74,7 +73,7 @@ class Registro extends StatelessWidget {
               SizedBox(height: 10),
               LoginInput(
                 controller: email,
-                hintText: AutofillHints.email,
+                hintText: 'Email',
                 obscureText: false,
               ),
               LoginInput(
