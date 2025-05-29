@@ -124,7 +124,6 @@ class _TareasInicioState extends State<TareasInicio> {
       }
     });
 
-    // Inicializar Firebase y escuchar cambios
     Firebase.initializeApp().then((_) {
       _configurarEscuchaTiempoReal();
     });
@@ -409,7 +408,6 @@ class _TareasInicioState extends State<TareasInicio> {
                   final claveCorrecta = entrada.key;
                   final expandida = _tareasExpandida.contains(tarea);
 
-                  // Extraer fecha y hora de la clave (formato: año-mes-día-hora)
                   final partesClave = claveCorrecta.split('-');
                   final fechaTarea = DateTime(
                     int.parse(partesClave[0]),
@@ -663,16 +661,13 @@ class _TareasInicioState extends State<TareasInicio> {
               'fecha': clave,
             });
 
-        // Actualizar también en el almacenamiento local
         await _localStorage.saveTarea(tarea);
       } else {
-        // Solo modo offline - guardar localmente
         await _localStorage.saveTarea(tarea);
       }
     } catch (e) {
       debugPrint('Error al actualizar tarea: $e');
 
-      // Revertir cambios en caso de error
       if (mounted) {
         setState(() {});
       }
@@ -691,11 +686,7 @@ class _TareasInicioState extends State<TareasInicio> {
   }
 
   Future<void> eliminarTarea(int index, String key) async {
-    // Verificación de montaje y estado
-    if (!mounted) return;
-
     try {
-      // 1. Validación exhaustiva de parámetros
       if (key.isEmpty) {
         debugPrint('🔴 Key vacía proporcionada');
         return;
@@ -746,7 +737,6 @@ class _TareasInicioState extends State<TareasInicio> {
 
       if (confirmado != true) return;
 
-      // 3. Obtener referencia a la tarea
       final tarea = listaTareas[index];
       final id = tarea.id;
 
@@ -755,23 +745,19 @@ class _TareasInicioState extends State<TareasInicio> {
         return;
       }
 
-      // 4. Eliminación optimista (UI primero)
       setState(() {
-        // Crear copia de seguridad por si falla
         final tareaBackup = tarea.copyWith();
 
         try {
           listaTareas.removeAt(index);
           if (listaTareas.isEmpty) _tareas.remove(key);
         } catch (e) {
-          // Revertir si falla la eliminación en UI
           listaTareas.insert(index, tareaBackup);
           _tareas.putIfAbsent(key, () => listaTareas);
           rethrow;
         }
       });
 
-      // 5. Eliminar de Firestore (si es online y no es local)
       if (_isOnline && !id.startsWith('local_')) {
         try {
           await FirebaseFirestore.instance
@@ -784,11 +770,9 @@ class _TareasInicioState extends State<TareasInicio> {
             debugPrint('🔴 Error Firestore: ${e.code}');
             throw Exception('Error al eliminar de Firestore: ${e.message}');
           }
-          // Si no se encuentra, continuamos igual
         }
       }
 
-      // 6. Eliminar del almacenamiento local
       try {
         await _localStorage.deleteTarea(id);
         debugPrint('🗑️ Tarea eliminada localmente: $id');

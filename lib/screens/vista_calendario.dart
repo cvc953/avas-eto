@@ -40,15 +40,7 @@ class _CalendarioTareasState extends State<CalendarioTareas> {
     final tareasPorDia = <DateTime, List<Tarea>>{};
     for (var doc in snapshot.docs) {
       final data = doc.data();
-      final fechaStr = data['fecha'] as String?;
-      if (fechaStr == null) continue;
-      final partes = fechaStr.split('-');
-      if (partes.length < 3) continue;
-      final fecha = DateTime(
-        int.parse(partes[0]),
-        int.parse(partes[1]),
-        int.parse(partes[2]),
-      );
+
       final tarea = Tarea(
         id: doc.id,
         title: data['titulo'] ?? '',
@@ -62,7 +54,8 @@ class _CalendarioTareasState extends State<CalendarioTareas> {
         completada: data['completada'] ?? false,
         fechaCreacion: DateTime.now(),
       );
-      tareasPorDia.putIfAbsent(fecha, () => []).add(tarea);
+      final fechaFinal = data['fecha'] as String;
+      tareasPorDia.putIfAbsent(fechaFinal as DateTime, () => []).add(tarea);
     }
     setState(() {
       _tareasPorDia = tareasPorDia;
@@ -145,7 +138,6 @@ class _CalendarioTareasState extends State<CalendarioTareas> {
           showAddTaskDialog(
             context: context,
             onSave: (tarea, clave) async {
-              // Guardar la tarea en Firestore
               final user = FirebaseAuth.instance.currentUser;
               if (user == null) return;
               await FirebaseFirestore.instance.collection('tareas').add({
