@@ -132,47 +132,6 @@ class _CalendarioTareasState extends State<CalendarioTareas> {
                   ),
                 ],
               ),
-      bottomNavigationBar: CustomBottomNavBar(
-        parentContext: context,
-        onAdd: () {
-          showAddTaskDialog(
-            context: context,
-            onSave: (tarea, clave) async {
-              final user = FirebaseAuth.instance.currentUser;
-              if (user == null) return;
-              await FirebaseFirestore.instance.collection('tareas').add({
-                'titulo': tarea.title,
-                'materia': tarea.materia,
-                'descripcion': tarea.descripcion,
-                'profesor': tarea.profesor,
-                'creditos': tarea.creditos,
-                'nrc': tarea.nrc,
-                'prioridad': tarea.prioridad,
-                'color': tarea.color.value.toRadixString(16),
-                'completada': tarea.completada,
-                'fecha': clave,
-                'hora': clave.split('-').last,
-                'creadoEn': FieldValue.serverTimestamp(),
-                'userId': user.uid,
-              });
-              await _loadTareas();
-            },
-            initialDate: _selectedDay ?? DateTime.now(),
-            availableColors: widget.coloresDisponibles,
-          );
-        },
-        onSearch: () {
-          showSearch(
-            context: context,
-            delegate: TareaSearchDelegate(
-              tareas: _tareasPorDia.map(
-                (k, v) => MapEntry('${k.year}-${k.month}-${k.day}-0', v),
-              ),
-            ),
-          );
-        },
-        coloresDisponibles: widget.coloresDisponibles,
-      ),
     );
   }
 }
