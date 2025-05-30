@@ -92,7 +92,7 @@ class CustomBottomNavBar extends StatelessWidget {
                 );
               },
             ),
-            ListTile(
+            /*ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Ajustes'),
               onTap: () {},
@@ -101,7 +101,7 @@ class CustomBottomNavBar extends StatelessWidget {
               leading: const Icon(Icons.help),
               title: const Text('Ayuda'),
               onTap: () {},
-            ),
+            ),*/
           ],
         );
       },
