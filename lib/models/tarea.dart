@@ -66,7 +66,7 @@ class Tarea {
       'creditos': creditos,
       'nrc': nrc,
       'prioridad': prioridad,
-      'color': color.value.toRadixString(16),
+      'color': color.toARGB32().toRadixString(16),
       'completada': completada,
       'fechaCreacion': fechaCreacion.toIso8601String(),
     };

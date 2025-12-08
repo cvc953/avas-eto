@@ -50,7 +50,7 @@ class AppTheme {
         borderSide: const BorderSide(color: primaryColor),
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 1,
@@ -105,7 +105,7 @@ class AppTheme {
         borderSide: const BorderSide(color: primaryColor),
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: Colors.grey[100],
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,

@@ -7,13 +7,22 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ap/services/tarea_repository.dart';
+import 'package:ap/services/local_storage_service.dart';
+import 'package:ap/services/local_database.dart';
 
 import 'package:ap/main.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    final mockRepository = TareaRepository(
+      null,
+      LocalStorageService(LocalDatabase()),
+    );
+    await tester.pumpWidget(
+      MyApp(firebaseEnabled: false, tareaRepository: mockRepository),
+    );
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

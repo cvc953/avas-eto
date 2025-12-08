@@ -3,9 +3,6 @@ import 'package:table_calendar/table_calendar.dart';
 import '../models/tarea.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../widgets/bottom_navigation_bar.dart';
-import '../dialogs/agregar_tarea.dart';
-import '../widgets/buscar_tareas.dart';
 
 class CalendarioTareas extends StatefulWidget {
   final List<Color> coloresDisponibles;
