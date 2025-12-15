@@ -1,7 +1,7 @@
-import 'package:ap/screens/tareas.dart';
-import 'package:ap/services/local_database.dart';
-import 'package:ap/services/local_storage_service.dart';
-import 'package:ap/services/tarea_repository.dart';
+import 'package:avas_eto/screens/tareas.dart';
+import 'package:avas_eto/services/local_database.dart';
+import 'package:avas_eto/services/local_storage_service.dart';
+import 'package:avas_eto/services/tarea_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';

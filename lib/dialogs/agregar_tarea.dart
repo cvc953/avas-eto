@@ -21,13 +21,9 @@ class AddTaskDialog extends StatefulWidget {
 class _AddTaskDialogState extends State<AddTaskDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _tareaController;
-  late TextEditingController _materiaController;
   late TextEditingController _descripcionController;
-  late TextEditingController _profesorController;
-  late TextEditingController _creditosController;
-  late TextEditingController _nrcController;
   late Color _colorSeleccionado;
-  late int _selectedHour;
+  late TimeOfDay _selectedTime;
   late DateTime _selectedDate;
   late String _prioridadSeleccionada;
   bool _isSaving = false;
@@ -36,30 +32,27 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   void initState() {
     super.initState();
     _tareaController = TextEditingController();
-    _materiaController = TextEditingController();
     _descripcionController = TextEditingController();
-    _profesorController = TextEditingController();
-    _creditosController = TextEditingController();
-    _nrcController = TextEditingController();
-    _colorSeleccionado = widget.availableColors.first;
-    _selectedHour = _calculateInitialHour();
+    // Seleccionar un color aleatorio
+    _colorSeleccionado =
+        widget.availableColors[DateTime.now().millisecond %
+            widget.availableColors.length];
+    _selectedTime = _calculateInitialTime();
     _selectedDate = widget.initialDate;
     _prioridadSeleccionada = 'Media';
   }
 
-  int _calculateInitialHour() {
+  TimeOfDay _calculateInitialTime() {
     final now = TimeOfDay.now();
-    return now.hour >= 23 ? 0 : now.hour + 1;
+    final nextHour = now.hour >= 23 ? 0 : now.hour + 1;
+    return TimeOfDay(hour: nextHour, minute: 0);
   }
 
   @override
   void dispose() {
     _tareaController.dispose();
-    _materiaController.dispose();
     _descripcionController.dispose();
-    _profesorController.dispose();
-    _creditosController.dispose();
-    _nrcController.dispose();
+
     super.dispose();
   }
 
@@ -72,18 +65,22 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       final nuevaTarea = Tarea(
         id: '', // Se asignará al guardar
         title: _tareaController.text.trim(),
-        materia: _materiaController.text.trim(),
         descripcion: _descripcionController.text.trim(),
-        profesor: _profesorController.text.trim(),
-        creditos: int.parse(_creditosController.text),
-        nrc: int.parse(_nrcController.text),
-        prioridad: _prioridadSeleccionada,
+        prioridad: _prioridadSeleccionada.toString(),
         color: _colorSeleccionado,
         completada: false,
         fechaCreacion: DateTime.now(),
+        fechaVencimiento: DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          _selectedTime.hour,
+          _selectedTime.minute,
+        ),
+        fechaCompletada: DateTime(0),
       );
 
-      final clave = _formatDateKey(_selectedDate, _selectedHour);
+      final clave = _formatDateKey(_selectedDate, _selectedTime);
       widget.onSave(nuevaTarea, clave);
 
       if (mounted) Navigator.pop(context);
@@ -98,9 +95,10 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     }
   }
 
-  String _formatDateKey(DateTime date, int hour) {
+  String _formatDateKey(DateTime date, TimeOfDay time) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-'
-        '${date.day.toString().padLeft(2, '0')}-${hour.toString().padLeft(2, '0')}';
+        '${date.day.toString().padLeft(2, '0')}-${time.hour.toString().padLeft(2, '0')}'
+        '-${time.minute.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -126,19 +124,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                             ? 'Este campo es requerido'
                             : null,
               ),
-              TextFormField(
-                controller: _materiaController,
-                decoration: const InputDecoration(
-                  labelText: "Materia*",
-                  hintText: "Ej: Matemáticas",
-                ),
-                maxLength: 50,
-                validator:
-                    (value) =>
-                        value?.trim().isEmpty ?? true
-                            ? 'Este campo es requerido'
-                            : null,
-              ),
+
               TextFormField(
                 controller: _descripcionController,
                 decoration: const InputDecoration(
@@ -148,52 +134,13 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 maxLines: 2,
                 maxLength: 200,
               ),
-              TextFormField(
-                controller: _profesorController,
-                decoration: const InputDecoration(
-                  labelText: "Profesor",
-                  hintText: "Nombre del profesor",
-                ),
-                maxLength: 50,
-              ),
-              TextFormField(
-                controller: _creditosController,
-                decoration: const InputDecoration(
-                  labelText: "Créditos*",
-                  hintText: "Número de créditos",
-                ),
-                keyboardType: TextInputType.number,
-                maxLength: 1,
-                validator: (value) {
-                  if (value?.trim().isEmpty ?? true) return 'Requerido';
-                  final num = int.tryParse(value!);
-                  if (num == null || num < 0 || num > 9) {
-                    return 'Entre 0 y 9';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _nrcController,
-                decoration: const InputDecoration(
-                  labelText: "NRC*",
-                  hintText: "Código NRC",
-                ),
-                keyboardType: TextInputType.number,
-                maxLength: 4,
-                validator: (value) {
-                  if (value?.trim().isEmpty ?? true) return 'Requerido';
-                  final num = int.tryParse(value!);
-                  if (num == null || num < 0) return 'Número válido';
-                  return null;
-                },
-              ),
+
               const SizedBox(height: 16),
               const Text(
                 'Prioridad:',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              DropdownButton<String>(
+              DropdownButton(
                 isExpanded: true,
                 value: _prioridadSeleccionada,
                 onChanged: (value) {
@@ -231,28 +178,26 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                       },
                       child: Text(
                         "Fecha: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}",
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: DropdownButtonFormField<int>(
-                      initialValue: _selectedHour,
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => _selectedHour = value);
+                    child: TextButton(
+                      onPressed: () async {
+                        final pickedTime = await showTimePicker(
+                          context: context,
+                          initialTime: _selectedTime,
+                        );
+                        if (pickedTime != null && mounted) {
+                          setState(() => _selectedTime = pickedTime);
                         }
                       },
-                      decoration: const InputDecoration(
-                        labelText: "Hora",
-                        border: OutlineInputBorder(),
+                      child: Text(
+                        "Hora: ${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}",
+                        style: TextStyle(color: Colors.white),
                       ),
-                      items: List.generate(24, (index) {
-                        return DropdownMenuItem(
-                          value: index,
-                          child: Text("${index.toString().padLeft(2, '0')}:00"),
-                        );
-                      }),
                     ),
                   ),
                 ],
@@ -299,13 +244,17 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         TextButton(
           onPressed: _isSaving ? null : () => Navigator.pop(context),
           child: const Text("Cancelar"),
+          style: TextButton.styleFrom(foregroundColor: Colors.white),
         ),
-        ElevatedButton(
+        TextButton(
           onPressed: _isSaving ? null : _saveTask,
           child:
               _isSaving
                   ? const CircularProgressIndicator()
-                  : const Text("Guardar"),
+                  : const Text(
+                    "Guardar",
+                    style: TextStyle(color: Colors.blueAccent),
+                  ),
         ),
       ],
     );

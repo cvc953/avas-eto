@@ -23,9 +23,9 @@ class LocalStorageService {
               : tarea;
 
       await _store.record(tareaConId.id).put(database, tareaConId.toMap());
-      debugPrint('✅ Tarea guardada LOCALMENTE: ${tareaConId.id}');
+      debugPrint('Tarea guardada LOCALMENTE: ${tareaConId.id}');
     } catch (e) {
-      debugPrint('❌ Error guardando localmente: $e');
+      debugPrint('Error guardando localmente: $e');
       throw Exception('Error en saveTarea: $e');
     }
   }
@@ -43,14 +43,12 @@ class LocalStorageService {
           return Tarea(
             id: record.key,
             title: 'Error',
-            materia: '',
             descripcion: '',
-            profesor: '',
-            creditos: 0,
-            nrc: 0,
             prioridad: 'media',
             color: Colors.grey,
             fechaCreacion: DateTime.now(),
+            fechaVencimiento: DateTime.now(),
+            fechaCompletada: DateTime.now(),
           );
         }
       }).toList();
@@ -64,9 +62,9 @@ class LocalStorageService {
     try {
       final database = await _localDb.db;
       await _store.record(id).delete(database);
-      debugPrint('🗑️ Tarea eliminada: $id');
+      debugPrint('Tarea eliminada: $id');
     } catch (e) {
-      debugPrint('❌ Error eliminando tarea $id: $e');
+      debugPrint('Error eliminando tarea $id: $e');
       throw Exception('Failed to delete task');
     }
   }

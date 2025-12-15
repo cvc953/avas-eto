@@ -1,5 +1,5 @@
-import 'package:ap/screens/tareas_inicio.dart';
-import 'package:ap/widgets/login_input.dart';
+import 'package:avas_eto/screens/tareas_inicio.dart';
+import 'package:avas_eto/widgets/login_input.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -64,6 +64,7 @@ class Registro extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(title: Text("Registro")),
       body: SafeArea(
         child: SingleChildScrollView(

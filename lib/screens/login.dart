@@ -1,5 +1,5 @@
-import 'package:ap/screens/tareas_inicio.dart';
-import 'package:ap/services/password_reset.dart';
+import 'package:avas_eto/screens/tareas_inicio.dart';
+import 'package:avas_eto/services/password_reset.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/login_input.dart';
@@ -55,7 +55,7 @@ class Login extends StatelessWidget {
               const SizedBox(height: 20),
 
               Botoninicio(onTap: () => inicio(context)),
-              const SizedBox(height: 20),
+              const SizedBox(height: 20, width: 30),
 
               Text('o', style: TextStyle(color: Colors.grey[600])),
               const SizedBox(height: 20),

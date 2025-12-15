@@ -7,11 +7,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ap/services/tarea_repository.dart';
-import 'package:ap/services/local_storage_service.dart';
-import 'package:ap/services/local_database.dart';
+import 'package:avas_eto/services/tarea_repository.dart';
+import 'package:avas_eto/services/local_storage_service.dart';
+import 'package:avas_eto/services/local_database.dart';
 
-import 'package:ap/main.dart';
+import 'package:avas_eto/main.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {

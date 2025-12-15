@@ -1,4 +1,4 @@
-package com.cvc.tareas
+package com.cvc.avas_eto
 
 import io.flutter.embedding.android.FlutterActivity
 

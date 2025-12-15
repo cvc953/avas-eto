@@ -1,189 +1,245 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/tarea.dart';
 
-Future<Map<String, dynamic>?> mostrarDialogoEditarTarea({
-  required BuildContext context,
-  required Tarea tarea,
-  required List<Color> coloresDisponibles,
-  required String horaActual,
-  required DateTime fechaActual, // Recibir fecha actual como parámetro
-}) async {
-  // Convertir la hora actual a entero
-  int horaInicial = int.tryParse(horaActual) ?? 12;
+class EditTaskDialog extends StatefulWidget {
+  final Tarea tarea;
+  final Function(Tarea, String) onSave;
+  final List<Color> availableColors;
 
-  // Controladores con los valores actuales
-  final tareaController = TextEditingController(text: tarea.title);
-  final materia = TextEditingController(text: tarea.materia);
-  final descripcionController = TextEditingController(text: tarea.descripcion);
-  final profesorController = TextEditingController(text: tarea.profesor);
-  final creditosController = TextEditingController(
-    text: tarea.creditos.toString(),
-  );
-  final nrcController = TextEditingController(text: tarea.nrc.toString());
+  const EditTaskDialog({
+    super.key,
+    required this.tarea,
+    required this.onSave,
+    required this.availableColors,
+  });
 
-  // Estado del diálogo
-  Color colorSeleccionado = tarea.color;
-  String prioridadSeleccionada = tarea.prioridad;
-  int selectedHour = horaInicial;
-  DateTime selectedDate = fechaActual; // Usar la fecha actual de la tarea
+  @override
+  State<EditTaskDialog> createState() => _EditTaskDialogState();
+}
 
-  return await showDialog<Map<String, dynamic>>(
-    context: context,
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setStateDialog) {
-          return AlertDialog(
-            title: const Text("Editar Tarea"),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+class _EditTaskDialogState extends State<EditTaskDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _tareaController;
+  late TextEditingController _descripcionController;
+  late Color _colorSeleccionado;
+  late TimeOfDay _selectedTime;
+  late DateTime _selectedDate;
+  late String _prioridadSeleccionada;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tareaController = TextEditingController(text: widget.tarea.title);
+    _descripcionController = TextEditingController(
+      text: widget.tarea.descripcion,
+    );
+    _colorSeleccionado = widget.tarea.color;
+    _selectedTime = TimeOfDay(
+      hour: widget.tarea.fechaVencimiento.hour,
+      minute: widget.tarea.fechaVencimiento.minute,
+    );
+    _selectedDate = widget.tarea.fechaVencimiento;
+    _prioridadSeleccionada = widget.tarea.prioridad;
+  }
+
+  @override
+  void dispose() {
+    _tareaController.dispose();
+    _descripcionController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveTask() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final tareaEditada = widget.tarea.copyWith(
+        title: _tareaController.text.trim(),
+        descripcion: _descripcionController.text.trim(),
+        prioridad: _prioridadSeleccionada,
+        color: _colorSeleccionado,
+        fechaVencimiento: DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          _selectedTime.hour,
+          _selectedTime.minute,
+        ),
+      );
+
+      final clave = _formatDateKey(_selectedDate, _selectedTime);
+      widget.onSave(tareaEditada, clave);
+
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al guardar: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  String _formatDateKey(DateTime date, TimeOfDay time) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}-${time.hour.toString().padLeft(2, '0')}'
+        '-${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text("Editar Tarea", textAlign: TextAlign.center),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _tareaController,
+                decoration: const InputDecoration(
+                  labelText: "Tarea*",
+                  hintText: "Ej: Hacer presentación",
+                ),
+                maxLength: 50,
+                validator:
+                    (value) =>
+                        value?.trim().isEmpty ?? true
+                            ? 'Este campo es requerido'
+                            : null,
+              ),
+              TextFormField(
+                controller: _descripcionController,
+                decoration: const InputDecoration(
+                  labelText: "Descripción",
+                  hintText: "Detalles de la tarea",
+                ),
+                maxLines: 2,
+                maxLength: 200,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Prioridad:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              DropdownButton(
+                isExpanded: true,
+                value: _prioridadSeleccionada,
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _prioridadSeleccionada = value);
+                  }
+                },
+                items:
+                    ['Alta', 'Media', 'Baja'].map((prioridad) {
+                      return DropdownMenuItem(
+                        value: prioridad,
+                        child: Text(prioridad),
+                      );
+                    }).toList(),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextField(
-                    controller: tareaController,
-                    decoration: const InputDecoration(hintText: "tarea"),
-                  ),
-                  TextField(
-                    controller: materia,
-                    decoration: const InputDecoration(
-                      hintText: "Nombre de la materia",
-                    ),
-                  ),
-                  TextField(
-                    controller: descripcionController,
-                    decoration: const InputDecoration(hintText: "Descripción"),
-                  ),
-                  TextField(
-                    controller: profesorController,
-                    decoration: const InputDecoration(hintText: "Profesor"),
-                  ),
-                  TextField(
-                    maxLength: 1,
-                    controller: creditosController,
-                    decoration: const InputDecoration(
-                      hintText: "Número de créditos",
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  TextField(
-                    maxLength: 4,
-                    controller: nrcController,
-                    decoration: const InputDecoration(hintText: "NRC"),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 10),
-                  Text('Seleccione la prioridad de la tarea'),
-                  DropdownButton<String>(
-                    value: prioridadSeleccionada,
-                    onChanged: (value) {
-                      if (value != null) {
-                        setStateDialog(() => prioridadSeleccionada = value);
-                      }
-                    },
-                    items:
-                        ['Alta', 'Media', 'Baja'].map((prioridad) {
-                          return DropdownMenuItem(
-                            value: prioridad,
-                            child: Text(prioridad),
-                          );
-                        }).toList(),
-                  ),
-                  const SizedBox(height: 10),
                   TextButton(
                     onPressed: () async {
                       final pickedDate = await showDatePicker(
                         context: context,
-                        initialDate: selectedDate,
+                        initialDate: _selectedDate,
                         firstDate: DateTime.now().subtract(
                           const Duration(days: 365),
                         ),
                         lastDate: DateTime.now().add(const Duration(days: 365)),
                       );
                       if (pickedDate != null) {
-                        setStateDialog(() => selectedDate = pickedDate);
+                        setState(() => _selectedDate = pickedDate);
                       }
                     },
                     child: Text(
-                      "Fecha: ${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}",
+                      'Fecha:\n ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
-                  DropdownButton<int>(
-                    value: selectedHour,
-                    onChanged: (value) {
-                      if (value != null) {
-                        setStateDialog(() => selectedHour = value);
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () async {
+                      final pickedTime = await showTimePicker(
+                        context: context,
+                        initialTime: _selectedTime,
+                      );
+                      if (pickedTime != null) {
+                        setState(() => _selectedTime = pickedTime);
                       }
                     },
-                    items: List.generate(
-                      24,
-                      (index) => DropdownMenuItem(
-                        value: index,
-                        child: Text("${index.toString().padLeft(2, '0')}:00"),
-                      ),
+                    child: Text(
+                      "Hora:\n ${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}",
+                      style: TextStyle(color: Colors.white),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text('Seleccione un color:'),
-                  Wrap(
-                    spacing: 10,
-                    children:
-                        coloresDisponibles.map((color) {
-                          return GestureDetector(
-                            onTap:
-                                () => setStateDialog(
-                                  () => colorSeleccionado = color,
-                                ),
-                            child: Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                                border:
-                                    colorSeleccionado == color
-                                        ? Border.all(
-                                          color: Colors.white,
-                                          width: 3,
-                                        )
-                                        : null,
-                              ),
-                            ),
-                          );
-                        }).toList(),
                   ),
                 ],
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Cancelar"),
+              const SizedBox(height: 16),
+
+              const Text(
+                'Color:',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              TextButton(
-                onPressed: () {
-                  if (tareaController.text.isNotEmpty) {
-                    final tareaEditada = tarea.copyWith(
-                      title: tareaController.text,
-                      materia: materia.text,
-                      descripcion: descripcionController.text,
-                      profesor: profesorController.text,
-                      creditos: int.tryParse(creditosController.text) ?? 0,
-                      nrc: int.tryParse(nrcController.text) ?? 0,
-                      prioridad: prioridadSeleccionada,
-                      color: colorSeleccionado,
-                    );
-                    Navigator.pop(context, {
-                      'tarea': tareaEditada,
-                      'hora': selectedHour,
-                      'fecha': selectedDate,
-                    });
-                  }
-                },
-                child: const Text("Guardar"),
+
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children:
+                    widget.availableColors.map((color) {
+                      final isSelected = _colorSeleccionado == color;
+                      return GestureDetector(
+                        onTap: () => setState(() => _colorSeleccionado = color),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border:
+                                isSelected
+                                    ? Border.all(color: Colors.white, width: 3)
+                                    : null,
+                          ),
+                        ),
+                      );
+                    }).toList(),
               ),
             ],
-          );
-        },
-      );
-    },
-  );
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isSaving ? null : () => Navigator.pop(context),
+          child: const Text('Cancelar', style: TextStyle(color: Colors.white)),
+        ),
+        TextButton(
+          onPressed: _isSaving ? null : _saveTask,
+          child:
+              _isSaving
+                  ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : const Text(
+                    'Guardar',
+                    style: TextStyle(color: Colors.blueAccent),
+                  ),
+        ),
+      ],
+    );
+  }
 }

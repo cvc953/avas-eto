@@ -1,4 +1,4 @@
-import 'package:ap/models/tarea.dart';
+import 'package:avas_eto/models/tarea.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -6,16 +6,18 @@ import 'package:flutter/material.dart';
 Map<String, dynamic> tareaToFirestoreMap(Tarea tarea, String fecha) {
   return {
     'titulo': tarea.title,
-    'materia': tarea.materia,
     'descripcion': tarea.descripcion,
-    'profesor': tarea.profesor,
-    'creditos': tarea.creditos,
-    'nrc': tarea.nrc,
     'prioridad': tarea.prioridad,
     'color': tarea.color.toARGB32().toRadixString(16),
     'completada': tarea.completada,
     'fecha': fecha,
     'hora': fecha.split('-').last,
+    'creadoEn': Timestamp.fromDate(tarea.fechaCreacion),
+    'vencimiento': Timestamp.fromDate(tarea.fechaVencimiento),
+    'completadaEn':
+        tarea.completada
+            ? Timestamp.fromDate(tarea.fechaCompletada)
+            : Timestamp.fromDate(DateTime.now()),
   };
 }
 
@@ -25,15 +27,18 @@ Tarea documentToTarea(DocumentSnapshot doc) {
   return Tarea(
     id: doc.id,
     title: data['titulo'] ?? '',
-    materia: data['materia'] ?? '',
     descripcion: data['descripcion'] ?? '',
-    profesor: data['profesor'] ?? '',
-    creditos: data['creditos'] ?? 0,
-    nrc: data['nrc'] ?? 0,
     prioridad: data['prioridad'] ?? 'Media',
-    color: Color(int.parse(data['color'] ?? '0xFF000000', radix: 16)),
+    color: Color(
+      int.tryParse(data['color'] ?? '0xFF000000', radix: 16) ?? 0xFF000000,
+    ),
     completada: data['completada'] ?? false,
     fechaCreacion: (data['creadoEn'] as Timestamp).toDate(),
+    fechaVencimiento: DateTime.parse(data['fecha'] as String),
+    fechaCompletada:
+        data['completada']
+            ? (data['completadaEn'] as Timestamp).toDate()
+            : DateTime.now(),
   );
 }
 
@@ -54,8 +59,8 @@ String hourFromTaskKey(String taskKey) {
 }
 
 /// Helper para generar clave de tarea
-String getTaskKey(DateTime day, int hour) {
-  return '${day.year}-${day.month}-${day.day}-$hour';
+String getTaskKey(DateTime day, int hour, [int minute = 0]) {
+  return '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}-${hour.toString().padLeft(2, '0')}-${minute.toString().padLeft(2, '0')}';
 }
 
 /// Helper para obtener color de prioridad

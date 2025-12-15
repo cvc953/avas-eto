@@ -1,7 +1,7 @@
 // screens/cuenta_screen.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'informacion_usuario.dart';
+//import 'informacion_usuario.dart';
 import 'login.dart';
 
 class CuentaScreen extends StatelessWidget {
@@ -9,7 +9,9 @@ class CuentaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
+    return MaterialApp();
+
+    /*StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -17,11 +19,11 @@ class CuentaScreen extends StatelessWidget {
         }
 
         if (snapshot.hasData) {
-          return UserHomeScreen(user: snapshot.data!); // ya logueado
+ ///         return UserHomeScreen(user: snapshot.data!); // ya logueado
         } else {
           return Login(); // no logueado
         }
       },
-    );
+    );*/
   }
 }

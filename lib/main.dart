@@ -1,5 +1,5 @@
 import 'dart:io' show Platform;
-import 'package:ap/screens/tareas.dart';
+import 'package:avas_eto/screens/tareas.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';

@@ -1,24 +1,32 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
+
+final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
 
 Future<User?> signInWithGoogle() async {
   try {
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    await _googleSignIn.signOut();
+
+    final googleUser = await _googleSignIn.signIn();
     if (googleUser == null) return null;
 
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
+    final googleAuth = await googleUser.authentication;
+
+    if (googleAuth.idToken == null) throw Exception("ID Token es nulo");
 
     final credential = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
 
-    final UserCredential userCredential = await FirebaseAuth.instance
-        .signInWithCredential(credential);
+    final userCredential = await FirebaseAuth.instance.signInWithCredential(
+      credential,
+    );
     return userCredential.user;
-  } catch (e) {
-    print("Error al iniciar sesión con Google: $e");
+  } catch (e, s) {
+    debugPrint('Error al iniciar sesión con Google: $e');
+    debugPrintStack(stackTrace: s);
     return null;
   }
 }

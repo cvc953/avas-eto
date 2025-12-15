@@ -1,4 +1,4 @@
-import 'package:ap/services/tarea_repository.dart';
+import 'package:avas_eto/services/tarea_repository.dart';
 import 'package:flutter/material.dart';
 import 'tareas_inicio.dart';
 

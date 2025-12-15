@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
-import 'package:ap/services/inicia_con_google.dart';
+import 'package:avas_eto/services/inicia_con_google.dart';
 
 class Google extends StatelessWidget {
   const Google({super.key});
@@ -13,7 +13,7 @@ class Google extends StatelessWidget {
         children: [
           SignInButton(
             Buttons.GoogleDark,
-            text: 'Inicia sesión con Google',
+            text: 'Inicia con Google',
             onPressed: () async {
               final user = await signInWithGoogle();
               if (user != null) {
@@ -29,4 +29,3 @@ class Google extends StatelessWidget {
     );
   }
 }
-

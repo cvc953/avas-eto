@@ -1,4 +1,5 @@
-import 'package:ap/screens/cuentas.dart';
+import 'package:avas_eto/screens/cuentas.dart';
+import 'package:avas_eto/screens/more_options.dart';
 import 'package:flutter/material.dart';
 import '../screens/vista_calendario.dart';
 import '../screens/vista_semana.dart';
@@ -34,24 +35,17 @@ class CustomBottomNavBar extends StatelessWidget {
           label: "Añadir",
         ),
         BottomNavigationBarItem(
-          icon: IconButton(icon: const Icon(Icons.search), onPressed: onSearch),
-          label: "Buscar",
-        ),
-        BottomNavigationBarItem(
           icon: IconButton(
-            icon: const Icon(Icons.person),
+            icon: const Icon(Icons.more_horiz),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => CuentaScreen()),
+                // MaterialPageRoute(builder: (context) => CuentaScreen()),
+                MaterialPageRoute(builder: (context) => MoreOptions()),
               );
-              /*Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (context) => Login()));
-              */
             },
           ),
-          label: "Cuenta",
+          label: "Más",
         ),
       ],
     );

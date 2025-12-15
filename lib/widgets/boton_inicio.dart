@@ -10,7 +10,7 @@ class Botoninicio extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 70, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.blueAccent,
           borderRadius: BorderRadius.circular(10),

@@ -1,5 +1,8 @@
-import 'package:ap/services/local_database.dart';
-import 'package:ap/services/conectividad_service.dart';
+import 'package:avas_eto/repositories/tareas_repository.dart';
+import 'package:avas_eto/services/local_database.dart';
+import 'package:avas_eto/services/conectividad_service.dart';
+import 'package:avas_eto/utils/tarea_firestore_mapper.dart';
+import 'package:avas_eto/utils/tareas_location_helper.dart';
 import '../dialogs/agregar_tarea.dart';
 import 'package:flutter/material.dart';
 import '../models/tarea.dart';
@@ -7,11 +10,13 @@ import '../dialogs/editar_tarea.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 import 'dart:async';
 import '../services/local_storage_service.dart';
 import '../widgets/buscar_tareas.dart';
 import '../utils/tarea_helpers.dart';
+import '../services/notification_service.dart';
+import 'tareas_tab_view.dart';
+import '../controller/tareas_controller.dart';
 
 class TareasInicio extends StatefulWidget {
   const TareasInicio({super.key});
@@ -21,7 +26,6 @@ class TareasInicio extends StatefulWidget {
 }
 
 class _TareasInicioState extends State<TareasInicio> {
-  // =============== PROPIEDADES ===============
   final List<Color> coloresDisponibles = [
     Colors.redAccent,
     Colors.orangeAccent,
@@ -36,12 +40,12 @@ class _TareasInicioState extends State<TareasInicio> {
 
   late final LocalStorageService _localStorage;
   late final ConectividadService _conectividadService;
+  late final TareasRepository _repo;
 
   final LocalDatabase _localDb = LocalDatabase();
   final Map<String, List<Tarea>> _tareas = {};
   final Set<Tarea> _tareasExpandida = {};
 
-  // =============== CICLO DE VIDA ===============
   @override
   void initState() {
     super.initState();
@@ -58,13 +62,18 @@ class _TareasInicioState extends State<TareasInicio> {
     try {
       _localStorage = LocalStorageService(_localDb);
       _conectividadService = ConectividadService();
+      _repo = TareasRepository(_localStorage);
 
       _conectividadService.setupListener((isOnline) {
         setState(() => _isOnline = isOnline);
       });
 
-      await _loadLocalTareas();
-      await _setupFirestoreListener();
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await _setupFirestoreListener();
+      } else {
+        await _loadLocalTareas();
+      }
 
       if (mounted) {
         setState(() => _loading = false);
@@ -77,11 +86,13 @@ class _TareasInicioState extends State<TareasInicio> {
     }
   }
 
-  // =============== LISTENERS Y DATOS ===============
   Future<void> _setupFirestoreListener() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        debugPrint('No hay usuario autenticado');
+        return;
+      }
 
       FirebaseFirestore.instance
           .collection('tareas')
@@ -91,9 +102,13 @@ class _TareasInicioState extends State<TareasInicio> {
             (snapshot) {
               if (!mounted) return;
               setState(() {
+                // Limpiar y reconstruir desde Firestore
                 _tareas.clear();
                 for (var doc in snapshot.docs) {
-                  _procesarDocumentoTarea(doc);
+                  final tarea = tareaFromFirestore(doc);
+                  final fecha = doc['fecha'];
+                  _tareas.putIfAbsent(fecha, () => []);
+                  _tareas[fecha]!.add(tarea);
                 }
               });
             },
@@ -106,41 +121,16 @@ class _TareasInicioState extends State<TareasInicio> {
     }
   }
 
-  void _procesarDocumentoTarea(QueryDocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    try {
-      final tarea = Tarea(
-        id: doc.id,
-        title: data['titulo'] ?? '',
-        materia: data['materia'] ?? '',
-        descripcion: data['descripcion'] ?? '',
-        profesor: data['profesor'] ?? '',
-        creditos: data['creditos'] ?? 0,
-        nrc: data['nrc'] ?? 0,
-        prioridad: data['prioridad'] ?? 'Media',
-        color: Color(int.parse(data['color'] ?? '0xFFFF0000', radix: 16)),
-        completada: data['completada'] ?? false,
-        fechaCreacion: (data['creadoEn'] as Timestamp).toDate(),
-      );
-
-      final clave = data['fecha'] as String;
-      _tareas.putIfAbsent(clave, () => []);
-      if (!_tareas[clave]!.any((t) => t.id == tarea.id)) {
-        _tareas[clave]!.add(tarea);
-      }
-    } catch (e) {
-      debugPrint('Error procesando documento: $e');
-    }
-  }
-
   Future<void> _loadLocalTareas() async {
     try {
       final tareas = await _localStorage.getTareas();
       if (mounted) {
         setState(() {
           for (var tarea in tareas) {
-            final hora = _obtenerHoraDeTarea(tarea);
-            final clave = getTaskKey(tarea.fechaCreacion, int.parse(hora));
+            // Extraer hora y minutos del DateTime de la tarea
+            final hora = tarea.fechaVencimiento.hour;
+            final minutos = tarea.fechaVencimiento.minute;
+            final clave = getTaskKey(tarea.fechaVencimiento, hora, minutos);
             _tareas.putIfAbsent(clave, () => []);
             if (!_tareas[clave]!.any((t) => t.id == tarea.id)) {
               _tareas[clave]!.add(tarea);
@@ -153,65 +143,24 @@ class _TareasInicioState extends State<TareasInicio> {
     }
   }
 
-  // =============== OPERACIONES CON TAREAS ===============
   Future<void> _guardarTarea(Tarea tarea) async {
-    try {
-      final hora = _obtenerHoraDeTarea(tarea);
-      final clave = getTaskKey(tarea.fechaCreacion, int.parse(hora));
+    final clave = getTaskKey(
+      tarea.fechaVencimiento,
+      tarea.fechaVencimiento.hour,
+      tarea.fechaVencimiento.minute,
+    );
 
-      if (mounted) {
-        setState(() {
-          _tareas.putIfAbsent(clave, () => []);
-          if (!_tareas[clave]!.any((t) => t.id == tarea.id)) {
-            _tareas[clave]!.add(tarea);
-          }
-        });
-      }
-
-      if (_isOnline) {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          await FirebaseFirestore.instance
-              .collection('tareas')
-              .add(tareaToFirestoreMap(tarea, clave)..['userId'] = user.uid);
-        }
-      }
-
-      await _localStorage.saveTarea(tarea);
-    } catch (e) {
-      debugPrint('Error guardando: $e');
-      _mostrarError('Error al guardar: ${e.toString()}');
-    }
+    await _localStorage.saveTarea(tarea);
   }
 
   Future<void> _marcarCompletada(Tarea tarea, bool completada) async {
-    try {
-      final tareaActualizada = tarea.copyWith(completada: completada);
+    setState(() {
+      final entry = _tareas.entries.firstWhere((e) => e.value.contains(tarea));
+      final index = entry.value.indexOf(tarea);
+      entry.value[index] = tarea.copyWith(completada: completada);
+    });
 
-      final entrada = _tareas.entries.firstWhere(
-        (entry) => entry.value.contains(tarea),
-      );
-
-      if (mounted) {
-        setState(() {
-          final index = entrada.value.indexOf(tarea);
-          if (index >= 0) {
-            entrada.value[index] = tareaActualizada;
-          }
-        });
-      }
-
-      if (_isOnline) {
-        await FirebaseFirestore.instance
-            .collection('tareas')
-            .doc(tarea.id)
-            .update({'completada': completada});
-      }
-
-      await _localStorage.saveTarea(tareaActualizada);
-    } catch (e) {
-      debugPrint('Error marcando completada: $e');
-    }
+    await _repo.marcarCompletada(tarea, completada, _isOnline);
   }
 
   Future<void> _moverTarea(
@@ -233,10 +182,13 @@ class _TareasInicioState extends State<TareasInicio> {
       }
 
       if (_isOnline) {
-        await FirebaseFirestore.instance
-            .collection('tareas')
-            .doc(tarea.id)
-            .update({'fecha': claveNueva});
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await FirebaseFirestore.instance
+              .collection('tareas')
+              .doc(tarea.id)
+              .update({'fecha': claveNueva});
+        }
       }
 
       await _localStorage.saveTarea(tarea);
@@ -255,10 +207,13 @@ class _TareasInicioState extends State<TareasInicio> {
       }
 
       if (_isOnline) {
-        await FirebaseFirestore.instance
-            .collection('tareas')
-            .doc(tarea.id)
-            .update(tareaToFirestoreMap(tarea, clave));
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await FirebaseFirestore.instance
+              .collection('tareas')
+              .doc(tarea.id)
+              .update(tareaToFirestoreMap(tarea, clave));
+        }
       }
 
       await _localStorage.saveTarea(tarea);
@@ -280,12 +235,16 @@ class _TareasInicioState extends State<TareasInicio> {
             context: context,
             builder:
                 (context) => AlertDialog(
+                  backgroundColor: Colors.black,
                   title: const Text('Confirmar eliminación'),
                   content: const Text('¿Eliminar esta tarea?'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancelar'),
+                      child: const Text(
+                        'Cancelar',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(context, true),
@@ -311,10 +270,13 @@ class _TareasInicioState extends State<TareasInicio> {
       }
 
       if (_isOnline) {
-        await FirebaseFirestore.instance
-            .collection('tareas')
-            .doc(tarea.id)
-            .delete();
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await FirebaseFirestore.instance
+              .collection('tareas')
+              .doc(tarea.id)
+              .delete();
+        }
       }
 
       await _localStorage.deleteTarea(tarea.id);
@@ -324,43 +286,30 @@ class _TareasInicioState extends State<TareasInicio> {
     }
   }
 
-  // =============== DIÁLOGOS Y EDICIÓN ===============
   void editarTarea(int index, List<Tarea> lista, String claveActual) async {
     final tareaActual = lista[index];
-    final horaActual = _obtenerHoraDeTarea(tareaActual);
-    final fechaActual = dateFromTaskKey(claveActual);
 
-    final result = await mostrarDialogoEditarTarea(
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      tarea: tareaActual,
-      coloresDisponibles: coloresDisponibles,
-      horaActual: horaActual,
-      fechaActual: fechaActual,
+      builder:
+          (context) => EditTaskDialog(
+            tarea: tareaActual,
+            onSave: (tareaEditada, clave) {
+              Navigator.pop(context, {'tarea': tareaEditada, 'clave': clave});
+            },
+            availableColors: coloresDisponibles,
+          ),
     );
 
     if (result != null) {
       final tareaEditada = result['tarea'] as Tarea;
-      final nuevaHora = result['hora'] as int;
-      final nuevaFecha = result['fecha'] as DateTime;
-      final nuevaClave = getTaskKey(nuevaFecha, nuevaHora);
+      final nuevaClave = result['clave'] as String;
 
       if (nuevaClave == claveActual) {
         await _actualizarTarea(tareaEditada, claveActual, index);
       } else {
         await _moverTarea(tareaEditada, claveActual, nuevaClave, index);
       }
-    }
-  }
-
-  // =============== HELPERS Y UTILIDADES ===============
-  String _obtenerHoraDeTarea(Tarea tarea) {
-    try {
-      final entrada = _tareas.entries.firstWhere(
-        (entry) => entry.value.contains(tarea),
-      );
-      return hourFromTaskKey(entrada.key);
-    } catch (_) {
-      return '00';
     }
   }
 
@@ -386,176 +335,88 @@ class _TareasInicioState extends State<TareasInicio> {
     );
   }
 
-  // =============== UI - BUILD ===============
+  void _onEliminarTarea(Tarea tarea) {
+    final ubicacion = buscarUbicacionTarea(_tareas, tarea);
+
+    _eliminarTarea(
+      ubicacion.value, // index
+      ubicacion.key, // clave
+    );
+  }
+
+  void _onEditarTarea(Tarea tarea) async {
+    final ubicacion = buscarUbicacionTarea(_tareas, tarea);
+    final claveActual = ubicacion.key;
+    final index = ubicacion.value;
+
+    editarTarea(
+      index,
+      _tareas[claveActual]!, // lista correcta
+      claveActual,
+    );
+  }
+
+  void _toggleExpandida(Tarea tarea) {
+    setState(() {
+      if (_tareasExpandida.contains(tarea)) {
+        _tareasExpandida.remove(tarea);
+      } else {
+        _tareasExpandida.add(tarea);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final tareasDelDia = _tareas.values.expand((i) => i).toList();
+    final List<String> tabs = <String>['Pendientes', 'Completadas'];
+    final controller = TareasController(_tareas, _tareasExpandida);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Center(
-          child: Text(
-            'Tareas',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-        ),
-      ),
-      body:
-          _loading
-              ? const Center(child: CircularProgressIndicator())
-              : tareasDelDia.isEmpty
-              ? const Center(
-                child: Text(
-                  'No hay Tareas',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+    return DefaultTabController(
+      length: tabs.length,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: NestedScrollView(
+          headerSliverBuilder: (BuildContext context, InnerBoxIsScrolled) {
+            return [
+              SliverOverlapAbsorber(
+                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                  context,
                 ),
-              )
-              : ListView.builder(
-                itemCount: tareasDelDia.length,
-                itemBuilder: (context, index) {
-                  final tarea = tareasDelDia[index];
-                  final entrada = _tareas.entries.firstWhere(
-                    (entry) => entry.value.contains(tarea),
-                  );
-                  final claveCorrecta = entrada.key;
-                  final expandida = _tareasExpandida.contains(tarea);
-
-                  return Card(
-                    color: Theme.of(context).cardColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: InkWell(
-                      onTap:
-                          () => setState(() {
-                            if (expandida) {
-                              _tareasExpandida.remove(tarea);
-                            } else {
-                              _tareasExpandida.add(tarea);
-                            }
-                          }),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Checkbox(
-                                      value: tarea.completada,
-                                      onChanged: (bool? value) {
-                                        if (value != null) {
-                                          _marcarCompletada(tarea, value);
-                                        }
-                                      },
-                                      activeColor: tarea.color,
-                                    ),
-                                    CircleAvatar(
-                                      backgroundColor: tarea.color,
-                                      child: const Icon(
-                                        Icons.menu_book,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          tarea.title,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                            decoration:
-                                                tarea.completada
-                                                    ? TextDecoration.lineThrough
-                                                    : TextDecoration.none,
-                                            color:
-                                                tarea.completada
-                                                    ? Colors.grey
-                                                    : Theme.of(context)
-                                                        .textTheme
-                                                        .titleMedium
-                                                        ?.color,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Fecha: ${formatearFecha(tarea.fechaCreacion)}',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Icon(
-                                  expandida
-                                      ? Icons.expand_less
-                                      : Icons.expand_more,
-                                ),
-                              ],
-                            ),
-                            if (expandida) ...[
-                              const SizedBox(height: 8),
-                              Text("Descripción: ${tarea.descripcion}"),
-                              Text("Materia: ${tarea.materia}"),
-                              Text("Profesor: ${tarea.profesor}"),
-                              Text("Créditos: ${tarea.creditos}"),
-                              Text("NRC: ${tarea.nrc}"),
-                              Text("Hora: ${_obtenerHoraDeTarea(tarea)}:00"),
-                              Text(
-                                'Prioridad: ${tarea.prioridad}',
-                                style: TextStyle(
-                                  color: getPrioridadColor(tarea.prioridad),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              if (tarea.completada)
-                                Text(
-                                  "Completada el: ${DateFormat('dd/MM/yyyy').format(tarea.fechaCreacion)}",
-                                  style: const TextStyle(
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                            ],
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                TextButton(
-                                  onPressed:
-                                      () => editarTarea(
-                                        index,
-                                        _tareas[claveCorrecta]!,
-                                        claveCorrecta,
-                                      ),
-                                  child: const Text('Editar'),
-                                ),
-                                TextButton(
-                                  onPressed:
-                                      () =>
-                                          _eliminarTarea(index, claveCorrecta),
-                                  child: const Text('Eliminar'),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
+                sliver: SliverAppBar(
+                  backgroundColor: Colors.black,
+                  title: Text(
+                    'Tareas',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  pinned: true,
+                  expandedHeight: 100.0,
+                  forceElevated: InnerBoxIsScrolled,
+                  bottom: TabBar(
+                    tabs: tabs.map((String name) => Tab(text: name)).toList(),
+                    unselectedLabelColor: Colors.white70,
+                    labelColor: Colors.white,
+                    indicatorColor: Colors.white,
+                  ),
+                ),
               ),
-      bottomNavigationBar: CustomBottomNavBar(
-        parentContext: context,
-        onAdd: _addTareas,
-        onSearch: _buscarTareas,
-        coloresDisponibles: coloresDisponibles,
+            ];
+          },
+
+          body: TareasTabsView(
+            controller: controller,
+            onToggle: _toggleExpandida,
+            onCheck: _marcarCompletada,
+            onEditar: _onEditarTarea,
+            onEliminar: _onEliminarTarea,
+          ), //  ),
+        ),
+        bottomNavigationBar: CustomBottomNavBar(
+          parentContext: context,
+          onAdd: _addTareas,
+          onSearch: _buscarTareas,
+          coloresDisponibles: coloresDisponibles,
+        ),
       ),
     );
   }

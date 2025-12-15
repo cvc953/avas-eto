@@ -7,20 +7,12 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:595438480456:android:30a8e319b091eb532cfc7d",
+        "mobilesdk_app_id": "1:595438480456:android:88c9433135c6fcab2cfc7d",
         "android_client_info": {
-          "package_name": "com.cvc.tareas"
+          "package_name": "com.cvc.avas_eto"
         }
       },
       "oauth_client": [
-        {
-          "client_id": "595438480456-7r4cmaa82s2hflftdvmq6kjp9k6rl0vp.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.cvc.tareas",
-            "certificate_hash": "3dde4958069f3fabbb9f5b9861627efd221649a2"
-          }
-        },
         {
           "client_id": "595438480456-nvcafqlsafatbu6es2hfjrvilkg8k7lr.apps.googleusercontent.com",
           "client_type": 3
@@ -37,6 +29,13 @@
             {
               "client_id": "595438480456-nvcafqlsafatbu6es2hfjrvilkg8k7lr.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "595438480456-vjuajn989bf82arko4p99ech91nngu19.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ap"
+              }
             }
           ]
         }

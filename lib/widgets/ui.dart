@@ -1,4 +1,4 @@
-import 'package:ap/screens/login.dart';
+import 'package:avas_eto/screens/login.dart';
 import 'package:flutter/material.dart';
 
 class Home extends StatefulWidget {
