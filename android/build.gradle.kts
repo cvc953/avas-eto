@@ -9,9 +9,11 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.google.gms:google-services:4.4.1") // ✅
+        classpath("com.google.gms:google-services:4.4.1") // 
         // También deberías tener el classpath del plugin de Android si falta:
-        classpath("com.android.tools.build:gradle:8.1.0")
+       // classpath("com.android.tools.build:gradle:8.1.0")
+        classpath("com.android.tools.build:gradle:8.9.1")
+
            }
 }
 

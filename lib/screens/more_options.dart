@@ -1,3 +1,4 @@
+import 'package:avas_eto/screens/about_screen.dart';
 import 'package:avas_eto/screens/login.dart';
 import 'package:avas_eto/widgets/toggle_notifications.dart';
 import 'package:flutter/material.dart';
@@ -128,13 +129,18 @@ class _MoreOptionsState extends State<MoreOptions> {
                     }
                   },
                 ),
-                const ListTile(
+                ListTile(
                   leading: Icon(Icons.info, color: Colors.white),
                   title: Text(
                     'Acerca de',
                     style: TextStyle(color: Colors.white),
                   ),
-                  onTap: null,
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => AboutScreen()),
+                    );
+                  },
                 ),
               ],
             ),
