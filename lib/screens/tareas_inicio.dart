@@ -426,6 +426,7 @@ class _TareasInicioState extends State<TareasInicio> {
                   ),
                   actions: [
                     PopupMenuButton<String>(
+                      menuPadding: EdgeInsets.all(10),
                       onSelected: (value) {
                         setState(() {
                           _tipoOrdenamiento = value;
@@ -444,8 +445,8 @@ class _TareasInicioState extends State<TareasInicio> {
                             ),
                           ],
                       child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Icon(Icons.sort),
+                        padding: const EdgeInsets.all(10),
+                        child: Icon(Icons.sort, color: Colors.white),
                       ),
                     ),
                   ],

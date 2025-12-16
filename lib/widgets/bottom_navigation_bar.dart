@@ -86,16 +86,6 @@ class CustomBottomNavBar extends StatelessWidget {
                 );
               },
             ),
-            /*ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Ajustes'),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: const Icon(Icons.help),
-              title: const Text('Ayuda'),
-              onTap: () {},
-            ),*/
           ],
         );
       },
