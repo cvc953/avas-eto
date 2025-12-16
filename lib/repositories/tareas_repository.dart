@@ -14,9 +14,14 @@ class TareasRepository {
     if (online) {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        await FirebaseFirestore.instance
+        final docRef = await FirebaseFirestore.instance
             .collection('tareas')
             .add(tareaToFirestoreMap(tarea, clave)..['userId'] = user.uid);
+
+        // Persist the generated Firestore ID locally to avoid duplicates
+        final tareaConId = tarea.copyWith(id: docRef.id);
+        await localStorage.saveTarea(tareaConId);
+        return;
       }
     }
     await localStorage.saveTarea(tarea);

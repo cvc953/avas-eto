@@ -10,6 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'services/local_database.dart';
 import 'services/local_storage_service.dart';
 import 'services/tarea_repository.dart';
+import 'package:avas_eto/utils/permissions.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -45,6 +46,8 @@ void main() async {
       print('Error inicializando Firebase: $e');
     }
   }
+
+  AppPermissions.Requestnotifications();
 
   // 2. Inicialización de la base de datos local
   final localDb = LocalDatabase();

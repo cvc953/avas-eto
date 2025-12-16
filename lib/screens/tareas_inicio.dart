@@ -150,7 +150,8 @@ class _TareasInicioState extends State<TareasInicio> {
       tarea.fechaVencimiento.minute,
     );
 
-    await _localStorage.saveTarea(tarea);
+    // Usa el repositorio para persistir en Firestore (si hay sesión) y en local
+    await _repo.guardar(tarea, clave, _isOnline);
   }
 
   Future<void> _marcarCompletada(Tarea tarea, bool completada) async {
@@ -385,6 +386,7 @@ class _TareasInicioState extends State<TareasInicio> {
                 ),
                 sliver: SliverAppBar(
                   backgroundColor: Colors.black,
+                  automaticallyImplyLeading: false,
                   title: Text(
                     'Tareas',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),

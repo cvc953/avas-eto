@@ -3,7 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ConectividadService {
   final Connectivity _connectivity = Connectivity();
-  StreamSubscription<ConnectivityResult>? _subscription;
+  StreamSubscription<List<ConnectivityResult>>? _subscription;
 
   bool _isOnline = true;
   bool get isOnline => _isOnline;
@@ -18,7 +18,8 @@ class ConectividadService {
   /// Configura escucha de cambios de conectividad
   void setupListener(Function(bool) onConnectivityChanged) {
     _subscription = _connectivity.onConnectivityChanged.listen((result) {
-      _isOnline = result != ConnectivityResult.none;
+      _isOnline =
+          result.isNotEmpty && !result.contains(ConnectivityResult.none);
       onConnectivityChanged(_isOnline);
     });
   }

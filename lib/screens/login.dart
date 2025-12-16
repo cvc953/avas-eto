@@ -7,81 +7,103 @@ import '../widgets/google.dart';
 import '../widgets/boton_inicio.dart';
 import '../screens/registro.dart';
 
-class Login extends StatelessWidget {
-  Login({super.key}); // Quitado el const porque tiene campos no constantes
+class Login extends StatefulWidget {
+  const Login({super.key});
 
+  @override
+  State<Login> createState() => _LoginState();
+}
+
+class _LoginState extends State<Login> {
   final username = TextEditingController();
   final password = TextEditingController();
+
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const Icon(Icons.email_rounded, size: 80),
-              const SizedBox(height: 10),
-              //Text('bienvenido', style: TextStyle(fontSize: 20)),
-              const SizedBox(height: 20),
-              LoginInput(
-                controller: username,
-                hintText: 'Usuario',
-                obscureText: false,
-              ),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const Icon(Icons.email_rounded, size: 80),
+                  const SizedBox(height: 10),
+                  //Text('bienvenido', style: TextStyle(fontSize: 20)),
+                  const SizedBox(height: 20),
+                  LoginInput(
+                    controller: username,
+                    hintText: 'Usuario',
+                    obscureText: false,
+                  ),
 
-              LoginInput(
-                controller: password,
-                hintText: 'Contraseña',
-                obscureText: true,
-              ),
-              const SizedBox(height: 10),
+                  LoginInput(
+                    controller: password,
+                    hintText: 'Contraseña',
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 10),
 
-              GestureDetector(
-                child: const Text(
-                  '¿Olvidaste tu contraseña?',
-                  style: TextStyle(color: Colors.blue),
-                ),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => ForgotPasswordScreen(),
+                  GestureDetector(
+                    child: const Text(
+                      '¿Olvidaste tu contraseña?',
+                      style: TextStyle(color: Colors.blue),
                     ),
-                  );
-                },
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ForgotPasswordScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Botoninicio(onTap: () => inicio(context)),
+                  const SizedBox(height: 20, width: 30),
+
+                  Text('o', style: TextStyle(color: Colors.grey[600])),
+                  const SizedBox(height: 20),
+
+                  Google(
+                    onStart: () => setState(() => isLoading = true),
+                    onFinish: () {
+                      if (mounted) {
+                        setState(() => isLoading = false);
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 60),
+
+                  Text(
+                    '¿No tienes cuenta?',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                  GestureDetector(
+                    child: const Text(
+                      'Registrate',
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => Registro()),
+                      );
+                    },
+                  ),
+                ],
               ),
-
-              const SizedBox(height: 20),
-
-              Botoninicio(onTap: () => inicio(context)),
-              const SizedBox(height: 20, width: 30),
-
-              Text('o', style: TextStyle(color: Colors.grey[600])),
-              const SizedBox(height: 20),
-
-              const Google(),
-
-              const SizedBox(height: 60),
-
-              Text(
-                '¿No tienes cuenta?',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              GestureDetector(
-                child: const Text(
-                  'Registrate',
-                  style: TextStyle(color: Colors.blue),
-                ),
-                onTap: () {
-                  Navigator.of(
-                    context,
-                  ).push(MaterialPageRoute(builder: (context) => Registro()));
-                },
-              ),
-            ],
+            ),
           ),
-        ),
+          if (isLoading) ...[
+            const ModalBarrier(dismissible: false, color: Colors.black54),
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
+          ],
+        ],
       ),
     );
   }
@@ -97,6 +119,10 @@ class Login extends StatelessWidget {
       );
       return;
     }
+
+    setState(() {
+      isLoading = true;
+    });
 
     try {
       await auth.signInWithEmailAndPassword(email: email, password: pass);
@@ -118,6 +144,12 @@ class Login extends StatelessWidget {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(mensaje)));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 }

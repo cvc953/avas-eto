@@ -27,6 +27,7 @@ Future<User?> signInWithGoogle() async {
   } catch (e, s) {
     debugPrint('Error al iniciar sesión con Google: $e');
     debugPrintStack(stackTrace: s);
+    print("Error al iniciar sesión con Google: $e");
     return null;
   }
 }
