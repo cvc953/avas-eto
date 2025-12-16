@@ -12,7 +12,6 @@ Una aplicación de gestión de tareas desarrollada con Flutter que te permite or
 - 👤 Sistema de autenticación con inicio de sesión
 - 🔐 Integración con Google Sign-In
 - 📱 Interfaz de usuario moderna con tema oscuro
-- 💾 Persistencia de datos con SQLite
 
 ## Requisitos Previos
 
@@ -23,7 +22,6 @@ Una aplicación de gestión de tareas desarrollada con Flutter que te permite or
 ## Dependencias Principales
 
 - `flutter` - Framework de desarrollo
-- `cupertino_icons` - Iconos de estilo iOS
 - `flutter_signin_button` - Botones de inicio de sesión prediseñados
 - `sqflite` - Base de datos SQLite para Flutter
 - `path` - Utilidades para trabajar con rutas de archivos
@@ -54,12 +52,60 @@ flutter run
 
 ```
 lib/
-├── main.dart           # Punto de entrada y pantalla principal de tareas
-├── Login.dart          # Pantalla de inicio de sesión
-├── Registro.dart       # Pantalla de registro
-├── LoginInput.dart     # Componentes de entrada para login
-├── Google.dart         # Integración con Google Sign-In
-└── BotonDeInicio.dart  # Botones personalizados
+├── components
+│   └── images
+│       └── google.png
+├── controller
+│   └── tareas_controller.dart
+├── dialogs
+│   ├── agregar_tarea.dart
+│   └── editar_tarea.dart
+├── firebase_options.dart
+├── main.dart
+├── models
+│   └── tarea.dart
+├── repositories
+│   └── tareas_repository.dart
+├── screens
+│   ├── cuentas.dart
+│   ├── login.dart
+│   ├── more_options.dart
+│   ├── registro.dart
+│   ├── tareas.dart
+│   ├── tareas_inicio.dart
+│   ├── tareas_list.dart
+│   ├── tareas_tab_view.dart
+│   ├── vista_calendario.dart
+│   └── vista_semana.dart
+├── services
+│   ├── autenticacion.dart
+│   ├── conectividad_service.dart
+│   ├── inicia_con_google.dart
+│   ├── local_database.dart
+│   ├── local_storage_service.dart
+│   ├── notificacion_service.dart
+│   ├── notification_service.dart
+│   ├── notifications_settings.dart
+│   ├── password_reset.dart
+│   ├── tarea_repository.dart
+│   └── tareas_firestore_service.dart
+├── utils
+│   ├── permissions.dart
+│   ├── tarea_firestore_mapper.dart
+│   ├── tarea_helpers.dart
+│   ├── tareas_location_helper.dart
+│   └── theme.dart
+└── widgets
+    ├── boton_agregar.dart
+    ├── boton_inicio.dart
+    ├── bottom_navigation_bar.dart
+    ├── buscar_tareas.dart
+    ├── google.dart
+    ├── login_input.dart
+    ├── nombre_tarea.dart
+    ├── tarea_card.dart
+    ├── toggle_notifications.dart
+    └── ui.dart
 ```
 
 ## Uso
