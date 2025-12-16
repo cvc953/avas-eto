@@ -14,7 +14,6 @@ import 'dart:async';
 import '../services/local_storage_service.dart';
 import '../widgets/buscar_tareas.dart';
 import '../utils/tarea_helpers.dart';
-import '../services/notification_service.dart';
 import 'tareas_tab_view.dart';
 import '../controller/tareas_controller.dart';
 
@@ -37,6 +36,7 @@ class _TareasInicioState extends State<TareasInicio> {
 
   bool _loading = true;
   bool _isOnline = true;
+  String _tipoOrdenamiento = 'reciente'; // 'reciente' o 'prioridad'
 
   late final LocalStorageService _localStorage;
   late final ConectividadService _conectividadService;
@@ -110,6 +110,8 @@ class _TareasInicioState extends State<TareasInicio> {
                   _tareas.putIfAbsent(fecha, () => []);
                   _tareas[fecha]!.add(tarea);
                 }
+                // Aplicar ordenamiento después de cargar desde Firestore
+                _ordenarTareas();
               });
             },
             onError: (e) {
@@ -136,10 +138,28 @@ class _TareasInicioState extends State<TareasInicio> {
               _tareas[clave]!.add(tarea);
             }
           }
+          _ordenarTareas();
         });
       }
     } catch (e) {
       debugPrint('Error cargando tareas locales: $e');
+    }
+  }
+
+  void _ordenarTareas() {
+    for (var lista in _tareas.values) {
+      if (_tipoOrdenamiento == 'reciente') {
+        // Ordenar por fecha de creación (más reciente primero)
+        lista.sort((a, b) => b.fechaCreacion.compareTo(a.fechaCreacion));
+      } else if (_tipoOrdenamiento == 'prioridad') {
+        // Ordenar por prioridad: Alta > Media > Baja
+        final prioridadValor = {'Alta': 3, 'Media': 2, 'Baja': 1};
+        lista.sort((a, b) {
+          final valA = prioridadValor[a.prioridad] ?? 0;
+          final valB = prioridadValor[b.prioridad] ?? 0;
+          return valB.compareTo(valA);
+        });
+      }
     }
   }
 
@@ -152,6 +172,13 @@ class _TareasInicioState extends State<TareasInicio> {
 
     // Usa el repositorio para persistir en Firestore (si hay sesión) y en local
     await _repo.guardar(tarea, clave, _isOnline);
+
+    // Reordenar después de guardar
+    if (mounted) {
+      setState(() {
+        _ordenarTareas();
+      });
+    }
   }
 
   Future<void> _marcarCompletada(Tarea tarea, bool completada) async {
@@ -159,6 +186,7 @@ class _TareasInicioState extends State<TareasInicio> {
       final entry = _tareas.entries.firstWhere((e) => e.value.contains(tarea));
       final index = entry.value.indexOf(tarea);
       entry.value[index] = tarea.copyWith(completada: completada);
+      _ordenarTareas();
     });
 
     await _repo.marcarCompletada(tarea, completada, _isOnline);
@@ -179,6 +207,7 @@ class _TareasInicioState extends State<TareasInicio> {
           }
           _tareas.putIfAbsent(claveNueva, () => []);
           _tareas[claveNueva]!.add(tarea);
+          _ordenarTareas();
         });
       }
 
@@ -204,6 +233,7 @@ class _TareasInicioState extends State<TareasInicio> {
       if (mounted) {
         setState(() {
           _tareas[clave]?[index] = tarea;
+          _ordenarTareas();
         });
       }
 
@@ -236,7 +266,6 @@ class _TareasInicioState extends State<TareasInicio> {
             context: context,
             builder:
                 (context) => AlertDialog(
-                  backgroundColor: Colors.black,
                   title: const Text('Confirmar eliminación'),
                   content: const Text('¿Eliminar esta tarea?'),
                   actions: [
@@ -391,6 +420,31 @@ class _TareasInicioState extends State<TareasInicio> {
                     'Tareas',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
+                  actions: [
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        setState(() {
+                          _tipoOrdenamiento = value;
+                          _ordenarTareas();
+                        });
+                      },
+                      itemBuilder:
+                          (BuildContext context) => [
+                            const PopupMenuItem(
+                              value: 'reciente',
+                              child: Text('Más recientes'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'prioridad',
+                              child: Text('Por prioridad'),
+                            ),
+                          ],
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Icon(Icons.sort),
+                      ),
+                    ),
+                  ],
                   pinned: true,
                   expandedHeight: 100.0,
                   forceElevated: InnerBoxIsScrolled,

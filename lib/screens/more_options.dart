@@ -1,6 +1,8 @@
 import 'package:avas_eto/screens/login.dart';
+import 'package:avas_eto/widgets/toggle_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/notifications_settings.dart';
 
 class MoreOptions extends StatefulWidget {
   const MoreOptions({super.key});
@@ -11,10 +13,18 @@ class MoreOptions extends StatefulWidget {
 
 class _MoreOptionsState extends State<MoreOptions> {
   final user = FirebaseAuth.instance.currentUser;
+  bool notificationsEnabled = true;
 
   @override
   void initState() {
     super.initState();
+    enableNotifications();
+  }
+
+  void enableNotifications() async {
+    // Lógica para habilitar o deshabilitar notificaciones
+    notificationsEnabled = await NotificationSettings.isEnabled();
+    setState(() {});
   }
 
   @override
@@ -97,13 +107,26 @@ class _MoreOptionsState extends State<MoreOptions> {
                 ],
 
                 const SizedBox(height: 30),
-                const ListTile(
-                  leading: Icon(Icons.notifications, color: Colors.white),
+                ListTile(
+                  leading:
+                      notificationsEnabled == true
+                          ? Icon(Icons.notifications_on, color: Colors.white)
+                          : Icon(Icons.notifications_off, color: Colors.white),
                   title: Text(
                     'Notificaciones',
                     style: TextStyle(color: Colors.white),
                   ),
-                  onTap: null,
+                  onTap: () async {
+                    final newValue = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => ToggleNotifications(),
+                    );
+                    if (newValue != null) {
+                      setState(() {
+                        notificationsEnabled = newValue;
+                      });
+                    }
+                  },
                 ),
                 const ListTile(
                   leading: Icon(Icons.info, color: Colors.white),
