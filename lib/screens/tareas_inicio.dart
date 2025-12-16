@@ -12,6 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 import '../services/local_storage_service.dart';
+import '../services/notification_service.dart';
 import '../widgets/buscar_tareas.dart';
 import '../utils/tarea_helpers.dart';
 import 'tareas_tab_view.dart';
@@ -172,6 +173,9 @@ class _TareasInicioState extends State<TareasInicio> {
 
     // Usa el repositorio para persistir en Firestore (si hay sesión) y en local
     await _repo.guardar(tarea, clave, _isOnline);
+
+    // Enviar notificación según prioridad
+    await NotificationService().notifyTaskCreated(tarea);
 
     // Reordenar después de guardar
     if (mounted) {
