@@ -54,7 +54,7 @@ class AboutScreen extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Text(
-                    ' - ✅ Crear y gestionar tareas\n - 🎨 Asignar colores personalizados a cada tarea\n - 📋 Visualizar lista de tareas\n - ✏️ Editar tareas existentes\n - 🗑️ Eliminar tareas\n - 👤 Sistema de autenticación con inicio de sesión\n - 🔐 Integración con Google Sign-In\n - 📱 Interfaz de usuario moderna con tema oscuro',
+                    '- ✅ Crear y gestionar tareas\n - 🎨 Asignar colores personalizados a cada tarea\n - 📋 Visualizar lista de tareas\n - ✏️ Editar tareas existentes\n - 🗑️ Eliminar tareas\n - 👤 Sistema de autenticación con inicio de sesión\n - 🔐 Integración con Google Sign-In\n - 📱 Interfaz de usuario moderna con tema oscuro',
                     textAlign: TextAlign.left,
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
@@ -108,7 +108,11 @@ class AboutScreen extends StatelessWidget {
                 ),
                 Padding(
                   padding: EdgeInsets.all(10.0),
-                  child: Column(children: []),
+                  child: Text(
+                    'Tester: Luis Angel Gonzalez',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
                 ),
                 Padding(
                   padding: EdgeInsets.all(10.0),
