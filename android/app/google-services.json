@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "595438480456-399fbg357b7hqbhhb3htdvrso3osc0db.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cvc953.avaseto",
+            "certificate_hash": "7f1a7c5f1a154122ad64321daf75b64380d25c50"
+          }
+        },
+        {
           "client_id": "595438480456-nvcafqlsafatbu6es2hfjrvilkg8k7lr.apps.googleusercontent.com",
           "client_type": 3
         }
