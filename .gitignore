@@ -109,3 +109,11 @@ macos/Flutter/GeneratedPluginRegistrant.swift
 scripts/generate_packages_txt_from_lock.sh
 windows/flutter/generated_plugin_registrant.cc
 windows/flutter/generated_plugins.cmake
+.env.local
+.gitignore
+android/app/.project
+android/app/upload-keystore.jks.bak.20260310-144804
+.gitignore
+android/app/.classpath
+.gitignore
+upload-keystore.jks
