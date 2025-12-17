@@ -20,7 +20,7 @@ class AboutScreen extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          backgroundColor: Colors.black54,
+          backgroundColor: Colors.black,
         ),
         backgroundColor: Colors.black,
         body: Center(
