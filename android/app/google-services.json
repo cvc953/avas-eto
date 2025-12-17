@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:595438480456:android:88c9433135c6fcab2cfc7d",
+        "mobilesdk_app_id": "1:595438480456:android:9576add01c48e2db2cfc7d",
         "android_client_info": {
-          "package_name": "com.cvc.avas_eto"
+          "package_name": "com.cvc953.avaseto"
         }
       },
       "oauth_client": [
