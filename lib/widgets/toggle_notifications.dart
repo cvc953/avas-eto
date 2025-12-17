@@ -25,7 +25,7 @@ class _ToggleNotificationsState extends State<ToggleNotifications> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Color(0xFF0D1B2A),
+      backgroundColor: Colors.black,
       title:
           toggle != true
               ? Text(

@@ -20,9 +20,9 @@ class AboutScreen extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          backgroundColor: const Color(0xFF0D1B2A),
+          backgroundColor: Colors.black54,
         ),
-        backgroundColor: const Color(0xFF0D1B2A),
+        backgroundColor: Colors.black,
         body: Center(
           child: SingleChildScrollView(
             //mainAxisAlignment: MainAxisAlignment.start,
