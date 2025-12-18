@@ -1,4 +1,3 @@
-import 'package:avas_eto/screens/cuentas.dart';
 import 'package:avas_eto/screens/more_options.dart';
 import 'package:flutter/material.dart';
 import '../screens/vista_calendario.dart';
