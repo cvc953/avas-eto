@@ -128,7 +128,6 @@ flutter run --debug
 Para compilar una versión de release:
 ```bash
 flutter build apk  # Para Android
-flutter build ios  # Para iOS
 flutter build web  # Para Web
 ```
 
