@@ -34,6 +34,7 @@ class _TareasInicioState extends State<TareasInicio> {
   // loading state not currently used by the UI
   bool _isOnline = true;
   String _tipoOrdenamiento = 'reciente';
+  int _selectedIndex = 1; // 0: Matriz, 1: Tareas, 2: Más
 
   late final LocalStorageService _localStorage;
   late final ConectividadService _conectividadService;
@@ -296,36 +297,46 @@ class _TareasInicioState extends State<TareasInicio> {
             ];
           },
 
-          body: Column(
-            children: [
-              // Eisenhower matrix shown where the Add button used to be
-              EisenhowerMatrix(
-                tareas: _controller.tareas.values.expand((e) => e).toList(),
-              ),
-              Expanded(
-                child: TareasTabsView(
-                  controller: _controller,
-                  onToggle: _toggleExpandida,
-                  onCheck: _marcarCompletada,
-                  onEditar: _onEditarTarea,
-                  onEliminar: _onEliminarTarea,
-                ),
-              ),
-            ],
-          ),
+              body: _buildBody(),
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _addTareas,
-          backgroundColor: Colors.blueAccent,
-          child: const Icon(Icons.add),
-        ),
+        floatingActionButton: _selectedIndex == 1
+            ? FloatingActionButton(
+                onPressed: _addTareas,
+                backgroundColor: Colors.blueAccent,
+                child: const Icon(Icons.add),
+              )
+            : null,
         bottomNavigationBar: CustomBottomNavBar(
           parentContext: context,
-          onAdd: _addTareas,
-          onSearch: _buscarTareas,
+          currentIndex: _selectedIndex,
+          onSelect: (i) {
+            if (i == 2) {
+              // Más -> push MoreOptions
+              Navigator.push(context, MaterialPageRoute(builder: (_) => MoreOptions()));
+              return;
+            }
+            setState(() => _selectedIndex = i);
+          },
           coloresDisponibles: coloresDisponibles,
         ),
       ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_selectedIndex == 0) {
+      return EisenhowerMatrix(
+        tareas: _controller.tareas.values.expand((e) => e).toList(),
+      );
+    }
+
+    // default: tareas view
+    return TareasTabsView(
+      controller: _controller,
+      onToggle: _toggleExpandida,
+      onCheck: _marcarCompletada,
+      onEditar: _onEditarTarea,
+      onEliminar: _onEliminarTarea,
     );
   }
 }

@@ -5,38 +5,36 @@ import '../screens/vista_semana.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final BuildContext parentContext;
-  final VoidCallback onAdd;
-  final VoidCallback onSearch;
+  final int currentIndex;
+  final ValueChanged<int> onSelect;
   final List<Color> coloresDisponibles;
 
   const CustomBottomNavBar({
     super.key,
     required this.parentContext,
-    required this.onAdd,
-    required this.onSearch,
+    required this.currentIndex,
+    required this.onSelect,
     required this.coloresDisponibles,
   });
 
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
+      currentIndex: currentIndex,
       type: BottomNavigationBarType.fixed,
+      onTap: (i) => onSelect(i),
       items: [
         BottomNavigationBarItem(
-          icon: IconButton(icon: const Icon(Icons.search), onPressed: onSearch),
-          label: "Buscar",
+          icon: const Icon(Icons.grid_view),
+          label: 'Matriz',
         ),
         BottomNavigationBarItem(
-          icon: IconButton(
-            icon: const Icon(Icons.more_horiz),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MoreOptions()),
-              );
-            },
-          ),
-          label: "Más",
+          icon: const Icon(Icons.view_list),
+          label: 'Tareas',
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.more_horiz),
+          label: 'Más',
         ),
       ],
     );
