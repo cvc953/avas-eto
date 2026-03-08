@@ -23,15 +23,8 @@ class CustomBottomNavBar extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       items: [
         BottomNavigationBarItem(
-          icon: IconButton(
-            icon: const Icon(Icons.view_list),
-            onPressed: () => _menu(parentContext),
-          ),
-          label: "Vistas",
-        ),
-        BottomNavigationBarItem(
-          icon: IconButton(icon: const Icon(Icons.add), onPressed: onAdd),
-          label: "Añadir",
+          icon: IconButton(icon: const Icon(Icons.search), onPressed: onSearch),
+          label: "Buscar",
         ),
         BottomNavigationBarItem(
           icon: IconButton(
@@ -39,7 +32,6 @@ class CustomBottomNavBar extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                // MaterialPageRoute(builder: (context) => CuentaScreen()),
                 MaterialPageRoute(builder: (context) => MoreOptions()),
               );
             },

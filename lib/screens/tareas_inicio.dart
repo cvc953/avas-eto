@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import '../models/tarea.dart';
 import '../dialogs/editar_tarea.dart';
 import '../widgets/bottom_navigation_bar.dart';
+import '../widgets/eisenhower_matrix.dart';
 import '../widgets/buscar_tareas.dart';
 import '../utils/task_key_generator.dart';
 import 'tareas_tab_view.dart';
@@ -295,13 +296,28 @@ class _TareasInicioState extends State<TareasInicio> {
             ];
           },
 
-          body: TareasTabsView(
-            controller: _controller,
-            onToggle: _toggleExpandida,
-            onCheck: _marcarCompletada,
-            onEditar: _onEditarTarea,
-            onEliminar: _onEliminarTarea,
+          body: Column(
+            children: [
+              // Eisenhower matrix shown where the Add button used to be
+              EisenhowerMatrix(
+                tareas: _controller.tareas.values.expand((e) => e).toList(),
+              ),
+              Expanded(
+                child: TareasTabsView(
+                  controller: _controller,
+                  onToggle: _toggleExpandida,
+                  onCheck: _marcarCompletada,
+                  onEditar: _onEditarTarea,
+                  onEliminar: _onEliminarTarea,
+                ),
+              ),
+            ],
           ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _addTareas,
+          backgroundColor: Colors.blueAccent,
+          child: const Icon(Icons.add),
         ),
         bottomNavigationBar: CustomBottomNavBar(
           parentContext: context,
