@@ -4,18 +4,77 @@ import '../models/tarea.dart';
 import '../services/local_storage_service.dart';
 import '../mappers/tarea_mapper.dart';
 import '../services/notification_service.dart';
-import '../services/tarea_repository.dart' as canonical;
 
-/// Adapter preserving the older `TareasRepository` API while delegating
-/// canonical behavior to `TareaRepository` (defined in
-/// `lib/services/tarea_repository.dart`). This keeps existing callers
-/// working while centralizing the implementation.
+/// Canonical repository implementation that centralizes local + optional
+/// Firestore sync behavior.
+class TareaRepository {
+  final FirebaseFirestore? _firestore;
+  final LocalStorageService _localStorage;
+
+  TareaRepository(this._firestore, this._localStorage);
+
+  Future<void> saveTarea(Tarea tarea) async {
+    await _localStorage.saveTarea(tarea);
+
+    if (_firestore != null) {
+      try {
+        await _firestore!.collection('tareas').doc(tarea.id).set(tarea.toMap());
+      } catch (e) {
+        print('Error al sincronizar con Firestore: $e');
+      }
+    }
+  }
+
+  Future<List<Tarea>> getTareas() async {
+    if (_firestore == null) {
+      return await _localStorage.getTareas();
+    }
+
+    try {
+      final snapshot = await _firestore!.collection('tareas').get();
+      final tareas = <Tarea>[];
+
+      for (var doc in snapshot.docs) {
+        try {
+          final tareaData = Map<String, dynamic>.from(doc.data());
+          tareaData['id'] = doc.id;
+          final tarea = Tarea.fromMap(tareaData);
+          await _localStorage.saveTarea(tarea);
+          tareas.add(tarea);
+        } catch (e) {
+          print('Error procesando documento ${doc.id}: $e');
+        }
+      }
+
+      return tareas;
+    } catch (e) {
+      print('Error obteniendo tareas de Firestore: $e');
+      return await _localStorage.getTareas();
+    }
+  }
+
+  Future<void> deleteTarea(String id) async {
+    await _localStorage.deleteTarea(id);
+
+    if (_firestore != null) {
+      try {
+        await _firestore!.collection('tareas').doc(id).delete();
+      } catch (e) {
+        print('Error eliminando tarea de Firestore: $e');
+      }
+    }
+  }
+}
+
+/// Backwards-compatible wrapper providing the old `TareasRepository` API
+/// (guardar/eliminar/marcarCompletada) delegating to the canonical
+/// `TareaRepository` where appropriate.
 class TareasRepository {
   final LocalStorageService localStorage;
-  final canonical.TareaRepository _inner;
+  final TareaRepository _inner;
 
   TareasRepository(this.localStorage)
-      : _inner = canonical.TareaRepository(FirebaseFirestore.instance, localStorage);
+      : _inner = TareaRepository(FirebaseFirestore.instance, localStorage);
 
   Future<void> guardar(Tarea tarea, String clave, bool online) async {
     if (online) {
@@ -60,9 +119,4 @@ class TareasRepository {
       await NotificationService().cancelNotifications(tarea);
     }
   }
-
-  // Delegate useful methods to canonical implementation where appropriate
-  Future<void> saveTarea(Tarea tarea) => _inner.saveTarea(tarea);
-  Future<List<Tarea>> getTareas() => _inner.getTareas();
-  Future<void> deleteTarea(String id) => _inner.deleteTarea(id);
 }
