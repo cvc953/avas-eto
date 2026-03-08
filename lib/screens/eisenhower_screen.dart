@@ -1,0 +1,52 @@
+import 'package:flutter/material.dart';
+import 'package:avas_eto/controller/tareas_controller.dart';
+import 'package:avas_eto/dialogs/agregar_tarea.dart';
+import 'package:avas_eto/widgets/eisenhower_matrix.dart';
+import '../models/tarea.dart';
+
+class EisenhowerScreen extends StatefulWidget {
+  final TareasController controller;
+  final Future<void> Function(Tarea tarea) onAddTask;
+
+  const EisenhowerScreen({super.key, required this.controller, required this.onAddTask});
+
+  @override
+  State<EisenhowerScreen> createState() => _EisenhowerScreenState();
+}
+
+class _EisenhowerScreenState extends State<EisenhowerScreen> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Future<void> _showAdd() async {
+    await showAddTaskDialog(
+      context: context,
+      onSave: (tarea, clave) async {
+        await widget.onAddTask(tarea);
+        setState(() {});
+      },
+      initialDate: DateTime.now(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tareas = widget.controller.tareas.values.expand((e) => e).toList();
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: const Text('Matriz de Eisenhower'),
+        automaticallyImplyLeading: true,
+      ),
+      body: EisenhowerMatrix(tareas: tareas),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAdd,
+        backgroundColor: Colors.blueAccent,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}

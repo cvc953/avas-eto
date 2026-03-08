@@ -7,6 +7,7 @@ import 'package:avas_eto/utils/tareas_location_helper.dart';
 import '../dialogs/agregar_tarea.dart';
 import 'package:flutter/material.dart';
 import 'package:avas_eto/screens/more_options.dart';
+import 'package:avas_eto/screens/eisenhower_screen.dart';
 import '../models/tarea.dart';
 import '../dialogs/editar_tarea.dart';
 import '../widgets/bottom_navigation_bar.dart';
@@ -313,6 +314,19 @@ class _TareasInicioState extends State<TareasInicio> {
               Navigator.push(context, MaterialPageRoute(builder: (_) => MoreOptions()));
               return;
             }
+            if (i == 0) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => EisenhowerScreen(
+                    controller: _controller,
+                    onAddTask: (t) async => await _guardarTarea(t),
+                  ),
+                ),
+              );
+              return;
+            }
+
             setState(() => _selectedIndex = i);
           },
           coloresDisponibles: coloresDisponibles,
