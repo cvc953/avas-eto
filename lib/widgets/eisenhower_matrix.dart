@@ -33,26 +33,77 @@ class EisenhowerMatrix extends StatelessWidget {
         children: [
           Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          Text(
-            '${items.length} tareas',
-            style: const TextStyle(color: Colors.grey),
-          ),
-        ],
-      ),
-    );
-  }
+        Widget _header(String roman, String title, Color color) {
+          return Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                child: Center(
+                  child: Text(roman, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        }
 
-  @override
-  Widget build(BuildContext context) {
-    final q1 = _filter(true, true); // Urgent & Important
-    final q2 = _filter(false, true); // Not Urgent & Important
-    final q3 = _filter(true, false); // Urgent & Not Important
-    final q4 = _filter(false, false); // Not Urgent & Not Important
-
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        Widget _quadrantContainer(BuildContext context, String roman, String title, Color color, List<Tarea> items) {
+          return Container(
+            margin: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade900,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _header(roman, title, color),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: items.isEmpty
+                      ? Center(child: Text('Sin tareas', style: TextStyle(color: Colors.grey[500])))
+                      : ListView.separated(
+                          padding: EdgeInsets.zero,
+                          itemCount: items.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final t = items[index];
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Checkbox(
+                                  value: t.completada,
+                                  onChanged: (_) {},
+                                  activeColor: color,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    t.title,
+                                    style: TextStyle(
+                                      color: t.completada ? Colors.grey : Colors.white,
+                                      decoration: t.completada ? TextDecoration.lineThrough : TextDecoration.none,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          );
+        }
         children: [
           const Text(
             'Matriz de Eisenhower',
