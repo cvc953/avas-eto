@@ -4,16 +4,13 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'services/notification_service.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'services/local_database.dart';
 import 'services/local_storage_service.dart';
 import 'services/tarea_repository.dart';
 import 'package:avas_eto/utils/permissions.dart';
-
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -35,19 +32,16 @@ void main() async {
       FirebaseMessaging.onBackgroundMessage(
         _firebaseMessagingBackgroundHandler,
       );
-
-      // Configuración de notificaciones
-      const AndroidInitializationSettings androidSettings =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
-      await flutterLocalNotificationsPlugin.initialize(
-        const InitializationSettings(android: androidSettings),
-      );
     } catch (e) {
       print('Error inicializando Firebase: $e');
     }
   }
 
   AppPermissions.Requestnotifications();
+
+  // Inicializar servicio de notificaciones (Awesome Notifications)
+  // Esto prepara canales y permisos dentro del servicio
+  NotificationService();
 
   // 2. Inicialización de la base de datos local
   final localDb = LocalDatabase();

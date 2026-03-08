@@ -3,7 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/tarea.dart';
 import '../services/local_storage_service.dart';
 import 'dart:async';
-import '../utils/tarea_helpers.dart';
+import '../mappers/tarea_mapper.dart';
+import '../services/notification_service.dart';
 
 class TareasRepository {
   final LocalStorageService localStorage;
@@ -14,17 +15,22 @@ class TareasRepository {
     if (online) {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
+        final data = TareaMapper.toFirestoreMap(tarea, clave);
+        data['userId'] = user.uid;
         final docRef = await FirebaseFirestore.instance
             .collection('tareas')
-            .add(tareaToFirestoreMap(tarea, clave)..['userId'] = user.uid);
+            .add(data);
 
         // Persist the generated Firestore ID locally to avoid duplicates
         final tareaConId = tarea.copyWith(id: docRef.id);
         await localStorage.saveTarea(tareaConId);
+        // Programar notificaciones para la tarea
+        await NotificationService().notifyTaskCreated(tareaConId);
         return;
       }
     }
     await localStorage.saveTarea(tarea);
+    await NotificationService().notifyTaskCreated(tarea);
   }
 
   Future<void> eliminar(Tarea tarea, bool online) async {
@@ -35,6 +41,7 @@ class TareasRepository {
           .delete();
     }
     await localStorage.deleteTarea(tarea.id);
+    await NotificationService().cancelNotifications(tarea);
   }
 
   Future<void> marcarCompletada(
@@ -52,5 +59,8 @@ class TareasRepository {
     }
 
     await localStorage.saveTarea(actualizada);
+    if (completada) {
+      await NotificationService().cancelNotifications(tarea);
+    }
   }
 }
