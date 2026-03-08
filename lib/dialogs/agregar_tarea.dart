@@ -203,39 +203,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 ],
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Color:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children:
-                    widget.availableColors.map((color) {
-                      return GestureDetector(
-                        onTap: () => setState(() => _colorSeleccionado = color),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border:
-                                _colorSeleccionado == color
-                                    ? Border.all(color: Colors.white, width: 3)
-                                    : null,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 2,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-              ),
             ],
           ),
         ),
