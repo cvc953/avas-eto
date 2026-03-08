@@ -85,7 +85,15 @@ class NotificationService {
   Future<void> cancelNotifications(Tarea tarea) async {
     final base = _baseIdFromTask(tarea);
     final ids = [1000, 2000, 3000, 4000].map((o) => base + o).toList();
-    await AwesomeNotifications().cancelNotifications(ids);
+    // Cancel any scheduled and delivered notifications for these ids.
+    for (var id in ids) {
+      try {
+        await AwesomeNotifications().cancelSchedule(id);
+      } catch (_) {}
+      try {
+        await AwesomeNotifications().cancel(id);
+      } catch (_) {}
+    }
   }
 
   Future<void> cancelAllNotifications() async {
