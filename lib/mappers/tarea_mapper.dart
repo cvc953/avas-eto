@@ -16,9 +16,10 @@ class TareaMapper {
       'hora': clave.split('-').last,
       'creadoEn': Timestamp.fromDate(tarea.fechaCreacion),
       'vencimiento': Timestamp.fromDate(tarea.fechaVencimiento),
-      'completadaEn': tarea.completada
-          ? Timestamp.fromDate(tarea.fechaCompletada)
-          : Timestamp.fromDate(DateTime.now()),
+      'completadaEn':
+          tarea.completada
+              ? Timestamp.fromDate(tarea.fechaCompletada)
+              : Timestamp.fromDate(DateTime.now()),
     };
   }
 
@@ -45,9 +46,12 @@ class TareaMapper {
         int.tryParse(data['color'] ?? 'FF000000', radix: 16) ?? 0xFF000000,
       ),
       completada: data['completada'] ?? false,
-      fechaCreacion: (data['creadoEn'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      fechaVencimiento: (data['vencimiento'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      fechaCompletada: (data['completadaEn'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      fechaCreacion:
+          (data['creadoEn'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      fechaVencimiento:
+          (data['vencimiento'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      fechaCompletada:
+          (data['completadaEn'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 

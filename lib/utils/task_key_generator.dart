@@ -26,7 +26,7 @@ class TaskKeyGenerator {
     try {
       final parts = key.split('-');
       if (parts.length != 5) return null;
-      
+
       return DateTime(
         int.parse(parts[0]), // year
         int.parse(parts[1]), // month

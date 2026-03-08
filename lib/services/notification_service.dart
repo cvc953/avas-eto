@@ -13,21 +13,17 @@ class NotificationService {
   }
 
   Future<void> _initialize() async {
-    await AwesomeNotifications().initialize(
-      null,
-      [
-        NotificationChannel(
-          channelKey: 'tareas_channel',
-          channelName: 'Notificaciones de Tareas',
-          channelDescription: 'Canal para notificaciones de tareas',
-          defaultColor: Colors.deepPurple,
-          importance: NotificationImportance.Max,
-          playSound: true,
-          enableVibration: true,
-        ),
-      ],
-      debug: false,
-    );
+    await AwesomeNotifications().initialize(null, [
+      NotificationChannel(
+        channelKey: 'tareas_channel',
+        channelName: 'Notificaciones de Tareas',
+        channelDescription: 'Canal para notificaciones de tareas',
+        defaultColor: Colors.deepPurple,
+        importance: NotificationImportance.Max,
+        playSound: true,
+        enableVibration: true,
+      ),
+    ], debug: false);
   }
 
   int _baseIdFromTask(Tarea tarea) {
@@ -63,7 +59,9 @@ class NotificationService {
     }
 
     for (var minutesOffset in chosenOffsets) {
-      final scheduled = tarea.fechaVencimiento.add(Duration(minutes: minutesOffset));
+      final scheduled = tarea.fechaVencimiento.add(
+        Duration(minutes: minutesOffset),
+      );
       if (scheduled.isBefore(DateTime.now())) continue;
 
       final id = base + (offsets[minutesOffset] ?? 0);
