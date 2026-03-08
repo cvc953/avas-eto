@@ -74,7 +74,7 @@ class TareasRepository {
   final TareaRepository _inner;
 
   TareasRepository(this.localStorage)
-      : _inner = TareaRepository(FirebaseFirestore.instance, localStorage);
+    : _inner = TareaRepository(FirebaseFirestore.instance, localStorage);
 
   Future<void> guardar(Tarea tarea, String clave, bool online) async {
     if (online) {
@@ -82,7 +82,9 @@ class TareasRepository {
       if (user != null) {
         final data = TareaMapper.toFirestoreMap(tarea, clave);
         data['userId'] = user.uid;
-        final docRef = await FirebaseFirestore.instance.collection('tareas').add(data);
+        final docRef = await FirebaseFirestore.instance
+            .collection('tareas')
+            .add(data);
 
         final tareaConId = tarea.copyWith(id: docRef.id);
         await localStorage.saveTarea(tareaConId);
@@ -98,19 +100,29 @@ class TareasRepository {
   Future<void> eliminar(Tarea tarea, bool online) async {
     if (online && tarea.id != null && tarea.id.isNotEmpty) {
       try {
-        await FirebaseFirestore.instance.collection('tareas').doc(tarea.id).delete();
+        await FirebaseFirestore.instance
+            .collection('tareas')
+            .doc(tarea.id)
+            .delete();
       } catch (_) {}
     }
     await localStorage.deleteTarea(tarea.id);
     await NotificationService().cancelNotifications(tarea);
   }
 
-  Future<void> marcarCompletada(Tarea tarea, bool completada, bool online) async {
+  Future<void> marcarCompletada(
+    Tarea tarea,
+    bool completada,
+    bool online,
+  ) async {
     final actualizada = tarea.copyWith(completada: completada);
 
     if (online && tarea.id != null && tarea.id.isNotEmpty) {
       try {
-        await FirebaseFirestore.instance.collection('tareas').doc(tarea.id).update({'completada': completada});
+        await FirebaseFirestore.instance
+            .collection('tareas')
+            .doc(tarea.id)
+            .update({'completada': completada});
       } catch (_) {}
     }
 
