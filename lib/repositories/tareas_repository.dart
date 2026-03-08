@@ -82,6 +82,25 @@ class TareasRepository {
       if (user != null) {
         final data = TareaMapper.toFirestoreMap(tarea, clave);
         data['userId'] = user.uid;
+
+        // If the tarea already has an id, update the existing document.
+        if (tarea.id.isNotEmpty) {
+          try {
+            await FirebaseFirestore.instance
+                .collection('tareas')
+                .doc(tarea.id)
+                .set(data);
+            // Ensure local store is updated and re-schedule notifications.
+            await localStorage.saveTarea(tarea);
+            await NotificationService().cancelNotifications(tarea);
+            await NotificationService().notifyTaskCreated(tarea);
+            return;
+          } catch (e) {
+            print('Error actualizando tarea en Firestore: $e');
+          }
+        }
+
+        // Otherwise create a new document and persist the generated id.
         final docRef = await FirebaseFirestore.instance
             .collection('tareas')
             .add(data);
@@ -93,7 +112,9 @@ class TareasRepository {
       }
     }
 
+    // Offline or no user: persist locally and schedule notifications.
     await localStorage.saveTarea(tarea);
+    await NotificationService().cancelNotifications(tarea);
     await NotificationService().notifyTaskCreated(tarea);
   }
 
@@ -128,7 +149,8 @@ class TareasRepository {
 
     await localStorage.saveTarea(actualizada);
     if (completada) {
-      await NotificationService().cancelNotifications(tarea);
+      // Use the updated tarea (same id) to cancel any scheduled notifications.
+      await NotificationService().cancelNotifications(actualizada);
     }
   }
 }
