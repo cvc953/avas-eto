@@ -1,0 +1,51 @@
+name: Build APK and upload artifact
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'release/**'
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+
+      - name: Accept Android SDK licenses
+        run: |
+          yes | sdkmanager --licenses || true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Build debug APK
+        run: flutter build apk --debug
+
+      - name: Collect debug APK
+        run: ls -la build/app/outputs/flutter-apk/app-debug.apk || true
+
+      - name: Upload debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-debug-${{ github.ref_name }}-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-debug.apk
