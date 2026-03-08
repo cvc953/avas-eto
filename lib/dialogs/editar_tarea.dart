@@ -5,13 +5,10 @@ import '../models/tarea.dart';
 class EditTaskDialog extends StatefulWidget {
   final Tarea tarea;
   final Function(Tarea, String) onSave;
-  final List<Color> availableColors;
-
   const EditTaskDialog({
     super.key,
     required this.tarea,
     required this.onSave,
-    required this.availableColors,
   });
 
   @override
@@ -188,34 +185,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               ),
               const SizedBox(height: 16),
 
-              const Text(
-                'Color:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children:
-                    widget.availableColors.map((color) {
-                      final isSelected = _colorSeleccionado == color;
-                      return GestureDetector(
-                        onTap: () => setState(() => _colorSeleccionado = color),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border:
-                                isSelected
-                                    ? Border.all(color: Colors.white, width: 3)
-                                    : null,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-              ),
+              const SizedBox(height: 8),
             ],
           ),
         ),

@@ -172,14 +172,12 @@ class _TareasInicioState extends State<TareasInicio> {
 
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder:
-          (context) => EditTaskDialog(
-            tarea: tareaActual,
-            onSave: (tareaEditada, clave) {
-              Navigator.pop(context, {'tarea': tareaEditada, 'clave': clave});
-            },
-            availableColors: coloresDisponibles,
-          ),
+      builder: (context) => EditTaskDialog(
+        tarea: tareaActual,
+        onSave: (tareaEditada, clave) {
+          Navigator.pop(context, {'tarea': tareaEditada, 'clave': clave});
+        },
+      ),
     );
 
     if (result != null) {
@@ -205,7 +203,6 @@ class _TareasInicioState extends State<TareasInicio> {
       context: context,
       onSave: (tarea, clave) => _guardarTarea(tarea),
       initialDate: DateTime.now(),
-      availableColors: coloresDisponibles,
     );
   }
 

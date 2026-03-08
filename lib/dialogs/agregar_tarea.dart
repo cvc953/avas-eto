@@ -5,13 +5,11 @@ import '../models/tarea.dart';
 class AddTaskDialog extends StatefulWidget {
   final Function(Tarea, String) onSave;
   final DateTime initialDate;
-  final List<Color> availableColors;
 
   const AddTaskDialog({
     super.key,
     required this.onSave,
     required this.initialDate,
-    required this.availableColors,
   });
 
   @override
@@ -34,9 +32,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     _tareaController = TextEditingController();
     _descripcionController = TextEditingController();
     // Seleccionar un color aleatorio
-    _colorSeleccionado =
-        widget.availableColors[DateTime.now().millisecond %
-            widget.availableColors.length];
+    _colorSeleccionado = Colors.blueAccent;
     _selectedTime = _calculateInitialTime();
     _selectedDate = widget.initialDate;
     _prioridadSeleccionada = 'Media';
@@ -232,15 +228,12 @@ Future<void> showAddTaskDialog({
   required BuildContext context,
   required Function(Tarea, String) onSave,
   required DateTime initialDate,
-  required List<Color> availableColors,
 }) async {
   await showDialog(
     context: context,
-    builder:
-        (context) => AddTaskDialog(
-          onSave: onSave,
-          initialDate: initialDate,
-          availableColors: availableColors,
-        ),
+    builder: (context) => AddTaskDialog(
+      onSave: onSave,
+      initialDate: initialDate,
+    ),
   );
 }
