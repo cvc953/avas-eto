@@ -43,6 +43,15 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Receivers required by awesome_notifications -->
+        <receiver android:name="me.carda.awesome_notifications.notifications.core.AwesomeNotificationReceiver"
+                  android:exported="true" />
+        <receiver android:name="me.carda.awesome_notifications.notifications.actions.ActionReceiver"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="NOTIFICATION_ACTION" />
+            </intent-filter>
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/tarea.dart';
 import 'package:intl/intl.dart';
-import '../utils/tarea_helpers.dart';
+import '../utils/tarea_utils.dart';
 
 class TareaCard extends StatelessWidget {
   final Tarea tarea;

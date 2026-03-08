@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/tarea.dart';
-import '../utils/tarea_helpers.dart';
+import '../mappers/tarea_mapper.dart';
 
 class TareasFirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -27,7 +27,7 @@ class TareasFirestoreService {
     if (userId == null) throw Exception('Usuario no autenticado');
 
     final docRef = await _firestore.collection('tareas').add({
-      ...tareaToFirestoreMap(tarea, fecha),
+      ...TareaMapper.toFirestoreMap(tarea, fecha),
       'creadoEn': FieldValue.serverTimestamp(),
       'userId': userId,
     });
@@ -42,7 +42,7 @@ class TareasFirestoreService {
     await _firestore
         .collection('tareas')
         .doc(tarea.id)
-        .update(tareaToFirestoreMap(tarea, fecha));
+        .update(TareaMapper.toFirestoreMap(tarea, fecha));
   }
 
   /// Marca una tarea como completada
