@@ -6,6 +6,7 @@ import 'package:avas_eto/services/conectividad_service.dart';
 import 'package:avas_eto/utils/tareas_location_helper.dart';
 import '../dialogs/agregar_tarea.dart';
 import 'package:flutter/material.dart';
+import 'package:avas_eto/screens/more_options.dart';
 import '../models/tarea.dart';
 import '../dialogs/editar_tarea.dart';
 import '../widgets/bottom_navigation_bar.dart';
