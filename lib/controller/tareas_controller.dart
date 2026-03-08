@@ -37,10 +37,11 @@ class TareasController {
   }
 
   List<Tarea> filtrar(bool completadas) {
-    final list = tareas.values
-        .expand((e) => e)
-        .where((t) => t.completada == completadas)
-        .toList();
+    final list =
+        tareas.values
+            .expand((e) => e)
+            .where((t) => t.completada == completadas)
+            .toList();
 
     if (_ordenActual == 'reciente') {
       list.sort((a, b) => b.fechaCreacion.compareTo(a.fechaCreacion));
