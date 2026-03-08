@@ -11,6 +11,7 @@ class TareasController {
 
   final Map<String, List<Tarea>> tareas = {};
   final Set<Tarea> tareasExpandida = {};
+  String _ordenActual = 'reciente';
 
   TareasController(this._repository, this._localStorage, this._conectividad);
 
@@ -36,10 +37,24 @@ class TareasController {
   }
 
   List<Tarea> filtrar(bool completadas) {
-    return tareas.values
+    final list = tareas.values
         .expand((e) => e)
         .where((t) => t.completada == completadas)
         .toList();
+
+    if (_ordenActual == 'reciente') {
+      list.sort((a, b) => b.fechaCreacion.compareTo(a.fechaCreacion));
+    } else if (_ordenActual == 'prioridad') {
+      final prioridadValor = {'Alta': 3, 'Media': 2, 'Baja': 1};
+      list.sort((a, b) {
+        final valA = prioridadValor[a.prioridad] ?? 0;
+        final valB = prioridadValor[b.prioridad] ?? 0;
+        if (valA != valB) return valB.compareTo(valA);
+        return a.fechaVencimiento.compareTo(b.fechaVencimiento);
+      });
+    }
+
+    return list;
   }
 
   void toggleExpandida(Tarea tarea) {
@@ -51,18 +66,7 @@ class TareasController {
   }
 
   void ordenar(String tipoOrdenamiento) {
-    for (var lista in tareas.values) {
-      if (tipoOrdenamiento == 'reciente') {
-        lista.sort((a, b) => b.fechaCreacion.compareTo(a.fechaCreacion));
-      } else if (tipoOrdenamiento == 'prioridad') {
-        final prioridadValor = {'Alta': 3, 'Media': 2, 'Baja': 1};
-        lista.sort((a, b) {
-          final valA = prioridadValor[a.prioridad] ?? 0;
-          final valB = prioridadValor[b.prioridad] ?? 0;
-          return valB.compareTo(valA);
-        });
-      }
-    }
+    _ordenActual = tipoOrdenamiento;
   }
 
   Future<void> guardar(Tarea tarea, String clave, bool online) async {
