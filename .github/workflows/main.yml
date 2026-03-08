@@ -4,6 +4,8 @@ on:
       - main
       - master
   push:
+    tags:
+      - 'v*.*.*'
     branches:
       - main
       - master
@@ -42,7 +44,6 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: "build/app/outputs/apk/release/*"
-          tag: v1.0.${{ github.run_number }}
           token: ${{ secrets.TOKEN }}
 
       - name: Decode keystore
