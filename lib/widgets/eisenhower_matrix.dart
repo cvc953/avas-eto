@@ -25,46 +25,65 @@ class EisenhowerMatrix extends StatelessWidget {
   Widget _taskRow(BuildContext context, Tarea tarea, Color accent) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 22,
-            height: 22,
-            child: Checkbox(
-              value: tarea.completada,
-              onChanged: (value) {
-                if (value == null || onToggle == null) return;
-                onToggle!.call(tarea, value);
-              },
-              side: BorderSide(
-                color: tarea.completada ? Colors.grey.shade700 : accent,
-                width: 1.6,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: BoxDecoration(
+          color:
+              tarea.completada ? Colors.grey.withAlpha(20) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 180),
+          opacity: tarea.completada ? 0.75 : 1,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 22,
+                height: 22,
+                child: Checkbox(
+                  value: tarea.completada,
+                  onChanged: (value) {
+                    if (value == null || onToggle == null) return;
+                    onToggle!.call(tarea, value);
+                  },
+                  side: BorderSide(
+                    color: tarea.completada ? Colors.grey.shade700 : accent,
+                    width: 1.6,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  activeColor: Colors.grey.shade800,
+                  checkColor: Colors.grey.shade300,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+              const SizedBox(width: 10),
+              Expanded(
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  style: TextStyle(
+                    color:
+                        tarea.completada ? Colors.grey.shade600 : Colors.white,
+                    fontSize: 20,
+                    decoration:
+                        tarea.completada
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                  ),
+                  child: Text(
+                    tarea.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
-              activeColor: Colors.grey.shade800,
-              checkColor: Colors.grey.shade300,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              tarea.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: tarea.completada ? Colors.grey.shade600 : Colors.white,
-                fontSize: 20,
-                decoration:
-                    tarea.completada
-                        ? TextDecoration.lineThrough
-                        : TextDecoration.none,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -99,7 +118,7 @@ class EisenhowerMatrix extends StatelessWidget {
                   style: const TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.w700,
-                    fontSize: 14,
+                    fontSize: 12,
                   ),
                 ),
               ),
