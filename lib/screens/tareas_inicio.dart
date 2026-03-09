@@ -323,7 +323,11 @@ class _TareasInicioState extends State<TareasInicio> {
               // Más -> push MoreOptions
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => MoreOptions()),
+                MaterialPageRoute(
+                  builder: (_) => MoreOptions(
+                    coloresDisponibles: coloresDisponibles,
+                  ),
+                ),
               );
               return;
             }
