@@ -9,7 +9,6 @@ import '../models/tarea.dart';
 import '../dialogs/editar_tarea.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import '../widgets/eisenhower_matrix.dart';
-import '../widgets/buscar_tareas.dart';
 import 'tareas_tab_view.dart';
 
 class TareasInicio extends StatefulWidget {
@@ -190,14 +189,6 @@ class _TareasInicioState extends State<TareasInicio> {
     );
   }
 
-  void _buscarTareas() {
-    if (_controller == null) return;
-    showSearch(
-      context: context,
-      delegate: TareaSearchDelegate(tareas: _controller!.tareas),
-    );
-  }
-
   void _onEliminarTarea(Tarea tarea) async {
     if (!mounted || _controller == null) return;
 
@@ -254,8 +245,15 @@ class _TareasInicioState extends State<TareasInicio> {
   Widget build(BuildContext context) {
     final List<String> tabs = <String>['Pendientes', 'Completadas'];
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
       child: DefaultTabController(
         length: tabs.length,
         child: Scaffold(

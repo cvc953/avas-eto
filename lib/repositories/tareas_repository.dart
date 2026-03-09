@@ -18,7 +18,7 @@ class TareaRepository {
 
     if (_firestore != null) {
       try {
-        await _firestore!.collection('tareas').doc(tarea.id).set(tarea.toMap());
+        await _firestore.collection('tareas').doc(tarea.id).set(tarea.toMap());
       } catch (e) {
         print('Error al sincronizar con Firestore: $e');
       }
@@ -31,7 +31,7 @@ class TareaRepository {
     }
 
     try {
-      final snapshot = await _firestore!.collection('tareas').get();
+      final snapshot = await _firestore.collection('tareas').get();
       final tareas = <Tarea>[];
 
       for (var doc in snapshot.docs) {
@@ -58,7 +58,7 @@ class TareaRepository {
 
     if (_firestore != null) {
       try {
-        await _firestore!.collection('tareas').doc(id).delete();
+        await _firestore.collection('tareas').doc(id).delete();
       } catch (e) {
         print('Error eliminando tarea de Firestore: $e');
       }
@@ -67,14 +67,11 @@ class TareaRepository {
 }
 
 /// Backwards-compatible wrapper providing the old `TareasRepository` API
-/// (guardar/eliminar/marcarCompletada) delegating to the canonical
-/// `TareaRepository` where appropriate.
+/// (guardar/eliminar/marcarCompletada).
 class TareasRepository {
   final LocalStorageService localStorage;
-  final TareaRepository _inner;
 
-  TareasRepository(this.localStorage)
-    : _inner = TareaRepository(FirebaseFirestore.instance, localStorage);
+  TareasRepository(this.localStorage);
 
   Future<void> guardar(Tarea tarea, String clave, bool online) async {
     if (online) {
@@ -119,7 +116,7 @@ class TareasRepository {
   }
 
   Future<void> eliminar(Tarea tarea, bool online) async {
-    if (online && tarea.id != null && tarea.id.isNotEmpty) {
+    if (online && tarea.id.isNotEmpty) {
       try {
         await FirebaseFirestore.instance
             .collection('tareas')
@@ -138,7 +135,7 @@ class TareasRepository {
   ) async {
     final actualizada = tarea.copyWith(completada: completada);
 
-    if (online && tarea.id != null && tarea.id.isNotEmpty) {
+    if (online && tarea.id.isNotEmpty) {
       try {
         await FirebaseFirestore.instance
             .collection('tareas')

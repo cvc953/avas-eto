@@ -170,8 +170,15 @@ class _MoreOptionsState extends State<MoreOptions> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
       child: StreamBuilder<User?>(
         stream: _authController.authStateChanges(),
         builder: (context, snapshot) {

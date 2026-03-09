@@ -132,8 +132,15 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
     final controller = Provider.of<TareasController>(context, listen: false);
     final tareas = controller.tareas.values.expand((e) => e).toList();
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
