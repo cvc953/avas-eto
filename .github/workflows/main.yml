@@ -2,6 +2,11 @@ name: Build and Release Android
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag para el release (ej: v1.1.1)'
+        required: true
+        type: string
   pull_request:
     branches:
       - main
@@ -87,11 +92,22 @@ jobs:
       - name: Build release APKs
         run: flutter build apk --release --split-per-abi
 
+      - name: Resolve release tag
+        id: release_tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.release_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish GitHub Release
         uses: ncipollo/release-action@v1
         with:
           artifacts: build/app/outputs/flutter-apk/*.apk
           token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.release_tag.outputs.tag }}
+          name: Release ${{ steps.release_tag.outputs.tag }}
           generateReleaseNotes: true
           bodyFile: CHANGELOG.md
           allowUpdates: true
