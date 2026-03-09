@@ -87,8 +87,8 @@ class EisenhowerMatrix extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 30,
-                height: 30,
+                width: 20,
+                height: 20,
                 decoration: BoxDecoration(
                   color: accent,
                   shape: BoxShape.circle,

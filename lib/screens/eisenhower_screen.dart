@@ -40,6 +40,18 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
     );
   }
 
+  Future<void> _handleToggle(Tarea tarea, bool completada) async {
+    if (widget.onToggle == null) return;
+
+    // Immediate visual feedback in the matrix.
+    if (mounted) setState(() {});
+
+    await widget.onToggle!(tarea, completada);
+
+    // Rebuild again after controller sync/persistence.
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TareasController>(context, listen: false);
@@ -55,7 +67,7 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
         ),
         automaticallyImplyLeading: false,
       ),
-      body: EisenhowerMatrix(tareas: tareas, onToggle: widget.onToggle),
+      body: EisenhowerMatrix(tareas: tareas, onToggle: _handleToggle),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAdd,
         backgroundColor: const Color(0xFF4E7BFF),
