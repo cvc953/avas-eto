@@ -165,42 +165,54 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 ),
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _tareaController,
-                decoration: const InputDecoration(
-                  labelText: 'Tarea*',
-                  hintText: 'Ej: Hacer presentación',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.zero),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1B1B1B) : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                maxLength: 50,
-                validator:
-                    (value) =>
-                        value?.trim().isEmpty ?? true
-                            ? 'Este campo es requerido'
-                            : null,
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _descripcionController,
-                decoration: const InputDecoration(
-                  labelText: 'Descripción',
-                  hintText: 'Detalles de la tarea',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.zero),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _tareaController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tarea*',
+                        hintText: 'Ej: Hacer presentación',
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        counterText: '',
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                      ),
+                      maxLength: 50,
+                      validator:
+                          (value) =>
+                              value?.trim().isEmpty ?? true
+                                  ? 'Este campo es requerido'
+                                  : null,
+                    ),
+                    Divider(height: 1, color: Theme.of(context).dividerColor),
+                    TextFormField(
+                      controller: _descripcionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Descripción',
+                        hintText: 'Detalles de la tarea',
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        counterText: '',
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                      ),
+                      maxLines: 2,
+                      maxLength: 200,
+                    ),
+                  ],
                 ),
-                maxLines: 2,
-                maxLength: 200,
               ),
               const SizedBox(height: 12),
 
