@@ -46,16 +46,29 @@ class TareaCard extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            decoration: tarea.completada ? TextDecoration.lineThrough : TextDecoration.none,
-                            color: tarea.completada ? Colors.grey : Theme.of(context).textTheme.titleMedium?.color,
+                            decoration:
+                                tarea.completada
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
+                            color:
+                                tarea.completada
+                                    ? Colors.grey
+                                    : Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium?.color,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          tarea.descripcion.isNotEmpty ? tarea.descripcion : 'Sin descripción',
+                          tarea.descripcion.isNotEmpty
+                              ? tarea.descripcion
+                              : 'Sin descripción',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[500],
+                          ),
                         ),
                       ],
                     ),
