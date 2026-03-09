@@ -172,8 +172,10 @@ class _TareasInicioState extends State<TareasInicio> {
   void editarTarea(int index, List<Tarea> lista, String claveActual) async {
     final tareaActual = lista[index];
 
-    final result = await showDialog<Map<String, dynamic>>(
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => EditTaskDialog(
         tarea: tareaActual,
         onSave: (tareaEditada, clave) {

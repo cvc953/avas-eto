@@ -138,78 +138,143 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                     ['Alta', 'Media', 'Baja'].map((prioridad) {
                       return DropdownMenuItem(
                         value: prioridad,
-                        child: Text(prioridad),
-                      );
-                    }).toList(),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () async {
-                      final pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: _selectedDate,
-                        firstDate: DateTime.now().subtract(
-                          const Duration(days: 365),
-                        ),
-                        lastDate: DateTime.now().add(const Duration(days: 365)),
-                      );
-                      if (pickedDate != null) {
-                        setState(() => _selectedDate = pickedDate);
-                      }
-                    },
-                    child: Text(
-                      'Fecha:\n ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () async {
-                      final pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime: _selectedTime,
-                      );
-                      if (pickedTime != null) {
-                        setState(() => _selectedTime = pickedTime);
-                      }
-                    },
-                    child: Text(
-                      "Hora:\n ${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                        // Bottom sheet style for editing
+                        return Container(
+                          padding: EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            top: 16,
+                            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                          ),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF121212),
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                          ),
+                          child: Form(
+                            key: _formKey,
+                            child: SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Center(
+                                    child: Container(
+                                      width: 40,
+                                      height: 4,
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      decoration: BoxDecoration(color: Colors.grey[700], borderRadius: BorderRadius.circular(4)),
+                                    ),
+                                  ),
+                                  const Text('Editar Tarea', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: _tareaController,
+                                    decoration: const InputDecoration(labelText: 'Tarea*', hintText: 'Ej: Hacer presentación'),
+                                    maxLength: 50,
+                                    validator: (value) => value?.trim().isEmpty ?? true ? 'Este campo es requerido' : null,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextFormField(
+                                    controller: _descripcionController,
+                                    decoration: const InputDecoration(labelText: 'Descripción', hintText: 'Detalles de la tarea'),
+                                    maxLines: 2,
+                                    maxLength: 200,
+                                  ),
+                                  const SizedBox(height: 12),
 
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _isSaving ? null : () => Navigator.pop(context),
-          child: const Text('Cancelar', style: TextStyle(color: Colors.white)),
-        ),
-        TextButton(
-          onPressed: _isSaving ? null : _saveTask,
-          child:
-              _isSaving
-                  ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                  : const Text(
-                    'Guardar',
-                    style: TextStyle(color: Colors.blueAccent),
-                  ),
-        ),
-      ],
-    );
-  }
-}
+                                  // Priority and Date side-by-side
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 2,
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('Prioridad:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                            const SizedBox(height: 6),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                                              decoration: BoxDecoration(color: Colors.grey[850], borderRadius: BorderRadius.circular(8)),
+                                              child: DropdownButtonHideUnderline(
+                                                child: DropdownButton<String>(
+                                                  isExpanded: true,
+                                                  value: _prioridadSeleccionada,
+                                                  dropdownColor: Colors.grey[900],
+                                                  onChanged: (value) {
+                                                    if (value != null) setState(() => _prioridadSeleccionada = value);
+                                                  },
+                                                  items: ['Alta', 'Media', 'Baja'].map((prioridad) => DropdownMenuItem(value: prioridad, child: Text(prioridad, style: const TextStyle(color: Colors.white)))).toList(),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        flex: 1,
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('Fecha', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                            const SizedBox(height: 6),
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[850], padding: const EdgeInsets.symmetric(vertical: 12)),
+                                              onPressed: () async {
+                                                final pickedDate = await showDatePicker(
+                                                  context: context,
+                                                  initialDate: _selectedDate,
+                                                  firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                                                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                                                );
+                                                if (pickedDate != null && mounted) setState(() => _selectedDate = pickedDate);
+                                              },
+                                              child: Text(DateFormat('dd/MM/yyyy').format(_selectedDate), style: const TextStyle(color: Colors.white)),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 12),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('Hora', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                      const SizedBox(height: 6),
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[850], padding: const EdgeInsets.symmetric(vertical: 12)),
+                                        onPressed: () async {
+                                          final pickedTime = await showTimePicker(context: context, initialTime: _selectedTime);
+                                          if (pickedTime != null && mounted) setState(() => _selectedTime = pickedTime);
+                                        },
+                                        child: Text('${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}', style: const TextStyle(color: Colors.white)),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 18),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextButton(
+                                          onPressed: _isSaving ? null : () => Navigator.pop(context),
+                                          child: const Text('Cancelar', style: TextStyle(color: Colors.white)),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, padding: const EdgeInsets.symmetric(vertical: 14)),
+                                          onPressed: _isSaving ? null : _saveTask,
+                                          child: _isSaving ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Guardar', style: TextStyle(color: Colors.white)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
