@@ -3,6 +3,7 @@ import '../models/tarea.dart';
 
 class EisenhowerMatrix extends StatelessWidget {
   final List<Tarea> tareas;
+
   /// Callback invoked when a task is toggled (marcar/desmarcar completada).
   /// The callback receives the tarea and the new `completada` value.
   final Future<void> Function(Tarea tarea, bool completada)? onToggle;
@@ -14,12 +15,21 @@ class EisenhowerMatrix extends StatelessWidget {
     return tareas.where((t) {
       final prioridad = t.prioridad.toLowerCase();
       final importantMatch = prioridad == 'alta' || prioridad == 'media';
-      final urgentMatch = t.fechaVencimiento.isBefore(now.add(const Duration(hours: 24)));
-      return (urgent ? urgentMatch : !urgentMatch) && (important ? importantMatch : !importantMatch);
+      final urgentMatch = t.fechaVencimiento.isBefore(
+        now.add(const Duration(hours: 24)),
+      );
+      return (urgent ? urgentMatch : !urgentMatch) &&
+          (important ? importantMatch : !importantMatch);
     }).toList();
   }
 
-  Widget _quadrantContainer(BuildContext context, String roman, String title, Color color, List<Tarea> items) {
+  Widget _quadrantContainer(
+    BuildContext context,
+    String roman,
+    String title,
+    Color color,
+    List<Tarea> items,
+  ) {
     return Container(
       margin: const EdgeInsets.all(6),
       padding: const EdgeInsets.all(10),
@@ -37,52 +47,79 @@ class EisenhowerMatrix extends StatelessWidget {
                 height: 28,
                 decoration: BoxDecoration(color: color, shape: BoxShape.circle),
                 child: Center(
-                  child: Text(roman, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    roman,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
-              Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: items.isEmpty
-                ? Center(child: Text('Sin tareas', style: TextStyle(color: Colors.grey[500])))
-                : ListView.separated(
-                    padding: EdgeInsets.zero,
-                    itemCount: items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final t = items[index];
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Checkbox(
-                            value: t.completada,
-                            onChanged: (val) async {
-                              if (onToggle != null) {
-                                await onToggle!(t, val ?? false);
-                              }
-                            },
-                            activeColor: color,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              t.title,
-                              style: TextStyle(
-                                color: t.completada ? Colors.grey : Colors.white,
-                                decoration: t.completada ? TextDecoration.lineThrough : TextDecoration.none,
+            child:
+                items.isEmpty
+                    ? Center(
+                      child: Text(
+                        'Sin tareas',
+                        style: TextStyle(color: Colors.grey[500]),
+                      ),
+                    )
+                    : ListView.separated(
+                      padding: EdgeInsets.zero,
+                      itemCount: items.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final t = items[index];
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Checkbox(
+                              value: t.completada,
+                              onChanged: (val) async {
+                                if (onToggle != null) {
+                                  await onToggle!(t, val ?? false);
+                                }
+                              },
+                              activeColor: color,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                t.title,
+                                style: TextStyle(
+                                  color:
+                                      t.completada ? Colors.grey : Colors.white,
+                                  decoration:
+                                      t.completada
+                                          ? TextDecoration.lineThrough
+                                          : TextDecoration.none,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
           ),
         ],
       ),
@@ -114,15 +151,30 @@ class EisenhowerMatrix extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          AspectRatio(
-            aspectRatio: 2,
+          Expanded(
             child: Row(
               children: [
                 Expanded(
                   child: Column(
                     children: [
-                      Expanded(child: _quadrantContainer(context, 'I', 'Urgente e Importante', Colors.red, q1)),
-                      Expanded(child: _quadrantContainer(context, 'II', 'No urgente e Importante', Colors.orange, q2)),
+                      Expanded(
+                        child: _quadrantContainer(
+                          context,
+                          'I',
+                          'Urgente e Importante',
+                          Colors.red,
+                          q1,
+                        ),
+                      ),
+                      Expanded(
+                        child: _quadrantContainer(
+                          context,
+                          'II',
+                          'No urgente e Importante',
+                          Colors.orange,
+                          q2,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -130,8 +182,24 @@ class EisenhowerMatrix extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: [
-                      Expanded(child: _quadrantContainer(context, 'III', 'Urgente y No importante', Colors.yellow, q3)),
-                      Expanded(child: _quadrantContainer(context, 'IV', 'No urgente y No importante', Colors.green, q4)),
+                      Expanded(
+                        child: _quadrantContainer(
+                          context,
+                          'III',
+                          'Urgente y No importante',
+                          Colors.yellow,
+                          q3,
+                        ),
+                      ),
+                      Expanded(
+                        child: _quadrantContainer(
+                          context,
+                          'IV',
+                          'No urgente y No importante',
+                          Colors.green,
+                          q4,
+                        ),
+                      ),
                     ],
                   ),
                 ),

@@ -193,7 +193,7 @@ class _TareasInicioState extends State<TareasInicio> {
         await _eliminarTarea(index, claveActual);
         return;
       }
-      
+
       final tareaEditada = result['tarea'] as Tarea;
       final nuevaClave = result['clave'] as String;
 
@@ -335,7 +335,11 @@ class _TareasInicioState extends State<TareasInicio> {
                       (_) => EisenhowerScreen(
                         controller: _controller,
                         onAddTask: (t) async => await _guardarTarea(t),
-                        onToggle: (tarea, completada) async => await _marcarCompletada(tarea, completada),
+                        onToggle:
+                            (tarea, completada) async =>
+                                await _marcarCompletada(tarea, completada),
+                        coloresDisponibles: coloresDisponibles,
+                        currentIndex: 0,
                       ),
                 ),
               );
@@ -354,7 +358,9 @@ class _TareasInicioState extends State<TareasInicio> {
     if (_selectedIndex == 0) {
       return EisenhowerMatrix(
         tareas: _controller.tareas.values.expand((e) => e).toList(),
-        onToggle: (tarea, completada) async => await _marcarCompletada(tarea, completada),
+        onToggle:
+            (tarea, completada) async =>
+                await _marcarCompletada(tarea, completada),
       );
     }
 
