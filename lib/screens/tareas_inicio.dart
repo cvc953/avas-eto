@@ -329,6 +329,7 @@ class _TareasInicioState extends State<TareasInicio> {
                       (_) => EisenhowerScreen(
                         controller: _controller,
                         onAddTask: (t) async => await _guardarTarea(t),
+                        onToggle: (tarea, completada) async => await _marcarCompletada(tarea, completada),
                       ),
                 ),
               );
@@ -347,6 +348,7 @@ class _TareasInicioState extends State<TareasInicio> {
     if (_selectedIndex == 0) {
       return EisenhowerMatrix(
         tareas: _controller.tareas.values.expand((e) => e).toList(),
+        onToggle: (tarea, completada) async => await _marcarCompletada(tarea, completada),
       );
     }
 

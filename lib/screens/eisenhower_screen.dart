@@ -7,11 +7,13 @@ import '../models/tarea.dart';
 class EisenhowerScreen extends StatefulWidget {
   final TareasController controller;
   final Future<void> Function(Tarea tarea) onAddTask;
+  final Future<void> Function(Tarea tarea, bool completada)? onToggle;
 
   const EisenhowerScreen({
     super.key,
     required this.controller,
     required this.onAddTask,
+    this.onToggle,
   });
 
   @override
@@ -45,7 +47,7 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
         title: const Text('Matriz de Eisenhower'),
         automaticallyImplyLeading: true,
       ),
-      body: EisenhowerMatrix(tareas: tareas),
+      body: EisenhowerMatrix(tareas: tareas, onToggle: widget.onToggle),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAdd,
         backgroundColor: Colors.blueAccent,
