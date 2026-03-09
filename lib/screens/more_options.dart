@@ -1,6 +1,5 @@
 import 'package:avas_eto/screens/about_screen.dart';
 import 'package:avas_eto/screens/login.dart';
-import 'package:avas_eto/widgets/toggle_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/bottom_navigation_bar.dart';
@@ -147,18 +146,16 @@ class _MoreOptionsState extends State<MoreOptions> {
                     'Notificaciones',
                     style: TextStyle(color: Colors.white),
                   ),
-                  onTap: () async {
-                    final newValue = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => ToggleNotifications(),
-                    );
-                    if (newValue != null) {
-                      await _settingsController.setEnabled(newValue);
+                  trailing: Switch(
+                    value: notificationsEnabled,
+                    onChanged: (bool value) async {
+                      await _settingsController.setEnabled(value);
                       setState(() {
-                        notificationsEnabled = newValue;
+                        notificationsEnabled = value;
                       });
-                    }
-                  },
+                    },
+                    activeThumbColor: Colors.blueAccent,
+                  ),
                 ),
                 ListTile(
                   leading: Icon(Icons.info, color: Colors.white),

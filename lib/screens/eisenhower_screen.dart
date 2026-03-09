@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:avas_eto/controller/tareas_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:avas_eto/dialogs/agregar_tarea.dart';
+import 'package:avas_eto/dialogs/editar_tarea.dart';
 import 'package:avas_eto/screens/tareas_inicio.dart';
+import 'package:avas_eto/utils/task_key_generator.dart';
 import 'package:avas_eto/widgets/eisenhower_matrix.dart';
 import 'package:avas_eto/widgets/bottom_navigation_bar.dart';
 import 'package:avas_eto/screens/more_options.dart';
@@ -53,6 +55,58 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _openEditTask(Tarea tarea) async {
+    if (!mounted) return;
+
+    final controller = Provider.of<TareasController>(context, listen: false);
+
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (sheetContext) => EditTaskDialog(
+            tarea: tarea,
+            onSave: (tareaEditada, clave) {
+              Navigator.pop(sheetContext, {
+                'tarea': tareaEditada,
+                'clave': clave,
+              });
+            },
+            onDelete: () {
+              Navigator.pop(sheetContext, {'delete': true});
+            },
+          ),
+    );
+
+    if (result == null || !mounted) return;
+
+    try {
+      if (result['delete'] == true) {
+        await controller.eliminar(tarea, controller.isOnline);
+      } else {
+        final tareaEditada = result['tarea'] as Tarea;
+        final nuevaClave = result['clave'] as String;
+        final claveVieja = TaskKeyGenerator.generateKeyFromDateTime(
+          tarea.fechaVencimiento,
+        );
+
+        if (nuevaClave == claveVieja) {
+          await controller.actualizar(tareaEditada, claveVieja);
+        } else {
+          await controller.moverTarea(tareaEditada, claveVieja, nuevaClave);
+        }
+      }
+
+      if (mounted) setState(() {});
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al editar tarea: ${e.toString()}')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<TareasController>(context, listen: false);
@@ -68,7 +122,11 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
         ),
         automaticallyImplyLeading: false,
       ),
-      body: EisenhowerMatrix(tareas: tareas, onToggle: _handleToggle),
+      body: EisenhowerMatrix(
+        tareas: tareas,
+        onToggle: _handleToggle,
+        onTapTask: _openEditTask,
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAdd,
         backgroundColor: const Color(0xFF4E7BFF),

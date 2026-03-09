@@ -27,6 +27,37 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   late String _prioridadSeleccionada;
   bool _isSaving = false;
 
+  Future<void> _confirmDelete() async {
+    if (widget.onDelete == null || _isSaving) return;
+
+    final confirmado =
+        await showDialog<bool>(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: const Text('Confirmar eliminación'),
+                content: const Text('¿Seguro que deseas eliminar esta tarea?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Cancelar'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text(
+                      'Eliminar',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
+              ),
+        ) ??
+        false;
+
+    if (!confirmado || !mounted) return;
+    widget.onDelete!();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -350,13 +381,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               if (widget.onDelete != null) ...[
                 const SizedBox(height: 12),
                 TextButton(
-                  onPressed:
-                      _isSaving
-                          ? null
-                          : () {
-                            // Call onDelete directly - it will close the dialog
-                            widget.onDelete!();
-                          },
+                  onPressed: _isSaving ? null : _confirmDelete,
                   child: const Text(
                     'Eliminar Tarea',
                     style: TextStyle(color: Colors.red),

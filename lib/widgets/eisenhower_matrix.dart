@@ -4,8 +4,14 @@ import '../models/tarea.dart';
 class EisenhowerMatrix extends StatelessWidget {
   final List<Tarea> tareas;
   final Future<void> Function(Tarea tarea, bool completada)? onToggle;
+  final void Function(Tarea tarea)? onTapTask;
 
-  const EisenhowerMatrix({super.key, required this.tareas, this.onToggle});
+  const EisenhowerMatrix({
+    super.key,
+    required this.tareas,
+    this.onToggle,
+    this.onTapTask,
+  });
 
   List<Tarea> _filter(bool urgent, bool important) {
     // Simple heuristic: prioridad Alta -> important, fechaVencimiento próxima -> urgent
@@ -37,51 +43,55 @@ class EisenhowerMatrix extends StatelessWidget {
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 180),
           opacity: tarea.completada ? 0.75 : 1,
-          child: Row(
-            children: [
-              SizedBox(
-                width: 22,
-                height: 22,
-                child: Checkbox(
-                  value: tarea.completada,
-                  onChanged: (value) {
-                    if (value == null || onToggle == null) return;
-                    onToggle!.call(tarea, value);
-                  },
-                  side: BorderSide(
-                    color: tarea.completada ? Colors.grey.shade700 : accent,
-                    width: 1.6,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  activeColor: Colors.grey.shade800,
-                  checkColor: Colors.grey.shade300,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOut,
-                  style: TextStyle(
-                    color:
-                        tarea.completada ? Colors.grey.shade600 : Colors.white,
-                    fontSize: 20,
-                    decoration:
-                        tarea.completada
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none,
-                  ),
-                  child: Text(
-                    tarea.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: onTapTask == null ? null : () => onTapTask!(tarea),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: Checkbox(
+                    value: tarea.completada,
+                    onChanged: (value) {
+                      if (value == null || onToggle == null) return;
+                      onToggle!.call(tarea, value);
+                    },
+                    side: BorderSide(
+                      color: tarea.completada ? Colors.grey.shade700 : accent,
+                      width: 1.6,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    activeColor: Colors.grey.shade800,
+                    checkColor: Colors.grey.shade300,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    style: TextStyle(
+                      color:
+                          tarea.completada ? Colors.grey.shade600 : Colors.white,
+                      fontSize: 20,
+                      decoration:
+                          tarea.completada
+                              ? TextDecoration.lineThrough
+                              : TextDecoration.none,
+                    ),
+                    child: Text(
+                      tarea.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

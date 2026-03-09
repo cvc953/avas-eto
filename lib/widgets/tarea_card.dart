@@ -13,8 +13,23 @@ class TareaCard extends StatelessWidget {
     required this.onTap,
   });
 
+  Color _priorityColor(String prioridad) {
+    switch (prioridad) {
+      case 'Alta':
+        return const Color(0xFFFF5F6D);
+      case 'Media':
+        return const Color(0xFFFFBC1F);
+      case 'Baja':
+        return const Color(0xFF00D4B5);
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final priorityColor = _priorityColor(tarea.prioridad);
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOut,
@@ -47,7 +62,8 @@ class TareaCard extends StatelessWidget {
                       Checkbox(
                         value: tarea.completada,
                         onChanged: onCheck,
-                        activeColor: tarea.color,
+                        activeColor: priorityColor,
+                        side: BorderSide(color: priorityColor, width: 1.5),
                       ),
                       const SizedBox(width: 8),
                       Expanded(

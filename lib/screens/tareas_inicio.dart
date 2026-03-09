@@ -109,6 +109,8 @@ class _TareasInicioState extends State<TareasInicio> {
     if (result != null && mounted) {
       try {
         if (result['delete'] == true) {
+          _removeTaskOptimistic(tarea);
+          if (mounted) setState(() => _ordenarTareas());
           await _controller!.eliminar(tarea, _isOnline);
         } else {
           final tareaEditada = result['tarea'] as Tarea;
@@ -129,6 +131,27 @@ class _TareasInicioState extends State<TareasInicio> {
         debugPrint('Error procesando edición: $e');
         if (mounted) _mostrarError('Error al procesar: ${e.toString()}');
       }
+    }
+  }
+
+  void _removeTaskOptimistic(Tarea tarea) {
+    final mapa = _controller?.tareas;
+    if (mapa == null) return;
+
+    String? claveParaLimpiar;
+    for (final entry in mapa.entries) {
+      final originalLength = entry.value.length;
+      entry.value.removeWhere((t) => t.id == tarea.id);
+      if (entry.value.isEmpty && originalLength > 0) {
+        claveParaLimpiar = entry.key;
+      }
+      if (originalLength != entry.value.length) {
+        break;
+      }
+    }
+
+    if (claveParaLimpiar != null) {
+      mapa.remove(claveParaLimpiar);
     }
   }
 
