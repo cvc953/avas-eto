@@ -5,11 +5,7 @@ import 'package:flutter/gestures.dart';
 class AboutScreen extends StatelessWidget {
   final Future<void> Function(dynamic tarea)? onAddTask;
   final Future<void> Function(dynamic tarea, bool)? onToggle;
-  const AboutScreen({
-    super.key,
-    this.onAddTask,
-    this.onToggle,
-  });
+  const AboutScreen({super.key, this.onAddTask, this.onToggle});
 
   @override
   Widget build(BuildContext context) {

@@ -19,7 +19,7 @@ class MoreOptions extends StatefulWidget {
 
   const MoreOptions({
     super.key,
-    
+
     this.onAddTask,
     this.onToggle,
     this.authController,
