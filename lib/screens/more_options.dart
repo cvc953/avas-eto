@@ -7,7 +7,6 @@ import '../services/notifications_settings.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import 'eisenhower_screen.dart';
 import 'tareas_inicio.dart';
-import '../controller/tareas_controller.dart';
 
 class MoreOptions extends StatefulWidget {
   final dynamic controller; // TareasController (dynamic to avoid import cycles)
@@ -167,12 +166,6 @@ class _MoreOptionsState extends State<MoreOptions> {
             ),
           ),
           bottomNavigationBar: CustomBottomNavBar(
-            backgroundColor:
-                Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-            selectedItemColor:
-                Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
-            unselectedItemColor:
-                Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
             currentIndex: 2,
             onSelect: (i) {
               if (i == 0) {

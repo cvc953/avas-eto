@@ -3,6 +3,7 @@ import 'package:avas_eto/services/local_storage_service.dart';
 import 'package:avas_eto/repositories/tareas_repository.dart';
 import 'package:avas_eto/services/conectividad_service.dart';
 import 'package:avas_eto/utils/task_key_generator.dart';
+import 'package:avas_eto/services/local_database.dart';
 
 /// Controller que centraliza la lógica de negocio para las tareas.
 class TareasController {
@@ -15,6 +16,33 @@ class TareasController {
   String _ordenActual = 'reciente';
 
   TareasController(this._repository, this._localStorage, this._conectividad);
+
+  /// Crea e inicializa un controlador con los servicios internos.
+  /// Facilita mantener la construcción de servicios fuera de la UI.
+  static Future<TareasController> create() async {
+    final localDb = LocalDatabase();
+    final localStorage = LocalStorageService(localDb);
+    final conectividad = ConectividadService();
+    final repo = TareasRepository(localStorage);
+
+    final controller = TareasController(repo, localStorage, conectividad);
+    await controller.init();
+
+    return controller;
+  }
+
+  /// Expone el estado de conectividad actual.
+  bool get isOnline => _conectividad.isOnline;
+
+  /// Permite a la UI suscribirse a cambios de conectividad.
+  void setupConnectivityListener(void Function(bool) onChange) {
+    _conectividad.setupListener(onChange);
+  }
+
+  /// Limpia recursos asociados (p.ej. listeners).
+  void dispose() {
+    _conectividad.dispose();
+  }
 
   /// Carga inicial: prioriza local y deja que el repo sincronice si es necesario.
   Future<void> init() async {

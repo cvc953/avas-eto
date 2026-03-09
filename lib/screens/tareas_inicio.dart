@@ -1,8 +1,4 @@
 import 'package:avas_eto/controller/tareas_controller.dart';
-import 'package:avas_eto/repositories/tareas_repository.dart';
-import 'package:avas_eto/services/local_database.dart';
-import 'package:avas_eto/services/local_storage_service.dart';
-import 'package:avas_eto/services/conectividad_service.dart';
 import 'package:avas_eto/utils/tareas_location_helper.dart';
 import '../dialogs/agregar_tarea.dart';
 import 'package:flutter/material.dart';
@@ -28,12 +24,7 @@ class _TareasInicioState extends State<TareasInicio> {
   bool _isOnline = true;
   String _tipoOrdenamiento = 'reciente';
   int _selectedIndex = 1; // 0: Matriz, 1: Tareas, 2: Más
-
-  late final LocalStorageService _localStorage;
-  late final ConectividadService _conectividadService;
-  late final TareasRepository _repo;
   late final TareasController _controller;
-  final LocalDatabase _localDb = LocalDatabase();
 
   @override
   void initState() {
@@ -43,26 +34,18 @@ class _TareasInicioState extends State<TareasInicio> {
 
   @override
   void dispose() {
-    _conectividadService.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   Future<void> _initializeServices() async {
     try {
-      _localStorage = LocalStorageService(_localDb);
-      _conectividadService = ConectividadService();
-      _repo = TareasRepository(_localStorage);
-      _controller = TareasController(
-        _repo,
-        _localStorage,
-        _conectividadService,
-      );
+      _controller = await TareasController.create();
 
-      _conectividadService.setupListener((isOnline) {
+      _controller.setupConnectivityListener((isOnline) {
         setState(() => _isOnline = isOnline);
       });
 
-      await _controller.init();
       _controller.ordenar(_tipoOrdenamiento);
 
       if (mounted) setState(() {});
@@ -243,7 +226,7 @@ class _TareasInicioState extends State<TareasInicio> {
     return DefaultTabController(
       length: tabs.length,
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: NestedScrollView(
           headerSliverBuilder: (BuildContext context, InnerBoxIsScrolled) {
             return [
@@ -254,9 +237,9 @@ class _TareasInicioState extends State<TareasInicio> {
                 sliver: SliverAppBar(
                   backgroundColor: Colors.black,
                   automaticallyImplyLeading: false,
-                  title: const Text(
+                  title: Text(
                     'Tareas',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).appBarTheme.titleTextStyle,
                   ),
                   actions: [
                     PopupMenuButton<String>(

@@ -3,6 +3,7 @@ import 'package:avas_eto/controller/tareas_controller.dart';
 import 'package:avas_eto/dialogs/agregar_tarea.dart';
 import 'package:avas_eto/widgets/eisenhower_matrix.dart';
 import 'package:avas_eto/widgets/bottom_navigation_bar.dart';
+import 'package:avas_eto/screens/more_options.dart';
 import '../models/tarea.dart';
 
 class EisenhowerScreen extends StatefulWidget {
@@ -45,15 +46,15 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
     final tareas = widget.controller.tareas.values.expand((e) => e).toList();
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Matriz de Eisenhower'),
+        title: Text('Matriz de Eisenhower', style: Theme.of(context).appBarTheme.titleTextStyle),
         automaticallyImplyLeading: false,
       ),
       body: EisenhowerMatrix(tareas: tareas, onToggle: widget.onToggle),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAdd,
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Theme.of(context).floatingActionButtonTheme.backgroundColor,
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: CustomBottomNavBar(
@@ -61,8 +62,26 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
         onSelect: (i) {
           if (i == 1) {
             Navigator.pop(context);
-          } else if (i == 2) {
-            Navigator.pushReplacementNamed(context, '/more');
+            return;
+          }
+
+          if (i == 2) {
+            // Push MoreOptions and pass controller + callbacks so MoreOptions can act.
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MoreOptions(
+                  controller: widget.controller,
+                  onAddTask: (t) async => await widget.onAddTask(t),
+                  onToggle: (dynamic tarea, bool completada) async {
+                    if (widget.onToggle != null) {
+                      await widget.onToggle!(tarea as Tarea, completada);
+                    }
+                  },
+                ),
+              ),
+            );
+            return;
           }
         },
       ),
