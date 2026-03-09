@@ -116,21 +116,42 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                   width: 40,
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(color: Colors.grey[700], borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[700],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
               ),
-              const Text('Editar Tarea', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'Editar Tarea',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _tareaController,
-                decoration: const InputDecoration(labelText: 'Tarea*', hintText: 'Ej: Hacer presentación'),
+                decoration: const InputDecoration(
+                  labelText: 'Tarea*',
+                  hintText: 'Ej: Hacer presentación',
+                ),
                 maxLength: 50,
-                validator: (value) => value?.trim().isEmpty ?? true ? 'Este campo es requerido' : null,
+                validator:
+                    (value) =>
+                        value?.trim().isEmpty ?? true
+                            ? 'Este campo es requerido'
+                            : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _descripcionController,
-                decoration: const InputDecoration(labelText: 'Descripción', hintText: 'Detalles de la tarea'),
+                decoration: const InputDecoration(
+                  labelText: 'Descripción',
+                  hintText: 'Detalles de la tarea',
+                ),
                 maxLines: 2,
                 maxLength: 200,
               ),
@@ -142,20 +163,45 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Prioridad:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                        const Text(
+                          'Prioridad:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(color: Colors.grey[850], borderRadius: BorderRadius.circular(8)),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[850],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               isExpanded: true,
                               value: _prioridadSeleccionada,
                               dropdownColor: Colors.grey[900],
                               onChanged: (value) {
-                                if (value != null) setState(() => _prioridadSeleccionada = value);
+                                if (value != null)
+                                  setState(
+                                    () => _prioridadSeleccionada = value,
+                                  );
                               },
-                              items: ['Alta', 'Media', 'Baja'].map((prioridad) => DropdownMenuItem(value: prioridad, child: Text(prioridad, style: const TextStyle(color: Colors.white)))).toList(),
+                              items:
+                                  ['Alta', 'Media', 'Baja', 'Ninguna']
+                                      .map(
+                                        (prioridad) => DropdownMenuItem(
+                                          value: prioridad,
+                                          child: Text(
+                                            prioridad,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
                             ),
                           ),
                         ),
@@ -168,20 +214,37 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Fecha', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                        const Text(
+                          'Fecha',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                         const SizedBox(height: 6),
                         ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[850], padding: const EdgeInsets.symmetric(vertical: 12)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey[850],
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
                           onPressed: () async {
                             final pickedDate = await showDatePicker(
                               context: context,
                               initialDate: _selectedDate,
-                              firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                              lastDate: DateTime.now().add(const Duration(days: 365)),
+                              firstDate: DateTime.now().subtract(
+                                const Duration(days: 365),
+                              ),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 365),
+                              ),
                             );
-                            if (pickedDate != null && mounted) setState(() => _selectedDate = pickedDate);
+                            if (pickedDate != null && mounted)
+                              setState(() => _selectedDate = pickedDate);
                           },
-                          child: Text(DateFormat('dd/MM/yyyy').format(_selectedDate), style: const TextStyle(color: Colors.white)),
+                          child: Text(
+                            DateFormat('dd/MM/yyyy').format(_selectedDate),
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ),
                       ],
                     ),
@@ -192,15 +255,31 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Hora', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  const Text(
+                    'Hora',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[850], padding: const EdgeInsets.symmetric(vertical: 12)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[850],
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
                     onPressed: () async {
-                      final pickedTime = await showTimePicker(context: context, initialTime: _selectedTime);
-                      if (pickedTime != null && mounted) setState(() => _selectedTime = pickedTime);
+                      final pickedTime = await showTimePicker(
+                        context: context,
+                        initialTime: _selectedTime,
+                      );
+                      if (pickedTime != null && mounted)
+                        setState(() => _selectedTime = pickedTime);
                     },
-                    child: Text('${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}', style: const TextStyle(color: Colors.white)),
+                    child: Text(
+                      '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
                 ],
               ),
@@ -209,16 +288,35 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: _isSaving ? null : () => Navigator.pop(context),
-                      child: const Text('Cancelar', style: TextStyle(color: Colors.white)),
+                      onPressed:
+                          _isSaving ? null : () => Navigator.pop(context),
+                      child: const Text(
+                        'Cancelar',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, padding: const EdgeInsets.symmetric(vertical: 14)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
                       onPressed: _isSaving ? null : _saveTask,
-                      child: _isSaving ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Guardar', style: TextStyle(color: Colors.white)),
+                      child:
+                          _isSaving
+                              ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : const Text(
+                                'Guardar',
+                                style: TextStyle(color: Colors.white),
+                              ),
                     ),
                   ),
                 ],
@@ -226,11 +324,17 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               if (widget.onDelete != null) ...[
                 const SizedBox(height: 12),
                 TextButton(
-                  onPressed: _isSaving ? null : () {
-                    Navigator.pop(context);
-                    widget.onDelete!();
-                  },
-                  child: const Text('Eliminar Tarea', style: TextStyle(color: Colors.red)),
+                  onPressed:
+                      _isSaving
+                          ? null
+                          : () {
+                            Navigator.pop(context);
+                            widget.onDelete!();
+                          },
+                  child: const Text(
+                    'Eliminar Tarea',
+                    style: TextStyle(color: Colors.red),
+                  ),
                 ),
               ],
             ],

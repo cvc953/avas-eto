@@ -198,7 +198,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                                   );
                               },
                               items:
-                                  ['Alta', 'Media', 'Baja']
+                                  ['Alta', 'Media', 'Baja', 'Ninguna']
                                       .map(
                                         (prioridad) => DropdownMenuItem(
                                           value: prioridad,

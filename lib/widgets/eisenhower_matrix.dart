@@ -14,6 +14,8 @@ class EisenhowerMatrix extends StatelessWidget {
     final now = DateTime.now();
     return tareas.where((t) {
       final prioridad = t.prioridad.toLowerCase();
+      // Importante: Alta o Media
+      // No importante: Baja o Ninguna
       final importantMatch = prioridad == 'alta' || prioridad == 'media';
       final urgentMatch = t.fechaVencimiento.isBefore(
         now.add(const Duration(hours: 24)),
