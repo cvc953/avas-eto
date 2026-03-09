@@ -289,7 +289,8 @@ class _TareasInicioState extends State<TareasInicio> {
                   forceElevated: InnerBoxIsScrolled,
                   bottom: TabBar(
                     tabs: tabs.map((String name) => Tab(text: name)).toList(),
-                    unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color,
+                    unselectedLabelColor:
+                        Theme.of(context).textTheme.bodyMedium?.color,
                     labelColor: Theme.of(context).textTheme.bodyLarge?.color,
                     indicatorColor: Theme.of(context).primaryColor,
                   ),

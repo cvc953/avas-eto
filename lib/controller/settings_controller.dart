@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 /// Controlador para la configuración de la aplicación (notificaciones, tema, etc.).
 class SettingsController extends ChangeNotifier {
   static const String _themeKey = "theme_mode";
-  
+
   ThemeMode _themeMode = ThemeMode.system;
-  
+
   ThemeMode get themeMode => _themeMode;
 
   /// Inicializa el controlador cargando las preferencias guardadas
@@ -26,7 +26,7 @@ class SettingsController extends ChangeNotifier {
   /// Establece el modo de tema
   Future<void> setThemeMode(ThemeMode mode) async {
     if (_themeMode == mode) return;
-    
+
     _themeMode = mode;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_themeKey, _themeModeToString(mode));

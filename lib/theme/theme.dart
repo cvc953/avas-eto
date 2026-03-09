@@ -4,12 +4,12 @@ class AppTheme {
   // Colores principales
   static const Color primaryColor = Colors.blueAccent;
   static const Color accentColor = Colors.orangeAccent;
-  
+
   // Colores tema oscuro
   static const Color darkBackgroundColor = Colors.black;
   static const Color darkSurfaceColor = Color(0xFF1E1E1E);
   static const Color darkCardColor = Color(0xFF2C2C2C);
-  
+
   // Colores tema claro
   static const Color lightBackgroundColor = Colors.white;
   static const Color lightSurfaceColor = Color(0xFFF5F5F5);
@@ -24,7 +24,7 @@ class AppTheme {
       elevation: 0,
       centerTitle: true,
       titleTextStyle: TextStyle(
-        fontSize: 28, 
+        fontSize: 28,
         fontWeight: FontWeight.bold,
         color: Colors.white,
       ),

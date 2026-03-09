@@ -170,6 +170,15 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Tarea*',
                   hintText: 'Ej: Hacer presentación',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
                 ),
                 maxLength: 50,
                 validator:
@@ -184,6 +193,15 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Descripción',
                   hintText: 'Detalles de la tarea',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
                 ),
                 maxLines: 2,
                 maxLength: 200,
