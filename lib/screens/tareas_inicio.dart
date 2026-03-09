@@ -24,7 +24,8 @@ class _TareasInicioState extends State<TareasInicio> {
   bool _isOnline = true;
   String _tipoOrdenamiento = 'reciente';
   int _selectedIndex = 1; // 0: Matriz, 1: Tareas, 2: Más
-  late final TareasController _controller;
+  TareasController? _controller;
+  bool _isInitialized = false;
 
   @override
   void initState() {
@@ -34,7 +35,7 @@ class _TareasInicioState extends State<TareasInicio> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
@@ -47,35 +48,37 @@ class _TareasInicioState extends State<TareasInicio> {
         _controller = await TareasController.create();
       }
 
-      _controller.setupConnectivityListener((isOnline) {
-        setState(() => _isOnline = isOnline);
+      _controller!.setupConnectivityListener((isOnline) {
+        if (mounted) setState(() => _isOnline = isOnline);
       });
 
-      _controller.ordenar(_tipoOrdenamiento);
+      _controller!.ordenar(_tipoOrdenamiento);
 
-      if (mounted) setState(() {});
+      if (mounted) setState(() => _isInitialized = true);
     } catch (e) {
       debugPrint('Error inicializando: $e');
-      if (mounted) setState(() {});
+      if (mounted) setState(() => _isInitialized = false);
     }
   }
 
   void _ordenarTareas() {
-    _controller.ordenar(_tipoOrdenamiento);
+    _controller?.ordenar(_tipoOrdenamiento);
   }
 
   Future<void> _guardarTarea(Tarea tarea) async {
-    await _controller.guardar(tarea, _isOnline);
+    if (_controller == null) return;
+    await _controller!.guardar(tarea, _isOnline);
     if (mounted) setState(() => _ordenarTareas());
   }
 
   Future<void> _marcarCompletada(Tarea tarea, bool completada) async {
+    if (_controller == null) return;
     // Optimistic update: update UI immediately, then sync in background.
-    _controller.markCompletadaLocal(tarea, completada);
+    _controller!.markCompletadaLocal(tarea, completada);
     if (mounted) setState(() {});
 
     try {
-      await _controller.marcarCompletada(tarea, completada, _isOnline);
+      await _controller!.marcarCompletada(tarea, completada, _isOnline);
     } catch (e) {
       debugPrint('Error sincronizando marca completada: $e');
       // Optionally show error to user
@@ -85,6 +88,8 @@ class _TareasInicioState extends State<TareasInicio> {
   }
 
   Future<void> editarTarea(Tarea tarea) async {
+    if (!mounted || _controller == null) return;
+    
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -101,30 +106,42 @@ class _TareasInicioState extends State<TareasInicio> {
           ),
     );
 
-    if (result != null) {
-      if (result['delete'] == true) {
-        await _controller.eliminar(tarea, _isOnline);
-      } else {
-        final tareaEditada = result['tarea'] as Tarea;
-        final nuevaClave = result['clave'] as String;
-        final claveVieja = TaskKeyGenerator.generateKeyFromDateTime(
-          tarea.fechaVencimiento,
-        );
-
-        if (nuevaClave == claveVieja) {
-          await _controller.actualizar(tareaEditada, claveVieja);
+    if (result != null && mounted) {
+      try {
+        if (result['delete'] == true) {
+          await _controller!.eliminar(tarea, _isOnline);
         } else {
-          await _controller.moverTarea(tareaEditada, claveVieja, nuevaClave);
+          final tareaEditada = result['tarea'] as Tarea;
+          final nuevaClave = result['clave'] as String;
+          final claveVieja = TaskKeyGenerator.generateKeyFromDateTime(
+            tarea.fechaVencimiento,
+          );
+
+          if (nuevaClave == claveVieja) {
+            await _controller!.actualizar(tareaEditada, claveVieja);
+          } else {
+            await _controller!.moverTarea(tareaEditada, claveVieja, nuevaClave);
+          }
         }
+        
+        if (mounted) setState(() => _ordenarTareas());
+      } catch (e) {
+        debugPrint('Error procesando edición: $e');
+        if (mounted) _mostrarError('Error al procesar: ${e.toString()}');
       }
-      if (mounted) setState(() => _ordenarTareas());
     }
   }
 
   void _mostrarError(String mensaje) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(mensaje)));
+    if (!mounted) return;
+    
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mensaje)),
+      );
+    } catch (e) {
+      debugPrint('Error mostrando snackbar: $e');
+    }
   }
 
   void _addTareas() {
@@ -136,13 +153,16 @@ class _TareasInicioState extends State<TareasInicio> {
   }
 
   void _buscarTareas() {
+    if (_controller == null) return;
     showSearch(
       context: context,
-      delegate: TareaSearchDelegate(tareas: _controller.tareas),
+      delegate: TareaSearchDelegate(tareas: _controller!.tareas),
     );
   }
 
   void _onEliminarTarea(Tarea tarea) async {
+    if (!mounted || _controller == null) return;
+    
     try {
       final confirmado =
           await showDialog<bool>(
@@ -171,13 +191,13 @@ class _TareasInicioState extends State<TareasInicio> {
           ) ??
           false;
 
-      if (!confirmado) return;
+      if (!confirmado || !mounted) return;
 
-      await _controller.eliminar(tarea, _isOnline);
+      await _controller!.eliminar(tarea, _isOnline);
       if (mounted) setState(() => _ordenarTareas());
     } catch (e) {
       debugPrint('Error eliminando tarea: $e');
-      _mostrarError('Error al eliminar: ${e.toString()}');
+      if (mounted) _mostrarError('Error al eliminar: ${e.toString()}');
     }
   }
 
@@ -306,9 +326,15 @@ class _TareasInicioState extends State<TareasInicio> {
   }
 
   Widget _buildBody() {
+    if (!_isInitialized || _controller == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     if (_selectedIndex == 0) {
       return EisenhowerMatrix(
-        tareas: _controller.tareas.values.expand((e) => e).toList(),
+        tareas: _controller!.tareas.values.expand((e) => e).toList(),
         onToggle:
             (tarea, completada) async =>
                 await _marcarCompletada(tarea, completada),
@@ -317,6 +343,8 @@ class _TareasInicioState extends State<TareasInicio> {
 
     // default: tareas view
     return TareasTabsView(
+      tareasPendientes: _controller!.filtrar(false),
+      tareasCompletadas: _controller!.filtrar(true),
       onCheck: _marcarCompletada,
       onEditar: _onEditarTarea,
       onEliminar: _onEliminarTarea,
