@@ -99,6 +99,19 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
   @override
   Widget build(BuildContext context) {
+    Color _priorityColor(String p) {
+      switch (p) {
+        case 'Alta':
+          return const Color(0xFFFF5F6D);
+        case 'Media':
+          return const Color(0xFFFFBC1F);
+        case 'Baja':
+          return const Color(0xFF00D4B5);
+        default:
+          return Colors.grey;
+      }
+    }
+
     // Bottom sheet style content
     return Container(
       padding: EdgeInsets.only(
@@ -164,133 +177,145 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
               ),
               const SizedBox(height: 12),
 
-              // Date and Priority side-by-side (date first)
+              // Compact icons: date, priority, then time (time moved to the right)
               Row(
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Expanded(
-                    flex: 1,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Fecha',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                  // Date icon + small label
+                  Column(
+                    children: [
+                      IconButton(
+                        tooltip: 'Seleccionar fecha',
+                        icon: const Icon(
+                          Icons.calendar_today,
+                          color: Colors.white,
                         ),
-                        const SizedBox(height: 6),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey[850],
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          onPressed: () async {
-                            final pickedDate = await showDatePicker(
-                              context: context,
-                              initialDate: _selectedDate,
-                              firstDate: DateTime.now().subtract(
-                                const Duration(days: 365),
-                              ),
-                              lastDate: DateTime.now().add(
-                                const Duration(days: 365),
-                              ),
-                            );
-                            if (pickedDate != null && mounted)
-                              setState(() => _selectedDate = pickedDate);
-                          },
-                          child: Text(
-                            DateFormat('dd/MM/yyyy').format(_selectedDate),
-                            style: const TextStyle(color: Colors.white),
-                          ),
+                        onPressed: () async {
+                          final pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: _selectedDate,
+                            firstDate: DateTime.now().subtract(
+                              const Duration(days: 365),
+                            ),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 365),
+                            ),
+                          );
+                          if (pickedDate != null && mounted)
+                            setState(() => _selectedDate = pickedDate);
+                        },
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        DateFormat('dd/MM').format(_selectedDate),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Prioridad:',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                  const SizedBox(width: 18),
+                  // Priority icon + small label
+                  Column(
+                    children: [
+                      IconButton(
+                        tooltip: 'Seleccionar prioridad',
+                        icon: Icon(
+                          _prioridadSeleccionada == 'Alta'
+                              ? Icons.flag
+                              : Icons.outlined_flag,
+                          color: _priorityColor(_prioridadSeleccionada),
                         ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[850],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              isExpanded: true,
-                              value: _prioridadSeleccionada,
-                              dropdownColor: Colors.grey[900],
-                              onChanged: (value) {
-                                if (value != null)
-                                  setState(
-                                    () => _prioridadSeleccionada = value,
-                                  );
-                              },
-                              items:
-                                  ['Alta', 'Media', 'Baja', 'Ninguna']
-                                      .map(
-                                        (prioridad) => DropdownMenuItem(
-                                          value: prioridad,
-                                          child: Text(
-                                            prioridad,
-                                            style: const TextStyle(
-                                              color: Colors.white,
+                        onPressed: () async {
+                          final selected = await showDialog<String?>(
+                            context: context,
+                            builder:
+                                (context) => SimpleDialog(
+                                  backgroundColor: const Color(0xFF121212),
+                                  title: const Text(
+                                    'Prioridad',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  children:
+                                      ['Alta', 'Media', 'Baja', 'Ninguna']
+                                          .map(
+                                            (p) => SimpleDialogOption(
+                                              onPressed:
+                                                  () =>
+                                                      Navigator.pop(context, p),
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.flag,
+                                                    color: _priorityColor(p),
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Text(
+                                                    p,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
+                                          )
+                                          .toList(),
+                                ),
+                          );
+                          if (selected != null && mounted)
+                            setState(() => _prioridadSeleccionada = selected);
+                        },
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.flag,
+                            color: _priorityColor(_prioridadSeleccionada),
+                            size: 14,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _prioridadSeleccionada,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
                             ),
                           ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 18),
+                  // Time icon + small label (moved to the right)
+                  Column(
+                    children: [
+                      IconButton(
+                        tooltip: 'Seleccionar hora',
+                        icon: const Icon(
+                          Icons.access_time,
+                          color: Colors.white,
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-              // Time selector full width
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Hora',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[850],
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    onPressed: () async {
-                      final pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime: _selectedTime,
-                      );
-                      if (pickedTime != null && mounted)
-                        setState(() => _selectedTime = pickedTime);
-                    },
-                    child: Text(
-                      '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
-                      style: const TextStyle(color: Colors.white),
-                    ),
+                        onPressed: () async {
+                          final pickedTime = await showTimePicker(
+                            context: context,
+                            initialTime: _selectedTime,
+                          );
+                          if (pickedTime != null && mounted)
+                            setState(() => _selectedTime = pickedTime);
+                        },
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
