@@ -16,16 +16,34 @@ class TareasInicio extends StatefulWidget {
   const TareasInicio({super.key});
 
   @override
-  _TareasInicioState createState() => _TareasInicioState();
+  State<TareasInicio> createState() => _TareasInicioState();
 }
 
 class _TareasInicioState extends State<TareasInicio> {
-  // loading state not currently used by the UI
   bool _isOnline = true;
   String _tipoOrdenamiento = 'reciente';
   int _selectedIndex = 1; // 0: Matriz, 1: Tareas, 2: Más
   TareasController? _controller;
   bool _isInitialized = false;
+  DateTime? _lastBackPressedAt;
+
+  Future<bool> _onWillPop() async {
+    final now = DateTime.now();
+    if (_lastBackPressedAt == null ||
+        now.difference(_lastBackPressedAt!) > const Duration(seconds: 1)) {
+      _lastBackPressedAt = now;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Presiona nuevamente para salir'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      return false;
+    }
+    return true;
+  }
 
   @override
   void initState() {
@@ -41,7 +59,6 @@ class _TareasInicioState extends State<TareasInicio> {
 
   Future<void> _initializeServices() async {
     try {
-      // Try to obtain a provided controller first; otherwise create one.
       try {
         _controller = Provider.of<TareasController>(context, listen: false);
       } catch (_) {
@@ -73,7 +90,6 @@ class _TareasInicioState extends State<TareasInicio> {
 
   Future<void> _marcarCompletada(Tarea tarea, bool completada) async {
     if (_controller == null) return;
-    // Optimistic update: update UI immediately, then sync in background.
     _controller!.markCompletadaLocal(tarea, completada);
     if (mounted) setState(() {});
 
@@ -81,7 +97,6 @@ class _TareasInicioState extends State<TareasInicio> {
       await _controller!.marcarCompletada(tarea, completada, _isOnline);
     } catch (e) {
       debugPrint('Error sincronizando marca completada: $e');
-      // Optionally show error to user
       if (mounted) _mostrarError('No se pudo sincronizar el cambio');
     }
     if (mounted) setState(() => _ordenarTareas());
@@ -239,113 +254,117 @@ class _TareasInicioState extends State<TareasInicio> {
   Widget build(BuildContext context) {
     final List<String> tabs = <String>['Pendientes', 'Completadas'];
 
-    return DefaultTabController(
-      length: tabs.length,
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: NestedScrollView(
-          headerSliverBuilder: (BuildContext context, InnerBoxIsScrolled) {
-            return [
-              SliverOverlapAbsorber(
-                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                  context,
-                ),
-                sliver: SliverAppBar(
-                  backgroundColor:
-                      Theme.of(context).appBarTheme.backgroundColor,
-                  automaticallyImplyLeading: false,
-                  title: Text(
-                    'Tareas',
-                    style: Theme.of(context).appBarTheme.titleTextStyle,
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: DefaultTabController(
+        length: tabs.length,
+        child: Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: NestedScrollView(
+            headerSliverBuilder: (
+              BuildContext context,
+              bool innerBoxIsScrolled,
+            ) {
+              return [
+                SliverOverlapAbsorber(
+                  handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                    context,
                   ),
-                  actions: [
-                    PopupMenuButton<String>(
-                      menuPadding: const EdgeInsets.all(10),
-                      onSelected: (value) {
-                        setState(() {
-                          _tipoOrdenamiento = value;
-                          _ordenarTareas();
-                        });
-                      },
-                      itemBuilder:
-                          (BuildContext context) => [
-                            const PopupMenuItem(
-                              value: 'reciente',
-                              child: Text('Más recientes'),
-                            ),
-                            const PopupMenuItem(
-                              value: 'prioridad',
-                              child: Text('Por prioridad'),
-                            ),
-                          ],
-                      child: const Padding(
-                        padding: EdgeInsets.all(10),
-                        child: Icon(Icons.sort),
-                      ),
+                  sliver: SliverAppBar(
+                    backgroundColor:
+                        Theme.of(context).appBarTheme.backgroundColor,
+                    automaticallyImplyLeading: false,
+                    title: Text(
+                      'Tareas',
+                      style: Theme.of(context).appBarTheme.titleTextStyle,
                     ),
-                  ],
-                  pinned: true,
-                  expandedHeight: 100.0,
-                  forceElevated: InnerBoxIsScrolled,
-                  bottom: TabBar(
-                    tabs: tabs.map((String name) => Tab(text: name)).toList(),
-                    unselectedLabelColor:
-                        Theme.of(context).textTheme.bodyMedium?.color,
-                    labelColor: Theme.of(context).textTheme.bodyLarge?.color,
-                    indicatorColor: Theme.of(context).primaryColor,
+                    actions: [
+                      PopupMenuButton<String>(
+                        menuPadding: const EdgeInsets.all(10),
+                        onSelected: (value) {
+                          setState(() {
+                            _tipoOrdenamiento = value;
+                            _ordenarTareas();
+                          });
+                        },
+                        itemBuilder:
+                            (BuildContext context) => [
+                              const PopupMenuItem(
+                                value: 'reciente',
+                                child: Text('Más recientes'),
+                              ),
+                              const PopupMenuItem(
+                                value: 'prioridad',
+                                child: Text('Por prioridad'),
+                              ),
+                            ],
+                        child: const Padding(
+                          padding: EdgeInsets.all(10),
+                          child: Icon(Icons.sort),
+                        ),
+                      ),
+                    ],
+                    pinned: true,
+                    expandedHeight: 100.0,
+                    forceElevated: innerBoxIsScrolled,
+                    bottom: TabBar(
+                      tabs: tabs.map((String name) => Tab(text: name)).toList(),
+                      unselectedLabelColor:
+                          Theme.of(context).textTheme.bodyMedium?.color,
+                      labelColor: Theme.of(context).textTheme.bodyLarge?.color,
+                      indicatorColor: Theme.of(context).primaryColor,
+                    ),
                   ),
                 ),
-              ),
-            ];
-          },
+              ];
+            },
+            body: _buildBody(),
+          ),
+          floatingActionButton:
+              _selectedIndex == 1
+                  ? FloatingActionButton(
+                    onPressed: _addTareas,
+                    backgroundColor: Colors.blueAccent,
+                    child: const Icon(Icons.add),
+                  )
+                  : null,
+          bottomNavigationBar: CustomBottomNavBar(
+            currentIndex: _selectedIndex,
+            onSelect: (i) {
+              if (i == 2) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (_) => MoreOptions(
+                          onAddTask: (t) async => await _guardarTarea(t),
+                          onToggle:
+                              (t, c) async => await _marcarCompletada(t, c),
+                        ),
+                  ),
+                );
+                return;
+              }
+              if (i == 0) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (_) => EisenhowerScreen(
+                          onAddTask: (t) async => await _guardarTarea(t),
+                          onToggle:
+                              (tarea, completada) async =>
+                                  await _marcarCompletada(tarea, completada),
+                          currentIndex: 0,
+                        ),
+                  ),
+                );
+                return;
+              }
 
-          body: _buildBody(),
-        ),
-        floatingActionButton:
-            _selectedIndex == 1
-                ? FloatingActionButton(
-                  onPressed: _addTareas,
-                  backgroundColor: Colors.blueAccent,
-                  child: const Icon(Icons.add),
-                )
-                : null,
-        bottomNavigationBar: CustomBottomNavBar(
-          currentIndex: _selectedIndex,
-          onSelect: (i) {
-            if (i == 2) {
-              // Más -> replace current route with MoreOptions to avoid stacked bottom bars
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (_) => MoreOptions(
-                        onAddTask: (t) async => await _guardarTarea(t),
-                        onToggle: (t, c) async => await _marcarCompletada(t, c),
-                      ),
-                ),
-              );
-              return;
-            }
-            if (i == 0) {
-              // Replace with EisenhowerScreen so only one bottom bar exists
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (_) => EisenhowerScreen(
-                        onAddTask: (t) async => await _guardarTarea(t),
-                        onToggle:
-                            (tarea, completada) async =>
-                                await _marcarCompletada(tarea, completada),
-                        currentIndex: 0,
-                      ),
-                ),
-              );
-              return;
-            }
-
-            setState(() => _selectedIndex = i);
-          },
+              setState(() => _selectedIndex = i);
+            },
+          ),
         ),
       ),
     );
@@ -365,7 +384,6 @@ class _TareasInicioState extends State<TareasInicio> {
       );
     }
 
-    // default: tareas view
     return TareasTabsView(
       tareasPendientes: _controller!.filtrar(false),
       tareasCompletadas: _controller!.filtrar(true),

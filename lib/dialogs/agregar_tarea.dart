@@ -25,6 +25,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   late DateTime _selectedDate;
   late String _prioridadSeleccionada;
   bool _isSaving = false;
+  bool _hasChanges = false;
 
   @override
   void initState() {
@@ -97,6 +98,11 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         '-${time.minute.toString().padLeft(2, '0')}';
   }
 
+  void _markChanged() {
+    if (_hasChanges) return;
+    setState(() => _hasChanges = true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -167,16 +173,19 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
               const SizedBox(height: 12),
               Container(
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1B1B1B) : Colors.grey[100],
+                  color: sheetColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
                   children: [
                     TextFormField(
                       controller: _tareaController,
+                      onChanged: (_) => _markChanged(),
                       decoration: const InputDecoration(
                         labelText: 'Tarea*',
                         hintText: 'Ej: Hacer presentación',
+                        filled: false,
+                        fillColor: Colors.transparent,
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -196,9 +205,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                     Divider(height: 1, color: Theme.of(context).dividerColor),
                     TextFormField(
                       controller: _descripcionController,
+                      onChanged: (_) => _markChanged(),
                       decoration: const InputDecoration(
                         labelText: 'Descripción',
                         hintText: 'Detalles de la tarea',
+                        filled: false,
+                        fillColor: Colors.transparent,
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -237,8 +249,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                               const Duration(days: 365),
                             ),
                           );
-                          if (pickedDate != null && mounted)
-                            setState(() => _selectedDate = pickedDate);
+                          if (pickedDate != null && mounted) {
+                            setState(() {
+                              _selectedDate = pickedDate;
+                              _hasChanges = true;
+                            });
+                          }
                         },
                       ),
                       const SizedBox(height: 4),
@@ -298,8 +314,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                                           .toList(),
                                 ),
                           );
-                          if (selected != null && mounted)
-                            setState(() => _prioridadSeleccionada = selected);
+                          if (selected != null && mounted) {
+                            setState(() {
+                              _prioridadSeleccionada = selected;
+                              _hasChanges = true;
+                            });
+                          }
                         },
                       ),
                       const SizedBox(height: 4),
@@ -334,8 +354,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                             context: context,
                             initialTime: _selectedTime,
                           );
-                          if (pickedTime != null && mounted)
-                            setState(() => _selectedTime = pickedTime);
+                          if (pickedTime != null && mounted) {
+                            setState(() {
+                              _selectedTime = pickedTime;
+                              _hasChanges = true;
+                            });
+                          }
                         },
                       ),
                       const SizedBox(height: 4),
@@ -352,43 +376,25 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
               ),
 
               const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed:
-                          _isSaving ? null : () => Navigator.pop(context),
-                      child: Text(
-                        'Cancelar',
-                        style: TextStyle(color: titleColor),
-                      ),
-                    ),
+              if (_hasChanges)
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onPressed: _isSaving ? null : _saveTask,
-                      child:
-                          _isSaving
-                              ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                              : const Text(
-                                'Guardar',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                    ),
-                  ),
-                ],
-              ),
+                  onPressed: _isSaving ? null : _saveTask,
+                  child:
+                      _isSaving
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : const Text(
+                            'Guardar',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                ),
             ],
           ),
         ),

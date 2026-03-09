@@ -25,6 +25,10 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   late TimeOfDay _selectedTime;
   late DateTime _selectedDate;
   late String _prioridadSeleccionada;
+  late String _initialTitle;
+  late String _initialDescripcion;
+  late String _initialPrioridad;
+  late DateTime _initialFechaVencimiento;
   bool _isSaving = false;
 
   Future<void> _confirmDelete() async {
@@ -72,6 +76,10 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     );
     _selectedDate = widget.tarea.fechaVencimiento;
     _prioridadSeleccionada = widget.tarea.prioridad;
+    _initialTitle = widget.tarea.title;
+    _initialDescripcion = widget.tarea.descripcion;
+    _initialPrioridad = widget.tarea.prioridad;
+    _initialFechaVencimiento = widget.tarea.fechaVencimiento;
   }
 
   @override
@@ -119,6 +127,24 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-'
         '${date.day.toString().padLeft(2, '0')}-${time.hour.toString().padLeft(2, '0')}'
         '-${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  bool get _hasChanges {
+    final titleChanged = _tareaController.text.trim() != _initialTitle.trim();
+    final descripcionChanged =
+        _descripcionController.text.trim() != _initialDescripcion.trim();
+    final prioridadChanged = _prioridadSeleccionada != _initialPrioridad;
+    final fechaChanged =
+        _selectedDate.year != _initialFechaVencimiento.year ||
+        _selectedDate.month != _initialFechaVencimiento.month ||
+        _selectedDate.day != _initialFechaVencimiento.day ||
+        _selectedTime.hour != _initialFechaVencimiento.hour ||
+        _selectedTime.minute != _initialFechaVencimiento.minute;
+
+    return titleChanged ||
+        descripcionChanged ||
+        prioridadChanged ||
+        fechaChanged;
   }
 
   @override
@@ -190,16 +216,19 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               const SizedBox(height: 12),
               Container(
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1B1B1B) : Colors.grey[100],
+                  color: sheetColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
                   children: [
                     TextFormField(
                       controller: _tareaController,
+                      onChanged: (_) => setState(() {}),
                       decoration: const InputDecoration(
                         labelText: 'Tarea*',
                         hintText: 'Ej: Hacer presentación',
+                        filled: false,
+                        fillColor: Colors.transparent,
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -219,9 +248,12 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                     Divider(height: 1, color: Theme.of(context).dividerColor),
                     TextFormField(
                       controller: _descripcionController,
+                      onChanged: (_) => setState(() {}),
                       decoration: const InputDecoration(
                         labelText: 'Descripción',
                         hintText: 'Detalles de la tarea',
+                        filled: false,
+                        fillColor: Colors.transparent,
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -259,8 +291,9 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                               const Duration(days: 365),
                             ),
                           );
-                          if (pickedDate != null && mounted)
+                          if (pickedDate != null && mounted) {
                             setState(() => _selectedDate = pickedDate);
+                          }
                         },
                       ),
                       const SizedBox(height: 4),
@@ -320,8 +353,9 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                                           .toList(),
                                 ),
                           );
-                          if (selected != null && mounted)
+                          if (selected != null && mounted) {
                             setState(() => _prioridadSeleccionada = selected);
+                          }
                         },
                       ),
                       const SizedBox(height: 4),
@@ -356,8 +390,9 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                             context: context,
                             initialTime: _selectedTime,
                           );
-                          if (pickedTime != null && mounted)
+                          if (pickedTime != null && mounted) {
                             setState(() => _selectedTime = pickedTime);
+                          }
                         },
                       ),
                       const SizedBox(height: 4),
@@ -374,43 +409,25 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               ),
               const SizedBox(height: 12),
               const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed:
-                          _isSaving ? null : () => Navigator.pop(context),
-                      child: Text(
-                        'Cancelar',
-                        style: TextStyle(color: titleColor),
-                      ),
-                    ),
+              if (_hasChanges)
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onPressed: _isSaving ? null : _saveTask,
-                      child:
-                          _isSaving
-                              ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                              : const Text(
-                                'Guardar',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                    ),
-                  ),
-                ],
-              ),
+                  onPressed: _isSaving ? null : _saveTask,
+                  child:
+                      _isSaving
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : const Text(
+                            'Guardar',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                ),
               if (widget.onDelete != null) ...[
                 const SizedBox(height: 12),
                 TextButton(

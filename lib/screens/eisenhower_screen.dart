@@ -27,6 +27,26 @@ class EisenhowerScreen extends StatefulWidget {
 }
 
 class _EisenhowerScreenState extends State<EisenhowerScreen> {
+  DateTime? _lastBackPressedAt;
+
+  Future<bool> _onWillPop() async {
+    final now = DateTime.now();
+    if (_lastBackPressedAt == null ||
+        now.difference(_lastBackPressedAt!) > const Duration(seconds: 1)) {
+      _lastBackPressedAt = now;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Presiona nuevamente para salir'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      return false;
+    }
+    return true;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -112,58 +132,58 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
     final controller = Provider.of<TareasController>(context, listen: false);
     final tareas = controller.tareas.values.expand((e) => e).toList();
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        title: Text(
-          'Matriz de Eisenhower',
-          style: Theme.of(context).appBarTheme.titleTextStyle,
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+          title: Text(
+            'Matriz de Eisenhower',
+            style: Theme.of(context).appBarTheme.titleTextStyle,
+          ),
+          automaticallyImplyLeading: false,
         ),
-        automaticallyImplyLeading: false,
-      ),
-      body: EisenhowerMatrix(
-        tareas: tareas,
-        onToggle: _handleToggle,
-        onTapTask: _openEditTask,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAdd,
-        backgroundColor: const Color(0xFF4E7BFF),
-        child: const Icon(Icons.add),
-      ),
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: widget.currentIndex,
-        onSelect: (i) {
-          if (i == 1) {
-            // We used pushReplacement from the main screen, so pop() would exit.
-            // Replace the current route with TareasInicio to return to the main tab.
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const TareasInicio()),
-            );
-            return;
-          }
+        body: EisenhowerMatrix(
+          tareas: tareas,
+          onToggle: _handleToggle,
+          onTapTask: _openEditTask,
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _showAdd,
+          backgroundColor: Colors.blueAccent,
+          child: const Icon(Icons.add),
+        ),
+        bottomNavigationBar: CustomBottomNavBar(
+          currentIndex: widget.currentIndex,
+          onSelect: (i) {
+            if (i == 1) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const TareasInicio()),
+              );
+              return;
+            }
 
-          if (i == 2) {
-            // Push MoreOptions and pass controller + callbacks so MoreOptions can act.
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (_) => MoreOptions(
-                      onAddTask: (t) async => await widget.onAddTask(t),
-                      onToggle: (dynamic tarea, bool completada) async {
-                        if (widget.onToggle != null) {
-                          await widget.onToggle!(tarea as Tarea, completada);
-                        }
-                      },
-                    ),
-              ),
-            );
-            return;
-          }
-        },
+            if (i == 2) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) => MoreOptions(
+                        onAddTask: (t) async => await widget.onAddTask(t),
+                        onToggle: (dynamic tarea, bool completada) async {
+                          if (widget.onToggle != null) {
+                            await widget.onToggle!(tarea as Tarea, completada);
+                          }
+                        },
+                      ),
+                ),
+              );
+              return;
+            }
+          },
+        ),
       ),
     );
   }
