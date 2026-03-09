@@ -222,9 +222,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                       IconButton(
                         tooltip: 'Seleccionar prioridad',
                         icon: Icon(
-                          _prioridadSeleccionada == 'Alta'
-                              ? Icons.flag
-                              : Icons.outlined_flag,
+                          Icons.flag,
                           color: _priorityColor(_prioridadSeleccionada),
                         ),
                         onPressed: () async {

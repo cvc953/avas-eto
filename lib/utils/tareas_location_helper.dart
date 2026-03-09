@@ -5,9 +5,10 @@ MapEntry<String, int> buscarUbicacionTarea(
   Tarea tarea,
 ) {
   for (final entry in tareas.entries) {
-    final index = entry.value.indexOf(tarea);
-    if (index != -1) {
-      return MapEntry(entry.key, index);
+    for (var i = 0; i < entry.value.length; i++) {
+      if (entry.value[i].id == tarea.id) {
+        return MapEntry(entry.key, i);
+      }
     }
   }
   throw Exception('Tarea no encontrada');

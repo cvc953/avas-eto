@@ -214,9 +214,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                       IconButton(
                         tooltip: 'Seleccionar prioridad',
                         icon: Icon(
-                          _prioridadSeleccionada == 'Alta'
-                              ? Icons.flag
-                              : Icons.outlined_flag,
+                          Icons.flag,
                           color: _priorityColor(_prioridadSeleccionada),
                         ),
                         onPressed: () async {

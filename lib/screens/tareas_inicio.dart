@@ -1,6 +1,6 @@
 import 'package:avas_eto/controller/tareas_controller.dart';
 import 'package:provider/provider.dart';
-import 'package:avas_eto/utils/tareas_location_helper.dart';
+import 'package:avas_eto/utils/task_key_generator.dart';
 import '../dialogs/agregar_tarea.dart';
 import 'package:flutter/material.dart';
 import 'package:avas_eto/screens/more_options.dart';
@@ -10,7 +10,6 @@ import '../dialogs/editar_tarea.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import '../widgets/eisenhower_matrix.dart';
 import '../widgets/buscar_tareas.dart';
-// moved key generation to controller
 import 'tareas_tab_view.dart';
 
 class TareasInicio extends StatefulWidget {
@@ -85,38 +84,64 @@ class _TareasInicioState extends State<TareasInicio> {
     if (mounted) setState(() => _ordenarTareas());
   }
 
-  Future<void> _moverTarea(
-    Tarea tarea,
-    String claveVieja,
-    String claveNueva,
-    int index,
-  ) async {
-    try {
-      await _controller.moverTarea(tarea, claveVieja, claveNueva);
+  Future<void> editarTarea(Tarea tarea) async {
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (context) => EditTaskDialog(
+            tarea: tarea,
+            onSave: (tareaEditada, clave) {
+              Navigator.pop(context, {'tarea': tareaEditada, 'clave': clave});
+            },
+            onDelete: () {
+              Navigator.pop(context, {'delete': true});
+            },
+          ),
+    );
+
+    if (result != null) {
+      if (result['delete'] == true) {
+        await _controller.eliminar(tarea, _isOnline);
+      } else {
+        final tareaEditada = result['tarea'] as Tarea;
+        final nuevaClave = result['clave'] as String;
+        final claveVieja = TaskKeyGenerator.generateKeyFromDateTime(tarea.fechaVencimiento);
+        
+        if (nuevaClave == claveVieja) {
+          await _controller.actualizar(tareaEditada, claveVieja);
+        } else {
+          await _controller.moverTarea(tareaEditada, claveVieja, nuevaClave);
+        }
+      }
       if (mounted) setState(() => _ordenarTareas());
-    } catch (e) {
-      debugPrint('Error moviendo: $e');
-      _mostrarError('Error al mover: ${e.toString()}');
     }
   }
 
-  Future<void> _actualizarTarea(Tarea tarea, String clave, int index) async {
-    try {
-      await _controller.actualizar(tarea, clave);
-      if (mounted) setState(() => _ordenarTareas());
-    } catch (e) {
-      debugPrint('Error actualizando: $e');
-      _mostrarError('Error al actualizar: ${e.toString()}');
-    }
+  void _mostrarError(String mensaje) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
-  Future<void> _eliminarTarea(int index, String clave) async {
-    try {
-      final mapa = _controller.tareas;
-      if (clave.isEmpty || !mapa.containsKey(clave)) return;
-      final listaTareas = mapa[clave]!;
-      if (index < 0 || index >= listaTareas.length) return;
+  void _addTareas() {
+    showAddTaskDialog(
+      context: context,
+      onSave: (tarea, clave) => _guardarTarea(tarea),
+      initialDate: DateTime.now(),
+    );
+  }
 
+  void _buscarTareas() {
+    showSearch(
+      context: context,
+      delegate: TareaSearchDelegate(tareas: _controller.tareas),
+    );
+  }
+
+  void _onEliminarTarea(Tarea tarea) async {
+    try {
       final confirmado =
           await showDialog<bool>(
             context: context,
@@ -146,77 +171,21 @@ class _TareasInicioState extends State<TareasInicio> {
 
       if (!confirmado) return;
 
-      final tarea = listaTareas[index];
       await _controller.eliminar(tarea, _isOnline);
       if (mounted) setState(() => _ordenarTareas());
     } catch (e) {
-      debugPrint('Error eliminando: $e');
+      debugPrint('Error eliminando tarea: $e');
       _mostrarError('Error al eliminar: ${e.toString()}');
     }
   }
 
-  void editarTarea(int index, List<Tarea> lista, String claveActual) async {
-    final tareaActual = lista[index];
-
-    final result = await showModalBottomSheet<Map<String, dynamic>>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder:
-          (context) => EditTaskDialog(
-            tarea: tareaActual,
-            onSave: (tareaEditada, clave) {
-              Navigator.pop(context, {'tarea': tareaEditada, 'clave': clave});
-            },
-            onDelete: () {
-              Navigator.pop(context, {'delete': true});
-            },
-          ),
-    );
-
-    if (result != null) {
-      await _controller.processEditResult(
-        result,
-        claveActual,
-        index,
-        _isOnline,
-      );
-      if (mounted) setState(() => _ordenarTareas());
-    }
-  }
-
-  void _mostrarError(String mensaje) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(mensaje)));
-  }
-
-  void _addTareas() {
-    showAddTaskDialog(
-      context: context,
-      onSave: (tarea, clave) => _guardarTarea(tarea),
-      initialDate: DateTime.now(),
-    );
-  }
-
-  void _buscarTareas() {
-    showSearch(
-      context: context,
-      delegate: TareaSearchDelegate(tareas: _controller.tareas),
-    );
-  }
-
-  void _onEliminarTarea(Tarea tarea) {
-    final ubicacion = buscarUbicacionTarea(_controller.tareas, tarea);
-    _eliminarTarea(ubicacion.value, ubicacion.key);
-  }
-
   void _onEditarTarea(Tarea tarea) async {
-    final ubicacion = buscarUbicacionTarea(_controller.tareas, tarea);
-    final claveActual = ubicacion.key;
-    final index = ubicacion.value;
-
-    editarTarea(index, _controller.tareas[claveActual]!, claveActual);
+    try {
+      await editarTarea(tarea);
+    } catch (e) {
+      debugPrint('Error editando tarea: $e');
+      _mostrarError('Error al editar: ${e.toString()}');
+    }
   }
 
   @override
