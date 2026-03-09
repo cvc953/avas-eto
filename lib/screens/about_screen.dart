@@ -132,11 +132,36 @@ class AboutScreen extends StatelessWidget {
           currentIndex: _selectedIndex,
           onSelect: (i) {
             if (i == 0) {
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => EisenhowerScreen(controller: widget.controller, onAddTask: widget.onAddTask, onToggle: widget.onToggle, currentIndex: 0)));
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) => EisenhowerScreen(
+                        controller: widget.controller,
+                        onAddTask: widget.onAddTask,
+                        onToggle: widget.onToggle,
+                        currentIndex: 0,
+                      ),
+                ),
+              );
             } else if (i == 1) {
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => TareasScreen(controller: widget.controller, onAddTask: widget.onAddTask, onToggle: widget.onToggle, currentIndex: 1)));
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) => TareasScreen(
+                        controller: widget.controller,
+                        onAddTask: widget.onAddTask,
+                        onToggle: widget.onToggle,
+                        currentIndex: 1,
+                      ),
+                ),
+              );
             } else if (i == 2) {
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MoreOptionsScreen()));
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => MoreOptionsScreen()),
+              );
             }
           },
         ),

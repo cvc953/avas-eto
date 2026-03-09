@@ -5,11 +5,7 @@ class EisenhowerMatrix extends StatelessWidget {
   final List<Tarea> tareas;
   final Future<void> Function(Tarea tarea, bool completada)? onToggle;
 
-  const EisenhowerMatrix({
-    super.key,
-    required this.tareas,
-    this.onToggle,
-  });
+  const EisenhowerMatrix({super.key, required this.tareas, this.onToggle});
 
   List<Tarea> _filter(bool urgent, bool important) {
     // Simple heuristic: prioridad Alta -> important, fechaVencimiento próxima -> urgent

@@ -24,7 +24,6 @@ class TareasInicio extends StatefulWidget {
 }
 
 class _TareasInicioState extends State<TareasInicio> {
-
   // loading state not currently used by the UI
   bool _isOnline = true;
   String _tipoOrdenamiento = 'reciente';
@@ -226,7 +225,6 @@ class _TareasInicioState extends State<TareasInicio> {
 
     editarTarea(index, _controller.tareas[claveActual]!, claveActual);
   }
-
 
   @override
   Widget build(BuildContext context) {
