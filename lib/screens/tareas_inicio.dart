@@ -197,9 +197,11 @@ class _TareasInicioState extends State<TareasInicio> {
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text(
+                      child: Text(
                         'Cancelar',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
                       ),
                     ),
                     TextButton(
@@ -278,7 +280,7 @@ class _TareasInicioState extends State<TareasInicio> {
                           ],
                       child: const Padding(
                         padding: EdgeInsets.all(10),
-                        child: Icon(Icons.sort, color: Colors.white),
+                        child: Icon(Icons.sort),
                       ),
                     ),
                   ],
@@ -287,9 +289,9 @@ class _TareasInicioState extends State<TareasInicio> {
                   forceElevated: InnerBoxIsScrolled,
                   bottom: TabBar(
                     tabs: tabs.map((String name) => Tab(text: name)).toList(),
-                    unselectedLabelColor: Colors.white70,
-                    labelColor: Colors.white,
-                    indicatorColor: Colors.white,
+                    unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color,
+                    labelColor: Theme.of(context).textTheme.bodyLarge?.color,
+                    indicatorColor: Theme.of(context).primaryColor,
                   ),
                 ),
               ),

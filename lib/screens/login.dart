@@ -100,8 +100,15 @@ class _LoginState extends State<Login> {
             ),
           ),
           if (isLoading) ...[
-            const ModalBarrier(dismissible: false, color: Colors.black54),
-            const Center(child: CircularProgressIndicator(color: Colors.white)),
+            ModalBarrier(
+              dismissible: false,
+              color: Theme.of(context).colorScheme.scrim.withAlpha(140),
+            ),
+            Center(
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
           ],
         ],
       ),

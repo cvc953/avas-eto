@@ -99,6 +99,19 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sheetColor =
+        isDark ? const Color(0xFF121212) : Theme.of(context).cardColor;
+    final titleColor =
+        Theme.of(context).textTheme.titleLarge?.color ??
+        (isDark ? Colors.white : Colors.black87);
+    final secondaryTextColor =
+        Theme.of(context).textTheme.bodyMedium?.color ??
+        (isDark ? Colors.white70 : Colors.black54);
+    final iconColor =
+        Theme.of(context).iconTheme.color ??
+        (isDark ? Colors.white : Colors.black87);
+
     Color _priorityColor(String p) {
       switch (p) {
         case 'Alta':
@@ -120,9 +133,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         top: 16,
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
-      decoration: const BoxDecoration(
-        color: Color(0xFF121212),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      decoration: BoxDecoration(
+        color: sheetColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: Form(
         key: _formKey,
@@ -137,16 +150,16 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: Colors.grey[700],
+                    color: isDark ? Colors.grey[700] : Colors.grey[400],
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
-              const Text(
+              Text(
                 'Nueva Tarea',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: titleColor,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -186,10 +199,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                     children: [
                       IconButton(
                         tooltip: 'Seleccionar fecha',
-                        icon: const Icon(
-                          Icons.calendar_today,
-                          color: Colors.white,
-                        ),
+                        icon: Icon(Icons.calendar_today, color: iconColor),
                         onPressed: () async {
                           final pickedDate = await showDatePicker(
                             context: context,
@@ -208,8 +218,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                       const SizedBox(height: 4),
                       Text(
                         DateFormat('dd/MM').format(_selectedDate),
-                        style: const TextStyle(
-                          color: Colors.white70,
+                        style: TextStyle(
+                          color: secondaryTextColor,
                           fontSize: 12,
                         ),
                       ),
@@ -230,10 +240,10 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                             context: context,
                             builder:
                                 (context) => SimpleDialog(
-                                  backgroundColor: const Color(0xFF121212),
-                                  title: const Text(
+                                  backgroundColor: sheetColor,
+                                  title: Text(
                                     'Prioridad',
-                                    style: TextStyle(color: Colors.white),
+                                    style: TextStyle(color: titleColor),
                                   ),
                                   children:
                                       ['Alta', 'Media', 'Baja', 'Ninguna']
@@ -251,8 +261,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                                                   const SizedBox(width: 12),
                                                   Text(
                                                     p,
-                                                    style: const TextStyle(
-                                                      color: Colors.white,
+                                                    style: TextStyle(
+                                                      color: titleColor,
                                                     ),
                                                   ),
                                                 ],
@@ -277,8 +287,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                           const SizedBox(width: 6),
                           Text(
                             _prioridadSeleccionada,
-                            style: const TextStyle(
-                              color: Colors.white70,
+                            style: TextStyle(
+                              color: secondaryTextColor,
                               fontSize: 12,
                             ),
                           ),
@@ -292,10 +302,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                     children: [
                       IconButton(
                         tooltip: 'Seleccionar hora',
-                        icon: const Icon(
-                          Icons.access_time,
-                          color: Colors.white,
-                        ),
+                        icon: Icon(Icons.access_time, color: iconColor),
                         onPressed: () async {
                           final pickedTime = await showTimePicker(
                             context: context,
@@ -308,8 +315,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                       const SizedBox(height: 4),
                       Text(
                         '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
-                        style: const TextStyle(
-                          color: Colors.white70,
+                        style: TextStyle(
+                          color: secondaryTextColor,
                           fontSize: 12,
                         ),
                       ),
@@ -325,9 +332,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                     child: TextButton(
                       onPressed:
                           _isSaving ? null : () => Navigator.pop(context),
-                      child: const Text(
+                      child: Text(
                         'Cancelar',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(color: titleColor),
                       ),
                     ),
                   ),

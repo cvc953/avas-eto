@@ -60,6 +60,95 @@ class _MoreOptionsState extends State<MoreOptions> {
     setState(() {});
   }
 
+  String _getThemeModeLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'Claro';
+      case ThemeMode.dark:
+        return 'Oscuro';
+      case ThemeMode.system:
+        return 'Seguir sistema';
+    }
+  }
+
+  void _showThemeDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          title: Text(
+            'Seleccionar tema',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.titleLarge?.color,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildThemeOption(
+                context,
+                'Seguir sistema',
+                Icons.brightness_auto,
+                ThemeMode.system,
+              ),
+              _buildThemeOption(
+                context,
+                'Claro',
+                Icons.light_mode,
+                ThemeMode.light,
+              ),
+              _buildThemeOption(
+                context,
+                'Oscuro',
+                Icons.dark_mode,
+                ThemeMode.dark,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildThemeOption(
+    BuildContext context,
+    String label,
+    IconData icon,
+    ThemeMode mode,
+  ) {
+    final isSelected = _settingsController.themeMode == mode;
+
+    return ListTile(
+      leading: Icon(
+        icon,
+        color:
+            isSelected
+                ? Theme.of(context).primaryColor
+                : Theme.of(context).iconTheme.color,
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color:
+              isSelected
+                  ? Theme.of(context).primaryColor
+                  : Theme.of(context).textTheme.bodyLarge?.color,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      trailing:
+          isSelected
+              ? Icon(Icons.check, color: Theme.of(context).primaryColor)
+              : null,
+      onTap: () async {
+        await _settingsController.setThemeMode(mode);
+        setState(() {});
+        Navigator.of(context).pop();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
@@ -99,7 +188,9 @@ class _MoreOptionsState extends State<MoreOptions> {
                   const SizedBox(height: 20),
                   Text(
                     'Hola, ${user.email}',
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
@@ -115,9 +206,11 @@ class _MoreOptionsState extends State<MoreOptions> {
                 ] else ...[
                   const Icon(Icons.account_circle, size: 80),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Inicia sesión para más opciones',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
@@ -140,11 +233,19 @@ class _MoreOptionsState extends State<MoreOptions> {
                 ListTile(
                   leading:
                       notificationsEnabled == true
-                          ? Icon(Icons.notifications_on, color: Colors.white)
-                          : Icon(Icons.notifications_off, color: Colors.white),
+                          ? Icon(
+                            Icons.notifications_on,
+                            color: Theme.of(context).iconTheme.color,
+                          )
+                          : Icon(
+                            Icons.notifications_off,
+                            color: Theme.of(context).iconTheme.color,
+                          ),
                   title: Text(
                     'Notificaciones',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
                   ),
                   trailing: Switch(
                     value: notificationsEnabled,
@@ -157,11 +258,41 @@ class _MoreOptionsState extends State<MoreOptions> {
                     activeThumbColor: Colors.blueAccent,
                   ),
                 ),
+                // Selector de tema
                 ListTile(
-                  leading: Icon(Icons.info, color: Colors.white),
+                  leading: Icon(
+                    _settingsController.themeMode == ThemeMode.dark
+                        ? Icons.dark_mode
+                        : _settingsController.themeMode == ThemeMode.light
+                        ? Icons.light_mode
+                        : Icons.brightness_auto,
+                    color: Theme.of(context).iconTheme.color,
+                  ),
+                  title: Text(
+                    'Tema',
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  subtitle: Text(
+                    _getThemeModeLabel(_settingsController.themeMode),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                  ),
+                  onTap: () => _showThemeDialog(),
+                ),
+                Divider(color: Theme.of(context).dividerColor),
+                ListTile(
+                  leading: Icon(
+                    Icons.info,
+                    color: Theme.of(context).iconTheme.color,
+                  ),
                   title: Text(
                     'Acerca de',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
                   ),
                   onTap: () {
                     Navigator.pushReplacement(
@@ -238,14 +369,16 @@ class _MoreOptionsState extends State<MoreOptions> {
                   await _authController.signOut();
                   Navigator.of(context).pop();
                 },
-                child: const Text(
-                  'Sí',
-                  style: TextStyle(color: Colors.redAccent),
-                ),
+                child: const Text('Sí', style: TextStyle(color: Colors.red)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('No', style: TextStyle(color: Colors.white)),
+                child: Text(
+                  'No',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
               ),
             ],
           ),

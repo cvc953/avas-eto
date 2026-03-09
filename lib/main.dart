@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 import 'package:avas_eto/screens/tareas.dart';
+import 'package:avas_eto/theme/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:avas_eto/controller/auth_controller.dart';
 import 'package:avas_eto/controller/settings_controller.dart';
@@ -67,6 +68,7 @@ void main() async {
   // Controllers to provide via Provider
   final authController = AuthController();
   final settingsController = SettingsController();
+  await settingsController.init(); // Inicializar para cargar preferencias
   final conectividadService = ConectividadService();
   final tareasController = TareasController(
     tareasRepository,
@@ -79,7 +81,7 @@ void main() async {
     MultiProvider(
       providers: [
         Provider.value(value: authController),
-        Provider.value(value: settingsController),
+        ChangeNotifierProvider.value(value: settingsController),
         Provider.value(value: tareasController),
       ],
       child: MyApp(
@@ -102,12 +104,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settingsController = Provider.of<SettingsController>(context);
+    
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: settingsController.themeMode,
       home:
           firebaseEnabled
-              ? Tareas(tareaRepository: tareaRepository) // Corregido
+              ? Tareas(tareaRepository: tareaRepository)
               : Scaffold(
                 body: Center(
                   child: Column(

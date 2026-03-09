@@ -76,7 +76,11 @@ class EisenhowerMatrix extends StatelessWidget {
                     curve: Curves.easeOut,
                     style: TextStyle(
                       color:
-                          tarea.completada ? Colors.grey.shade600 : Colors.white,
+                          tarea.completada
+                              ? Colors.grey.shade600
+                              : (Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black87),
                       fontSize: 20,
                       decoration:
                           tarea.completada
@@ -99,14 +103,21 @@ class EisenhowerMatrix extends StatelessWidget {
   }
 
   Widget _quadrant({
+    required BuildContext context,
     required String numeral,
     required String title,
     required Color accent,
     required List<Tarea> items,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final quadrantBg =
+        isDark ? const Color(0xFF191B20) : Theme.of(context).cardColor;
+    final emptyColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF191B20),
+        color: quadrantBg,
         borderRadius: BorderRadius.circular(24),
       ),
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
@@ -154,10 +165,7 @@ class EisenhowerMatrix extends StatelessWidget {
                     ? Center(
                       child: Text(
                         'Sin tareas',
-                        style: TextStyle(
-                          color: Colors.grey.shade500,
-                          fontSize: 20,
-                        ),
+                        style: TextStyle(color: emptyColor, fontSize: 20),
                       ),
                     )
                     : ListView.builder(
@@ -187,24 +195,28 @@ class EisenhowerMatrix extends StatelessWidget {
         childAspectRatio: 0.62,
         children: [
           _quadrant(
+            context: context,
             numeral: 'I',
             title: 'Urgente e importante',
             accent: const Color(0xFFFF5F6D),
             items: q1,
           ),
           _quadrant(
+            context: context,
             numeral: 'II',
             title: 'No urgente pero importante',
             accent: const Color(0xFFFFBC1F),
             items: q2,
           ),
           _quadrant(
+            context: context,
             numeral: 'III',
             title: 'Urgente pero no importante',
             accent: const Color(0xFF4E7BFF),
             items: q3,
           ),
           _quadrant(
+            context: context,
             numeral: 'IV',
             title: 'No urgente y no importante',
             accent: const Color(0xFF00D4B5),
