@@ -107,8 +107,10 @@ class _TareasInicioState extends State<TareasInicio> {
       } else {
         final tareaEditada = result['tarea'] as Tarea;
         final nuevaClave = result['clave'] as String;
-        final claveVieja = TaskKeyGenerator.generateKeyFromDateTime(tarea.fechaVencimiento);
-        
+        final claveVieja = TaskKeyGenerator.generateKeyFromDateTime(
+          tarea.fechaVencimiento,
+        );
+
         if (nuevaClave == claveVieja) {
           await _controller.actualizar(tareaEditada, claveVieja);
         } else {
