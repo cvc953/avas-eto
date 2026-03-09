@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 
 class TareasList extends StatelessWidget {
   final List<Tarea> tareas;
-  final Set<Tarea> expandida;
-  final void Function(Tarea) onToggle;
   final void Function(Tarea) onEliminar;
   final void Function(Tarea) onEditar;
   final void Function(Tarea, bool) onCheck;
@@ -13,8 +11,6 @@ class TareasList extends StatelessWidget {
   const TareasList({
     super.key,
     required this.tareas,
-    required this.expandida,
-    required this.onToggle,
     required this.onEliminar,
     required this.onEditar,
     required this.onCheck,
@@ -38,15 +34,11 @@ class TareasList extends StatelessWidget {
         SliverList(
           delegate: SliverChildBuilderDelegate((context, index) {
             final tarea = tareas[index];
-            final isExpandida = expandida.contains(tarea);
             return TareaCard(
-              key: ValueKey('${tarea.id}_$isExpandida'),
+              key: ValueKey(tarea.id),
               tarea: tarea,
-              expandida: isExpandida,
-              onToggleExpand: () => onToggle(tarea),
               onCheck: (val) => onCheck(tarea, val ?? false),
-              onEliminar: () => onEliminar(tarea),
-              onEditar: () => onEditar(tarea),
+              onTap: () => onEditar(tarea),
             );
           }, childCount: tareas.length),
         ),

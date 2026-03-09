@@ -232,9 +232,7 @@ class _TareasInicioState extends State<TareasInicio> {
   }
 
   void _toggleExpandida(Tarea tarea) {
-    setState(() {
-      _controller.toggleExpandida(tarea);
-    });
+    // Expansion removed.
   }
 
   @override
@@ -355,7 +353,6 @@ class _TareasInicioState extends State<TareasInicio> {
     // default: tareas view
     return TareasTabsView(
       controller: _controller,
-      onToggle: _toggleExpandida,
       onCheck: _marcarCompletada,
       onEditar: _onEditarTarea,
       onEliminar: _onEliminarTarea,

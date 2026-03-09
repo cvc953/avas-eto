@@ -8,7 +8,6 @@ class TareasTabsView extends StatelessWidget {
   final Function(Tarea) onEliminar;
   final Function(Tarea) onEditar;
   final Function(Tarea, bool) onCheck;
-  final Function(Tarea) onToggle;
 
   const TareasTabsView({
     super.key,
@@ -16,7 +15,6 @@ class TareasTabsView extends StatelessWidget {
     required this.onEliminar,
     required this.onEditar,
     required this.onCheck,
-    required this.onToggle,
   });
 
   @override
@@ -25,16 +23,12 @@ class TareasTabsView extends StatelessWidget {
       children: [
         TareasList(
           tareas: controller.filtrar(false),
-          expandida: controller.tareasExpandida,
-          onToggle: onToggle,
           onEliminar: onEliminar,
           onEditar: onEditar,
           onCheck: onCheck,
         ),
         TareasList(
           tareas: controller.filtrar(true),
-          expandida: controller.tareasExpandida,
-          onToggle: onToggle,
           onEliminar: onEliminar,
           onEditar: onEditar,
           onCheck: onCheck,
