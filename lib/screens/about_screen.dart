@@ -1,3 +1,4 @@
+import 'package:avas_eto/widgets/bottom_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/gestures.dart';
@@ -126,6 +127,18 @@ class AboutScreen extends StatelessWidget {
               ],
             ),
           ),
+        ),
+        bottomNavigationBar: CustomBottomNavBar(
+          currentIndex: _selectedIndex,
+          onSelect: (i) {
+            if (i == 0) {
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => EisenhowerScreen(controller: widget.controller, onAddTask: widget.onAddTask, onToggle: widget.onToggle, currentIndex: 0)));
+            } else if (i == 1) {
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => TareasScreen(controller: widget.controller, onAddTask: widget.onAddTask, onToggle: widget.onToggle, currentIndex: 1)));
+            } else if (i == 2) {
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MoreOptionsScreen()));
+            }
+          },
         ),
       ),
     );

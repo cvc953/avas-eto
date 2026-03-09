@@ -2,6 +2,7 @@ import 'package:avas_eto/models/tarea.dart';
 import 'package:avas_eto/services/local_storage_service.dart';
 import 'package:avas_eto/repositories/tareas_repository.dart';
 import 'package:avas_eto/services/conectividad_service.dart';
+import 'package:avas_eto/utils/task_key_generator.dart';
 
 /// Controller que centraliza la lógica de negocio para las tareas.
 class TareasController {
@@ -70,7 +71,10 @@ class TareasController {
     _ordenActual = tipoOrdenamiento;
   }
 
-  Future<void> guardar(Tarea tarea, String clave, bool online) async {
+  Future<void> guardar(Tarea tarea, bool online) async {
+    final clave = TaskKeyGenerator.generateKeyFromDateTime(
+      tarea.fechaVencimiento,
+    );
     await _repository.guardar(tarea, clave, online);
     await init();
   }

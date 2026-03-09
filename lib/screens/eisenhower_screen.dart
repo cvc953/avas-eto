@@ -9,7 +9,6 @@ class EisenhowerScreen extends StatefulWidget {
   final TareasController controller;
   final Future<void> Function(Tarea tarea) onAddTask;
   final Future<void> Function(Tarea tarea, bool completada)? onToggle;
-  final List<Color> coloresDisponibles;
   final int currentIndex;
 
   const EisenhowerScreen({
@@ -17,7 +16,6 @@ class EisenhowerScreen extends StatefulWidget {
     required this.controller,
     required this.onAddTask,
     this.onToggle,
-    this.coloresDisponibles = const [],
     this.currentIndex = 0,
   });
 
@@ -50,7 +48,7 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text('Matriz de Eisenhower'),
-        automaticallyImplyLeading: true,
+        automaticallyImplyLeading: false,
       ),
       body: EisenhowerMatrix(tareas: tareas, onToggle: widget.onToggle),
       floatingActionButton: FloatingActionButton(
@@ -58,21 +56,16 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
         backgroundColor: Colors.blueAccent,
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar:
-          widget.coloresDisponibles.isNotEmpty
-              ? CustomBottomNavBar(
-                parentContext: context,
-                currentIndex: widget.currentIndex,
-                onSelect: (i) {
-                  if (i == 1) {
-                    Navigator.pop(context);
-                  } else if (i == 2) {
-                    Navigator.pushReplacementNamed(context, '/more');
-                  }
-                },
-                coloresDisponibles: widget.coloresDisponibles,
-              )
-              : null,
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: widget.currentIndex,
+        onSelect: (i) {
+          if (i == 1) {
+            Navigator.pop(context);
+          } else if (i == 2) {
+            Navigator.pushReplacementNamed(context, '/more');
+          }
+        },
+      ),
     );
   }
 }

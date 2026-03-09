@@ -13,7 +13,7 @@ import '../dialogs/editar_tarea.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import '../widgets/eisenhower_matrix.dart';
 import '../widgets/buscar_tareas.dart';
-import '../utils/task_key_generator.dart';
+// moved key generation to controller
 import 'tareas_tab_view.dart';
 
 class TareasInicio extends StatefulWidget {
@@ -24,14 +24,6 @@ class TareasInicio extends StatefulWidget {
 }
 
 class _TareasInicioState extends State<TareasInicio> {
-  final List<Color> coloresDisponibles = [
-    Colors.redAccent,
-    Colors.orangeAccent,
-    Colors.yellowAccent,
-    Colors.greenAccent,
-    Colors.blueAccent,
-    Colors.purpleAccent,
-  ];
 
   // loading state not currently used by the UI
   bool _isOnline = true;
@@ -86,11 +78,7 @@ class _TareasInicioState extends State<TareasInicio> {
   }
 
   Future<void> _guardarTarea(Tarea tarea) async {
-    final clave = TaskKeyGenerator.generateKeyFromDateTime(
-      tarea.fechaVencimiento,
-    );
-
-    await _controller.guardar(tarea, clave, _isOnline);
+    await _controller.guardar(tarea, _isOnline);
     if (mounted) setState(() => _ordenarTareas());
   }
 
@@ -239,9 +227,6 @@ class _TareasInicioState extends State<TareasInicio> {
     editarTarea(index, _controller.tareas[claveActual]!, claveActual);
   }
 
-  void _toggleExpandida(Tarea tarea) {
-    // Expansion removed.
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -316,7 +301,6 @@ class _TareasInicioState extends State<TareasInicio> {
                 )
                 : null,
         bottomNavigationBar: CustomBottomNavBar(
-          parentContext: context,
           currentIndex: _selectedIndex,
           onSelect: (i) {
             if (i == 2) {
@@ -338,7 +322,6 @@ class _TareasInicioState extends State<TareasInicio> {
                         onToggle:
                             (tarea, completada) async =>
                                 await _marcarCompletada(tarea, completada),
-                        coloresDisponibles: coloresDisponibles,
                         currentIndex: 0,
                       ),
                 ),
@@ -348,7 +331,6 @@ class _TareasInicioState extends State<TareasInicio> {
 
             setState(() => _selectedIndex = i);
           },
-          coloresDisponibles: coloresDisponibles,
         ),
       ),
     );
