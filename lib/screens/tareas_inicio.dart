@@ -235,7 +235,8 @@ class _TareasInicioState extends State<TareasInicio> {
                   context,
                 ),
                 sliver: SliverAppBar(
-                  backgroundColor: Colors.black,
+                  backgroundColor:
+                      Theme.of(context).appBarTheme.backgroundColor,
                   automaticallyImplyLeading: false,
                   title: Text(
                     'Tareas',

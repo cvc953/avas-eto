@@ -87,8 +87,8 @@ class EisenhowerMatrix extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 34,
-                height: 34,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
                   color: accent,
                   shape: BoxShape.circle,
@@ -99,7 +99,7 @@ class EisenhowerMatrix extends StatelessWidget {
                   style: const TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                    fontSize: 14,
                   ),
                 ),
               ),
@@ -112,7 +112,7 @@ class EisenhowerMatrix extends StatelessWidget {
                   style: TextStyle(
                     color: accent,
                     fontWeight: FontWeight.w500,
-                    fontSize: 22,
+                    fontSize: 16,
                   ),
                 ),
               ),
