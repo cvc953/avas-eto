@@ -76,3 +76,4 @@ downloads/state_notifier-0.1.0.tar.gz
 downloads/table_calendar-0.0.1.tar.gz
 downloads/url_launcher-0.1.0.tar.gz
 tools/cache_pub_packages.py
+.github/workflows/build_apk.yml
