@@ -48,6 +48,7 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         title: Text(
           'Matriz de Eisenhower',
           style: Theme.of(context).appBarTheme.titleTextStyle,
@@ -57,8 +58,7 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
       body: EisenhowerMatrix(tareas: tareas, onToggle: widget.onToggle),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAdd,
-        backgroundColor:
-            Theme.of(context).floatingActionButtonTheme.backgroundColor,
+        backgroundColor: const Color(0xFF4E7BFF),
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: CustomBottomNavBar(

@@ -22,17 +22,121 @@ class EisenhowerMatrix extends StatelessWidget {
     }).toList();
   }
 
-  Widget _quadrant(String title, Color color, List<Tarea> items) {
+  Widget _taskRow(BuildContext context, Tarea tarea, Color accent) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 22,
+            height: 22,
+            child: Checkbox(
+              value: tarea.completada,
+              onChanged: (value) {
+                if (value == null || onToggle == null) return;
+                onToggle!.call(tarea, value);
+              },
+              side: BorderSide(
+                color: tarea.completada ? Colors.grey.shade700 : accent,
+                width: 1.6,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+              activeColor: Colors.grey.shade800,
+              checkColor: Colors.grey.shade300,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              tarea.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: tarea.completada ? Colors.grey.shade600 : Colors.white,
+                fontSize: 20,
+                decoration:
+                    tarea.completada
+                        ? TextDecoration.lineThrough
+                        : TextDecoration.none,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _quadrant({
+    required String numeral,
+    required String title,
+    required Color accent,
+    required List<Tarea> items,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF191B20),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 6),
-          Text(
-            '${items.length} tareas',
-            // style: const TextStyle(color: Colors.grey),
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: accent,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  numeral,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: accent,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 22,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child:
+                items.isEmpty
+                    ? Center(
+                      child: Text(
+                        'Sin tareas',
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 20,
+                        ),
+                      ),
+                    )
+                    : ListView.builder(
+                      itemCount: items.length,
+                      itemBuilder:
+                          (context, index) =>
+                              _taskRow(context, items[index], accent),
+                    ),
           ),
         ],
       ),
@@ -45,77 +149,40 @@ class EisenhowerMatrix extends StatelessWidget {
     final q2 = _filter(false, true); // Not Urgent & Important
     final q3 = _filter(true, false); // Urgent & Not Important
     final q4 = _filter(false, false); // Not Urgent & Not Important
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-
-        // Mobile / narrow layout: stack quadrants vertically so they fit small screens.
-        if (width < 600) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _quadrant('Urgente e Importante', Colors.red, q1),
-                const SizedBox(height: 8),
-                _quadrant('No urgente e Importante', Colors.orange, q2),
-                const SizedBox(height: 8),
-                _quadrant('Urgente y No importante', Colors.yellow, q3),
-                const SizedBox(height: 8),
-                _quadrant('No urgente y No importante', Colors.green, q4),
-              ],
-            ),
-          );
-        }
-
-        // Wider screens: present a two-column matrix with balanced quadrants.
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: _quadrant('Urgente e Importante', Colors.red, q1),
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: _quadrant(
-                        'No urgente e Importante',
-                        Colors.orange,
-                        q2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: _quadrant(
-                        'Urgente y No importante',
-                        Colors.yellow,
-                        q3,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: _quadrant(
-                        'No urgente y No importante',
-                        Colors.green,
-                        q4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: GridView.count(
+        crossAxisCount: 2,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 0.62,
+        children: [
+          _quadrant(
+            numeral: 'I',
+            title: 'Urgente e importante',
+            accent: const Color(0xFFFF5F6D),
+            items: q1,
           ),
-        );
-      },
+          _quadrant(
+            numeral: 'II',
+            title: 'No urgente pero importante',
+            accent: const Color(0xFFFFBC1F),
+            items: q2,
+          ),
+          _quadrant(
+            numeral: 'III',
+            title: 'Urgente pero no importante',
+            accent: const Color(0xFF4E7BFF),
+            items: q3,
+          ),
+          _quadrant(
+            numeral: 'IV',
+            title: 'No urgente y no importante',
+            accent: const Color(0xFF00D4B5),
+            items: q4,
+          ),
+        ],
+      ),
     );
   }
 }
