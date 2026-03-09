@@ -2,9 +2,21 @@ import 'package:avas_eto/widgets/bottom_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/gestures.dart';
+import 'tareas_inicio.dart';
+import 'more_options.dart';
+import 'eisenhower_screen.dart';
 
 class AboutScreen extends StatelessWidget {
-  const AboutScreen({super.key});
+  final dynamic controller;
+  final Future<void> Function(dynamic tarea)? onAddTask;
+  final Future<void> Function(dynamic tarea, bool)? onToggle;
+
+  const AboutScreen({
+    super.key,
+    this.controller,
+    this.onAddTask,
+    this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -129,38 +141,44 @@ class AboutScreen extends StatelessWidget {
           ),
         ),
         bottomNavigationBar: CustomBottomNavBar(
-          currentIndex: _selectedIndex,
+          currentIndex: 2,
           onSelect: (i) {
             if (i == 0) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (_) => EisenhowerScreen(
-                        controller: widget.controller,
-                        onAddTask: widget.onAddTask,
-                        onToggle: widget.onToggle,
-                        currentIndex: 0,
-                      ),
-                ),
-              );
+              if (controller != null && onAddTask != null) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (_) => EisenhowerScreen(
+                          controller: controller,
+                          onAddTask: onAddTask!,
+                          onToggle: onToggle,
+                          currentIndex: 0,
+                        ),
+                  ),
+                );
+              } else {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => TareasInicio()),
+                );
+              }
             } else if (i == 1) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(
-                  builder:
-                      (_) => TareasScreen(
-                        controller: widget.controller,
-                        onAddTask: widget.onAddTask,
-                        onToggle: widget.onToggle,
-                        currentIndex: 1,
-                      ),
-                ),
+                MaterialPageRoute(builder: (_) => TareasInicio()),
               );
             } else if (i == 2) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => MoreOptionsScreen()),
+                MaterialPageRoute(
+                  builder:
+                      (_) => MoreOptions(
+                        controller: controller,
+                        onAddTask: onAddTask,
+                        onToggle: onToggle,
+                      ),
+                ),
               );
             }
           },

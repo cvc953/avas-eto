@@ -6,7 +6,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/notifications_settings.dart';
 
 class MoreOptions extends StatefulWidget {
-  const MoreOptions({super.key});
+  final dynamic controller; // TareasController (dynamic to avoid import cycles)
+  final Future<void> Function(dynamic tarea)? onAddTask;
+  final Future<void> Function(dynamic tarea, bool completada)? onToggle;
+
+  const MoreOptions({
+    super.key,
+    this.controller,
+    this.onAddTask,
+    this.onToggle,
+  });
 
   @override
   State<MoreOptions> createState() => _MoreOptionsState();
@@ -138,7 +147,14 @@ class _MoreOptionsState extends State<MoreOptions> {
                   onTap: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => AboutScreen()),
+                      MaterialPageRoute(
+                        builder:
+                            (context) => AboutScreen(
+                              controller: widget.controller,
+                              onAddTask: widget.onAddTask,
+                              onToggle: widget.onToggle,
+                            ),
+                      ),
                     );
                   },
                 ),

@@ -315,7 +315,14 @@ class _TareasInicioState extends State<TareasInicio> {
               // Más -> push MoreOptions
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => MoreOptions()),
+                MaterialPageRoute(
+                  builder:
+                      (_) => MoreOptions(
+                        controller: _controller,
+                        onAddTask: (t) async => await _guardarTarea(t),
+                        onToggle: (t, c) async => await _marcarCompletada(t, c),
+                      ),
+                ),
               );
               return;
             }
