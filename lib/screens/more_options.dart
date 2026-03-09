@@ -1,16 +1,12 @@
 import 'package:avas_eto/screens/about_screen.dart';
 import 'package:avas_eto/screens/login.dart';
 import 'package:avas_eto/widgets/toggle_notifications.dart';
-import 'package:avas_eto/widgets/bottom_navigation_bar.dart';
-import 'package:avas_eto/services/theme_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/notifications_settings.dart';
 
 class MoreOptions extends StatefulWidget {
-  final List<Color> coloresDisponibles;
-
-  const MoreOptions({super.key, this.coloresDisponibles = const []});
+  const MoreOptions({super.key});
 
   @override
   State<MoreOptions> createState() => _MoreOptionsState();
@@ -134,30 +130,6 @@ class _MoreOptionsState extends State<MoreOptions> {
                   },
                 ),
                 ListTile(
-                  leading: Icon(
-                    ThemeService.instance.isDarkMode
-                        ? Icons.dark_mode
-                        : Icons.light_mode,
-                    color: Colors.white,
-                  ),
-                  title: Text(
-                    'Tema',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  trailing: Switch(
-                    value: ThemeService.instance.isDarkMode,
-                    onChanged: (value) {
-                      ThemeService.instance.setTheme(value);
-                      setState(() {});
-                    },
-                    activeColor: Colors.blueAccent,
-                  ),
-                  subtitle: Text(
-                    ThemeService.instance.isDarkMode ? 'Oscuro' : 'Claro',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-                ListTile(
                   leading: Icon(Icons.info, color: Colors.white),
                   title: Text(
                     'Acerca de',
@@ -173,18 +145,6 @@ class _MoreOptionsState extends State<MoreOptions> {
               ],
             ),
           ),
-          bottomNavigationBar: widget.coloresDisponibles.isNotEmpty
-              ? CustomBottomNavBar(
-                  parentContext: context,
-                  currentIndex: 2,
-                  onSelect: (i) {
-                    if (i == 0 || i == 1) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  coloresDisponibles: widget.coloresDisponibles,
-                )
-              : null,
         );
       },
     );

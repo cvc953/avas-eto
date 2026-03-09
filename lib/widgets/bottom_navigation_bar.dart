@@ -39,45 +39,4 @@ class CustomBottomNavBar extends StatelessWidget {
       ],
     );
   }
-
-  void _menu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.calendar_month_rounded),
-              title: const Text('Calendario'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) => CalendarioTareas(
-                          coloresDisponibles: coloresDisponibles,
-                        ),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.view_week),
-              title: const Text('Semana'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) =>
-                            VisSemana(coloresDisponibles: coloresDisponibles),
-                  ),
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
