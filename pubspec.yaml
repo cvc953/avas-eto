@@ -51,9 +51,10 @@ dependencies:
   intl: ^0.20.2
   shared_preferences: ^2.1.1
   url_launcher: ^6.2.6
+  provider: ^6.0.5
   # Añadido para manejo de estado reactivo
   # Reactivar flutter_riverpod para manejo de estado
-  #flutter_riverpod: 2.6.1
+  flutter_riverpod: 2.6.1
 
 dev_dependencies:
   flutter_test:

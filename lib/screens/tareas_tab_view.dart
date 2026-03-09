@@ -1,17 +1,16 @@
 import 'package:avas_eto/controller/tareas_controller.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import '../models/tarea.dart';
 import 'tareas_list.dart';
 
 class TareasTabsView extends StatelessWidget {
-  final TareasController controller;
   final Function(Tarea) onEliminar;
   final Function(Tarea) onEditar;
   final Function(Tarea, bool) onCheck;
 
   const TareasTabsView({
     super.key,
-    required this.controller,
     required this.onEliminar,
     required this.onEditar,
     required this.onCheck,
@@ -19,6 +18,8 @@ class TareasTabsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Provider.of<TareasController>(context, listen: false);
+
     return TabBarView(
       children: [
         TareasList(

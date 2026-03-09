@@ -3,21 +3,27 @@ import 'package:avas_eto/screens/login.dart';
 import 'package:avas_eto/widgets/toggle_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/notifications_settings.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import 'eisenhower_screen.dart';
 import 'tareas_inicio.dart';
+import 'package:avas_eto/controller/auth_controller.dart';
+import 'package:avas_eto/controller/settings_controller.dart';
+import 'package:provider/provider.dart';
+import 'package:avas_eto/controller/tareas_controller.dart';
 
 class MoreOptions extends StatefulWidget {
-  final dynamic controller; // TareasController (dynamic to avoid import cycles)
   final Future<void> Function(dynamic tarea)? onAddTask;
   final Future<void> Function(dynamic tarea, bool completada)? onToggle;
+  final AuthController? authController;
+  final SettingsController? settingsController;
 
   const MoreOptions({
     super.key,
-    this.controller,
+    
     this.onAddTask,
     this.onToggle,
+    this.authController,
+    this.settingsController,
   });
 
   @override
@@ -25,29 +31,40 @@ class MoreOptions extends StatefulWidget {
 }
 
 class _MoreOptionsState extends State<MoreOptions> {
-  final user = FirebaseAuth.instance.currentUser;
-  late final dynamic controller = widget.controller;
+  late final dynamic controller;
   late final Future<void> Function(dynamic tarea)? onAddTask = widget.onAddTask;
   late final Future<void> Function(dynamic tarea, bool)? onToggle =
       widget.onToggle;
+
+  late final AuthController _authController;
+  late final SettingsController _settingsController;
   bool notificationsEnabled = true;
 
   @override
   void initState() {
     super.initState();
+    _authController =
+        widget.authController ??
+        Provider.of<AuthController>(context, listen: false);
+    _settingsController =
+        widget.settingsController ??
+        Provider.of<SettingsController>(context, listen: false);
+    // Obtain TareasController from Provider (no longer passed via widget)
+    controller = Provider.of<TareasController>(context, listen: false);
+
     enableNotifications();
   }
 
   void enableNotifications() async {
-    // Lógica para habilitar o deshabilitar notificaciones
-    notificationsEnabled = await NotificationSettings.isEnabled();
+    // Lógica para habilitar o deshabilitar notificaciones (delegada al SettingsController)
+    notificationsEnabled = await _settingsController.isEnabled();
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
+      stream: _authController.authStateChanges(),
       builder: (context, snapshot) {
         final user = snapshot.data;
 
@@ -136,6 +153,7 @@ class _MoreOptionsState extends State<MoreOptions> {
                       builder: (context) => ToggleNotifications(),
                     );
                     if (newValue != null) {
+                      await _settingsController.setEnabled(newValue);
                       setState(() {
                         notificationsEnabled = newValue;
                       });
@@ -154,7 +172,6 @@ class _MoreOptionsState extends State<MoreOptions> {
                       MaterialPageRoute(
                         builder:
                             (context) => AboutScreen(
-                              controller: widget.controller,
                               onAddTask: widget.onAddTask,
                               onToggle: widget.onToggle,
                             ),
@@ -175,7 +192,6 @@ class _MoreOptionsState extends State<MoreOptions> {
                     MaterialPageRoute(
                       builder:
                           (_) => EisenhowerScreen(
-                            controller: controller,
                             onAddTask: onAddTask!,
                             onToggle: onToggle,
                             currentIndex: 0,
@@ -199,7 +215,6 @@ class _MoreOptionsState extends State<MoreOptions> {
                   MaterialPageRoute(
                     builder:
                         (_) => MoreOptions(
-                          controller: controller,
                           onAddTask: onAddTask,
                           onToggle: onToggle,
                         ),
@@ -223,7 +238,7 @@ class _MoreOptionsState extends State<MoreOptions> {
             actions: [
               TextButton(
                 onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
+                  await _authController.signOut();
                   Navigator.of(context).pop();
                 },
                 child: const Text(

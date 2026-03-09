@@ -1,5 +1,10 @@
 import 'dart:io' show Platform;
 import 'package:avas_eto/screens/tareas.dart';
+import 'package:provider/provider.dart';
+import 'package:avas_eto/controller/auth_controller.dart';
+import 'package:avas_eto/controller/settings_controller.dart';
+import 'package:avas_eto/controller/tareas_controller.dart';
+import 'package:avas_eto/services/conectividad_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -10,6 +15,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'services/local_database.dart';
 import 'services/local_storage_service.dart';
 import 'services/tarea_repository.dart';
+import 'package:avas_eto/repositories/tareas_repository.dart';
 import 'package:avas_eto/utils/permissions.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -55,10 +61,31 @@ void main() async {
     localStorage,
   );
 
+  // Wrapper providing the legacy API expected by controllers
+  final tareasRepository = TareasRepository(localStorage);
+
+  // Controllers to provide via Provider
+  final authController = AuthController();
+  final settingsController = SettingsController();
+  final conectividadService = ConectividadService();
+  final tareasController = TareasController(
+    tareasRepository,
+    localStorage,
+    conectividadService,
+  );
+  await tareasController.init();
+
   runApp(
-    MyApp(
-      firebaseEnabled: firebaseSupported && firebaseApp != null,
-      tareaRepository: tareaRepository,
+    MultiProvider(
+      providers: [
+        Provider.value(value: authController),
+        Provider.value(value: settingsController),
+        Provider.value(value: tareasController),
+      ],
+      child: MyApp(
+        firebaseEnabled: firebaseSupported && firebaseApp != null,
+        tareaRepository: tareaRepository,
+      ),
     ),
   );
 }

@@ -1,4 +1,5 @@
 import 'package:avas_eto/controller/tareas_controller.dart';
+import 'package:provider/provider.dart';
 import 'package:avas_eto/utils/tareas_location_helper.dart';
 import '../dialogs/agregar_tarea.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +41,12 @@ class _TareasInicioState extends State<TareasInicio> {
 
   Future<void> _initializeServices() async {
     try {
-      _controller = await TareasController.create();
+      // Try to obtain a provided controller first; otherwise create one.
+      try {
+        _controller = Provider.of<TareasController>(context, listen: false);
+      } catch (_) {
+        _controller = await TareasController.create();
+      }
 
       _controller.setupConnectivityListener((isOnline) {
         setState(() => _isOnline = isOnline);
@@ -169,19 +175,13 @@ class _TareasInicioState extends State<TareasInicio> {
     );
 
     if (result != null) {
-      if (result['delete'] == true) {
-        await _eliminarTarea(index, claveActual);
-        return;
-      }
-
-      final tareaEditada = result['tarea'] as Tarea;
-      final nuevaClave = result['clave'] as String;
-
-      if (nuevaClave == claveActual) {
-        await _actualizarTarea(tareaEditada, claveActual, index);
-      } else {
-        await _moverTarea(tareaEditada, claveActual, nuevaClave, index);
-      }
+      await _controller.processEditResult(
+        result,
+        claveActual,
+        index,
+        _isOnline,
+      );
+      if (mounted) setState(() => _ordenarTareas());
     }
   }
 
@@ -301,7 +301,6 @@ class _TareasInicioState extends State<TareasInicio> {
                 MaterialPageRoute(
                   builder:
                       (_) => MoreOptions(
-                        controller: _controller,
                         onAddTask: (t) async => await _guardarTarea(t),
                         onToggle: (t, c) async => await _marcarCompletada(t, c),
                       ),
@@ -315,7 +314,6 @@ class _TareasInicioState extends State<TareasInicio> {
                 MaterialPageRoute(
                   builder:
                       (_) => EisenhowerScreen(
-                        controller: _controller,
                         onAddTask: (t) async => await _guardarTarea(t),
                         onToggle:
                             (tarea, completada) async =>
@@ -346,7 +344,6 @@ class _TareasInicioState extends State<TareasInicio> {
 
     // default: tareas view
     return TareasTabsView(
-      controller: _controller,
       onCheck: _marcarCompletada,
       onEditar: _onEditarTarea,
       onEliminar: _onEliminarTarea,

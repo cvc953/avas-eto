@@ -170,4 +170,35 @@ class TareasController {
   ) async {
     await actualizar(tarea, claveNueva);
   }
+
+  /// Procesa el resultado del diálogo de edición.
+  /// Espera un `result` con las mismas claves que devuelve el modal:
+  /// - `delete`: bool -> eliminar la tarea
+  /// - `tarea`: Tarea -> tarea editada
+  /// - `clave`: String -> nueva clave
+  Future<void> processEditResult(
+    Map<String, dynamic> result,
+    String claveActual,
+    int index,
+    bool online,
+  ) async {
+    if (result['delete'] == true) {
+      final mapa = tareas;
+      if (!mapa.containsKey(claveActual)) return;
+      final lista = mapa[claveActual]!;
+      if (index < 0 || index >= lista.length) return;
+      final tarea = lista[index];
+      await eliminar(tarea, online);
+      return;
+    }
+
+    final tareaEditada = result['tarea'] as Tarea;
+    final nuevaClave = result['clave'] as String;
+
+    if (nuevaClave == claveActual) {
+      await actualizar(tareaEditada, claveActual);
+    } else {
+      await moverTarea(tareaEditada, claveActual, nuevaClave);
+    }
+  }
 }
