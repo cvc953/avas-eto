@@ -53,11 +53,21 @@ class AboutScreen extends StatelessWidget {
                   content: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _bullet('Crea tareas con titulo, descripcion, fecha y hora.'),
-                      _bullet('Muestra tus tareas en lista y en Matriz de Eisenhower.'),
-                      _bullet('Permite marcar, editar y eliminar tareas facilmente.'),
-                      _bullet('Guarda tareas en local y sincroniza cuando hay conexion.'),
-                      _bullet('Envia recordatorios para no olvidar tareas importantes.'),
+                      _bullet(
+                        'Crea tareas con titulo, descripcion, fecha y hora.',
+                      ),
+                      _bullet(
+                        'Muestra tus tareas en lista y en Matriz de Eisenhower.',
+                      ),
+                      _bullet(
+                        'Permite marcar, editar y eliminar tareas facilmente.',
+                      ),
+                      _bullet(
+                        'Guarda tareas en local y sincroniza cuando hay conexion.',
+                      ),
+                      _bullet(
+                        'Envia recordatorios para no olvidar tareas importantes.',
+                      ),
                     ],
                   ),
                   cardColor: cardColor,

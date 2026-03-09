@@ -81,9 +81,7 @@ class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        foregroundColor: primaryColor,
-      ),
+      style: TextButton.styleFrom(foregroundColor: primaryColor),
     ),
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.white),
@@ -215,9 +213,7 @@ class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        foregroundColor: primaryColor,
-      ),
+      style: TextButton.styleFrom(foregroundColor: primaryColor),
     ),
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.black87),
