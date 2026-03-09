@@ -296,8 +296,8 @@ class _TareasInicioState extends State<TareasInicio> {
           currentIndex: _selectedIndex,
           onSelect: (i) {
             if (i == 2) {
-              // Más -> push MoreOptions
-              Navigator.push(
+              // Más -> replace current route with MoreOptions to avoid stacked bottom bars
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                   builder:
@@ -310,7 +310,8 @@ class _TareasInicioState extends State<TareasInicio> {
               return;
             }
             if (i == 0) {
-              Navigator.push(
+              // Replace with EisenhowerScreen so only one bottom bar exists
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                   builder:

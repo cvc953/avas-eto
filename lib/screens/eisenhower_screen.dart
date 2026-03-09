@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:avas_eto/controller/tareas_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:avas_eto/dialogs/agregar_tarea.dart';
+import 'package:avas_eto/screens/tareas_inicio.dart';
 import 'package:avas_eto/widgets/eisenhower_matrix.dart';
 import 'package:avas_eto/widgets/bottom_navigation_bar.dart';
 import 'package:avas_eto/screens/more_options.dart';
@@ -77,13 +78,18 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
         currentIndex: widget.currentIndex,
         onSelect: (i) {
           if (i == 1) {
-            Navigator.pop(context);
+            // We used pushReplacement from the main screen, so pop() would exit.
+            // Replace the current route with TareasInicio to return to the main tab.
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const TareasInicio()),
+            );
             return;
           }
 
           if (i == 2) {
             // Push MoreOptions and pass controller + callbacks so MoreOptions can act.
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder:
