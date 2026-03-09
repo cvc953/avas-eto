@@ -182,10 +182,18 @@ class _TareasInicioState extends State<TareasInicio> {
             onSave: (tareaEditada, clave) {
               Navigator.pop(context, {'tarea': tareaEditada, 'clave': clave});
             },
+            onDelete: () {
+              Navigator.pop(context, {'delete': true});
+            },
           ),
     );
 
     if (result != null) {
+      if (result['delete'] == true) {
+        await _eliminarTarea(index, claveActual);
+        return;
+      }
+      
       final tareaEditada = result['tarea'] as Tarea;
       final nuevaClave = result['clave'] as String;
 

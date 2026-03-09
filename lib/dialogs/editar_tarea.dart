@@ -5,10 +5,12 @@ import '../models/tarea.dart';
 class EditTaskDialog extends StatefulWidget {
   final Tarea tarea;
   final Function(Tarea, String) onSave;
+  final VoidCallback? onDelete;
   const EditTaskDialog({
     super.key,
     required this.tarea,
     required this.onSave,
+    this.onDelete,
   });
 
   @override
@@ -273,6 +275,16 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                                       ),
                                     ],
                                   ),
+                                  if (widget.onDelete != null) ...[
+                                    const SizedBox(height: 12),
+                                    TextButton(
+                                      onPressed: _isSaving ? null : () {
+                                        Navigator.pop(context);
+                                        widget.onDelete!();
+                                      },
+                                      child: const Text('Eliminar Tarea', style: TextStyle(color: Colors.red)),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
