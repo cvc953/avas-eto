@@ -19,9 +19,15 @@ class CustomBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      backgroundColor: backgroundColor ?? Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-      selectedItemColor: selectedItemColor ?? Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
-      unselectedItemColor: unselectedItemColor ?? Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
+      backgroundColor:
+          backgroundColor ??
+          Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+      selectedItemColor:
+          selectedItemColor ??
+          Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+      unselectedItemColor:
+          unselectedItemColor ??
+          Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
       currentIndex: currentIndex,
       type: BottomNavigationBarType.fixed,
       onTap: (i) => onSelect?.call(i),

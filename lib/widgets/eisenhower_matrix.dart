@@ -76,9 +76,17 @@ class EisenhowerMatrix extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: [
-                    Expanded(child: _quadrant('Urgente e Importante', Colors.red, q1)),
+                    Expanded(
+                      child: _quadrant('Urgente e Importante', Colors.red, q1),
+                    ),
                     const SizedBox(height: 8),
-                    Expanded(child: _quadrant('No urgente e Importante', Colors.orange, q2)),
+                    Expanded(
+                      child: _quadrant(
+                        'No urgente e Importante',
+                        Colors.orange,
+                        q2,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -86,9 +94,21 @@ class EisenhowerMatrix extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: [
-                    Expanded(child: _quadrant('Urgente y No importante', Colors.yellow, q3)),
+                    Expanded(
+                      child: _quadrant(
+                        'Urgente y No importante',
+                        Colors.yellow,
+                        q3,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    Expanded(child: _quadrant('No urgente y No importante', Colors.green, q4)),
+                    Expanded(
+                      child: _quadrant(
+                        'No urgente y No importante',
+                        Colors.green,
+                        q4,
+                      ),
+                    ),
                   ],
                 ),
               ),

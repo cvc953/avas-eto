@@ -48,13 +48,17 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Matriz de Eisenhower', style: Theme.of(context).appBarTheme.titleTextStyle),
+        title: Text(
+          'Matriz de Eisenhower',
+          style: Theme.of(context).appBarTheme.titleTextStyle,
+        ),
         automaticallyImplyLeading: false,
       ),
       body: EisenhowerMatrix(tareas: tareas, onToggle: widget.onToggle),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAdd,
-        backgroundColor: Theme.of(context).floatingActionButtonTheme.backgroundColor,
+        backgroundColor:
+            Theme.of(context).floatingActionButtonTheme.backgroundColor,
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: CustomBottomNavBar(
@@ -70,15 +74,16 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => MoreOptions(
-                  controller: widget.controller,
-                  onAddTask: (t) async => await widget.onAddTask(t),
-                  onToggle: (dynamic tarea, bool completada) async {
-                    if (widget.onToggle != null) {
-                      await widget.onToggle!(tarea as Tarea, completada);
-                    }
-                  },
-                ),
+                builder:
+                    (_) => MoreOptions(
+                      controller: widget.controller,
+                      onAddTask: (t) async => await widget.onAddTask(t),
+                      onToggle: (dynamic tarea, bool completada) async {
+                        if (widget.onToggle != null) {
+                          await widget.onToggle!(tarea as Tarea, completada);
+                        }
+                      },
+                    ),
               ),
             );
             return;
