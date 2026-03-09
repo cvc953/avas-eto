@@ -71,17 +71,16 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
       );
 
       final clave = _formatDateKey(_selectedDate, _selectedTime);
-      widget.onSave(tareaEditada, clave);
 
-      if (mounted) Navigator.pop(context);
+      // Call onSave which will close the dialog
+      widget.onSave(tareaEditada, clave);
     } catch (e) {
       if (mounted) {
+        setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al guardar: ${e.toString()}')),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -355,7 +354,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                       _isSaving
                           ? null
                           : () {
-                            Navigator.pop(context);
+                            // Call onDelete directly - it will close the dialog
                             widget.onDelete!();
                           },
                   child: const Text(
