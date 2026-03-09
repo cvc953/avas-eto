@@ -58,20 +58,21 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
         backgroundColor: Colors.blueAccent,
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar: widget.coloresDisponibles.isNotEmpty
-          ? CustomBottomNavBar(
-              parentContext: context,
-              currentIndex: widget.currentIndex,
-              onSelect: (i) {
-                if (i == 1) {
-                  Navigator.pop(context);
-                } else if (i == 2) {
-                  Navigator.pushReplacementNamed(context, '/more');
-                }
-              },
-              coloresDisponibles: widget.coloresDisponibles,
-            )
-          : null,
+      bottomNavigationBar:
+          widget.coloresDisponibles.isNotEmpty
+              ? CustomBottomNavBar(
+                parentContext: context,
+                currentIndex: widget.currentIndex,
+                onSelect: (i) {
+                  if (i == 1) {
+                    Navigator.pop(context);
+                  } else if (i == 2) {
+                    Navigator.pushReplacementNamed(context, '/more');
+                  }
+                },
+                coloresDisponibles: widget.coloresDisponibles,
+              )
+              : null,
     );
   }
 }
