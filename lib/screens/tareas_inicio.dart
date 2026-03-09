@@ -176,12 +176,13 @@ class _TareasInicioState extends State<TareasInicio> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => EditTaskDialog(
-        tarea: tareaActual,
-        onSave: (tareaEditada, clave) {
-          Navigator.pop(context, {'tarea': tareaEditada, 'clave': clave});
-        },
-      ),
+      builder:
+          (context) => EditTaskDialog(
+            tarea: tareaActual,
+            onSave: (tareaEditada, clave) {
+              Navigator.pop(context, {'tarea': tareaEditada, 'clave': clave});
+            },
+          ),
     );
 
     if (result != null) {
@@ -298,32 +299,37 @@ class _TareasInicioState extends State<TareasInicio> {
             ];
           },
 
-              body: _buildBody(),
+          body: _buildBody(),
         ),
-        floatingActionButton: _selectedIndex == 1
-            ? FloatingActionButton(
-                onPressed: _addTareas,
-                backgroundColor: Colors.blueAccent,
-                child: const Icon(Icons.add),
-              )
-            : null,
+        floatingActionButton:
+            _selectedIndex == 1
+                ? FloatingActionButton(
+                  onPressed: _addTareas,
+                  backgroundColor: Colors.blueAccent,
+                  child: const Icon(Icons.add),
+                )
+                : null,
         bottomNavigationBar: CustomBottomNavBar(
           parentContext: context,
           currentIndex: _selectedIndex,
           onSelect: (i) {
             if (i == 2) {
               // Más -> push MoreOptions
-              Navigator.push(context, MaterialPageRoute(builder: (_) => MoreOptions()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => MoreOptions()),
+              );
               return;
             }
             if (i == 0) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => EisenhowerScreen(
-                    controller: _controller,
-                    onAddTask: (t) async => await _guardarTarea(t),
-                  ),
+                  builder:
+                      (_) => EisenhowerScreen(
+                        controller: _controller,
+                        onAddTask: (t) async => await _guardarTarea(t),
+                      ),
                 ),
               );
               return;

@@ -8,7 +8,11 @@ class EisenhowerScreen extends StatefulWidget {
   final TareasController controller;
   final Future<void> Function(Tarea tarea) onAddTask;
 
-  const EisenhowerScreen({super.key, required this.controller, required this.onAddTask});
+  const EisenhowerScreen({
+    super.key,
+    required this.controller,
+    required this.onAddTask,
+  });
 
   @override
   State<EisenhowerScreen> createState() => _EisenhowerScreenState();
