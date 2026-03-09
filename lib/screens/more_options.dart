@@ -4,6 +4,10 @@ import 'package:avas_eto/widgets/toggle_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/notifications_settings.dart';
+import '../widgets/bottom_navigation_bar.dart';
+import 'eisenhower_screen.dart';
+import 'tareas_inicio.dart';
+import '../controller/tareas_controller.dart';
 
 class MoreOptions extends StatefulWidget {
   final dynamic controller; // TareasController (dynamic to avoid import cycles)
@@ -23,6 +27,10 @@ class MoreOptions extends StatefulWidget {
 
 class _MoreOptionsState extends State<MoreOptions> {
   final user = FirebaseAuth.instance.currentUser;
+  late final dynamic controller = widget.controller;
+  late final Future<void> Function(dynamic tarea)? onAddTask = widget.onAddTask;
+  late final Future<void> Function(dynamic tarea, bool)? onToggle =
+      widget.onToggle;
   bool notificationsEnabled = true;
 
   @override
@@ -45,20 +53,17 @@ class _MoreOptionsState extends State<MoreOptions> {
         final user = snapshot.data;
 
         return Scaffold(
-          backgroundColor: Colors.black,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            title: const Center(
+            automaticallyImplyLeading: false,
+            title: Center(
               child: Text(
                 'Más opciones',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
+                style: Theme.of(context).appBarTheme.titleTextStyle,
               ),
             ),
-            automaticallyImplyLeading: false,
           ),
+          //automaticallyImplyLeading: false,
           body: Center(
             child: Column(
               children: [
@@ -160,6 +165,55 @@ class _MoreOptionsState extends State<MoreOptions> {
                 ),
               ],
             ),
+          ),
+          bottomNavigationBar: CustomBottomNavBar(
+            backgroundColor:
+                Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+            selectedItemColor:
+                Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+            unselectedItemColor:
+                Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
+            currentIndex: 2,
+            onSelect: (i) {
+              if (i == 0) {
+                if (controller != null && onAddTask != null) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (_) => EisenhowerScreen(
+                            controller: controller,
+                            onAddTask: onAddTask!,
+                            onToggle: onToggle,
+                            currentIndex: 0,
+                          ),
+                    ),
+                  );
+                } else {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => TareasInicio()),
+                  );
+                }
+              } else if (i == 1) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => TareasInicio()),
+                );
+              } else if (i == 2) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (_) => MoreOptions(
+                          controller: controller,
+                          onAddTask: onAddTask,
+                          onToggle: onToggle,
+                        ),
+                  ),
+                );
+              }
+            },
           ),
         );
       },

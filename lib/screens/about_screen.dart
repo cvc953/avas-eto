@@ -1,3 +1,4 @@
+import 'package:avas_eto/theme/theme.dart';
 import 'package:avas_eto/widgets/bottom_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -25,17 +26,13 @@ class AboutScreen extends StatelessWidget {
       home: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          title: const Text(
+          title: Text(
             'Acerca de',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(context).appBarTheme.titleTextStyle,
           ),
-          backgroundColor: Colors.black,
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         ),
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
           child: SingleChildScrollView(
             //mainAxisAlignment: MainAxisAlignment.start,
@@ -139,49 +136,6 @@ class AboutScreen extends StatelessWidget {
               ],
             ),
           ),
-        ),
-        bottomNavigationBar: CustomBottomNavBar(
-          currentIndex: 2,
-          onSelect: (i) {
-            if (i == 0) {
-              if (controller != null && onAddTask != null) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (_) => EisenhowerScreen(
-                          controller: controller,
-                          onAddTask: onAddTask!,
-                          onToggle: onToggle,
-                          currentIndex: 0,
-                        ),
-                  ),
-                );
-              } else {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => TareasInicio()),
-                );
-              }
-            } else if (i == 1) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => TareasInicio()),
-              );
-            } else if (i == 2) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (_) => MoreOptions(
-                        controller: controller,
-                        onAddTask: onAddTask,
-                        onToggle: onToggle,
-                      ),
-                ),
-              );
-            }
-          },
         ),
       ),
     );

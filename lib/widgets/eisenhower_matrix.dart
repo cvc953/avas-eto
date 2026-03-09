@@ -32,7 +32,7 @@ class EisenhowerMatrix extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '${items.length} tareas',
-            style: const TextStyle(color: Colors.grey),
+            // style: const TextStyle(color: Colors.grey),
           ),
         ],
       ),
@@ -51,14 +51,6 @@ class EisenhowerMatrix extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Matriz de Eisenhower',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
           const SizedBox(height: 8),
           AspectRatio(
             aspectRatio: 2,
