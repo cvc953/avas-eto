@@ -98,8 +98,41 @@ class TareasController {
     bool completada,
     bool online,
   ) async {
-    await _repository.marcarCompletada(tarea, completada, online);
-    await init();
+    final actualizada = tarea.copyWith(completada: completada);
+
+    // Try to update remote; don't reload everything afterwards to keep UI snappy.
+    try {
+      await _repository.marcarCompletada(tarea, completada, online);
+    } catch (_) {}
+
+    // Ensure local storage reflects the change.
+    await _localStorage.saveTarea(actualizada);
+
+    // Update in-memory map to reflect the new state.
+    for (final entry in tareas.entries) {
+      for (var i = 0; i < entry.value.length; i++) {
+        if (entry.value[i].id == actualizada.id) {
+          entry.value[i] = actualizada;
+        }
+      }
+    }
+  }
+
+  /// Apply a local, optimistic completed toggle immediately.
+  /// Fires a background save to local storage (not awaited) so the UI can update instantly.
+  void markCompletadaLocal(Tarea tarea, bool completada) {
+    final actualizada = tarea.copyWith(completada: completada);
+
+    for (final entry in tareas.entries) {
+      for (var i = 0; i < entry.value.length; i++) {
+        if (entry.value[i].id == actualizada.id) {
+          entry.value[i] = actualizada;
+        }
+      }
+    }
+
+    // Fire-and-forget local save to keep persistence fast.
+    _localStorage.saveTarea(actualizada);
   }
 
   Future<void> moverTarea(

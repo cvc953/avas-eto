@@ -82,7 +82,17 @@ class _TareasInicioState extends State<TareasInicio> {
   }
 
   Future<void> _marcarCompletada(Tarea tarea, bool completada) async {
-    await _controller.marcarCompletada(tarea, completada, _isOnline);
+    // Optimistic update: update UI immediately, then sync in background.
+    _controller.markCompletadaLocal(tarea, completada);
+    if (mounted) setState(() {});
+
+    try {
+      await _controller.marcarCompletada(tarea, completada, _isOnline);
+    } catch (e) {
+      debugPrint('Error sincronizando marca completada: $e');
+      // Optionally show error to user
+      if (mounted) _mostrarError('No se pudo sincronizar el cambio');
+    }
     if (mounted) setState(() => _ordenarTareas());
   }
 
