@@ -1,144 +1,128 @@
 # Avas Eto
 
-Una aplicación de gestión de tareas desarrollada con Flutter que te permite organizar y administrar tus tareas de manera eficiente.
+[![Flutter](https://img.shields.io/badge/Flutter-3.7%2B-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white)](#plataforma-soportada)
 
-## Características
+Aplicacion de gestion de tareas construida con Flutter, enfocada en planificacion diaria y priorizacion usando lista y Matriz de Eisenhower.
 
-- ✅ Crear y gestionar tareas
-- 🎨 Asignar colores personalizados a cada tarea
-- 📋 Visualizar lista de tareas
-- ✏️ Editar tareas existentes
-- 🗑️ Eliminar tareas
-- 👤 Sistema de autenticación con inicio de sesión
-- 🔐 Integración con Google Sign-In
-- 📱 Interfaz de usuario moderna con tema oscuro
+## Alcance actual
 
-## Requisitos Previos
+- Crear tareas con titulo, descripcion, prioridad, color, fecha y hora.
+- Editar, eliminar y marcar tareas como completadas.
+- Visualizar tareas en dos formatos:
+    - Lista por pestanas: `Pendientes` y `Completadas`.
+    - Matriz de Eisenhower (4 cuadrantes).
+- Ordenar tareas por prioridad o por fecha reciente.
+- Busqueda de tareas por texto.
+- Recordatorios y notificaciones locales para tareas programadas.
+- Persistencia local de tareas y sincronizacion cuando hay conectividad.
+- Soporte de autenticacion (incluyendo Google Sign-In).
+- Navegacion principal con `Tareas`, `Matriz` y `Mas`.
+- Tema claro y oscuro aplicado a componentes clave (dialogs, date/time pickers, tarjetas y navegacion inferior).
+- Pantalla `Acerca de` con resumen funcional y politica de privacidad.
+
+## Requisitos
 
 - Flutter SDK 3.7.0 o superior
 - Dart SDK
-- Android Studio / Xcode / Visual Studio (dependiendo de la plataforma objetivo)
+- Android Studio (entorno recomendado para desarrollo y ejecucion)
 
-## Dependencias Principales
+## Plataforma soportada
 
-- `flutter` - Framework de desarrollo
-- `flutter_signin_button` - Botones de inicio de sesión prediseñados
-- `sqflite` - Base de datos SQLite para Flutter
-- `path` - Utilidades para trabajar con rutas de archivos
+- Android
 
-## Instalación
+## Instalacion
 
-1. Clona este repositorio:
+1. Clonar repositorio
+
 ```bash
 git clone https://github.com/cvc953/avas-eto.git
 cd avas-eto
 ```
 
-2. Instala las dependencias:
+2. Instalar dependencias
+
 ```bash
 flutter pub get
 ```
 
-3. Ejecuta la aplicación:
+3. Ejecutar la app
+
 ```bash
 flutter run
 ```
 
-## Plataformas Soportadas
+## Estructura principal
 
-- ✅ Android
-
-## Estructura del Proyecto
-
-```
+```text
 lib/
-├── components
-│   └── images
-│       └── google.png
-├── controller
-│   └── tareas_controller.dart
-├── dialogs
-│   ├── agregar_tarea.dart
-│   └── editar_tarea.dart
-├── firebase_options.dart
-├── main.dart
-├── models
-│   └── tarea.dart
-├── repositories
-│   └── tareas_repository.dart
-├── screens
-│   ├── cuentas.dart
-│   ├── login.dart
-│   ├── more_options.dart
-│   ├── registro.dart
-│   ├── tareas.dart
-│   ├── tareas_inicio.dart
-│   ├── tareas_list.dart
-│   ├── tareas_tab_view.dart
-│   ├── vista_calendario.dart
-│   └── vista_semana.dart
-├── services
-│   ├── autenticacion.dart
-│   ├── conectividad_service.dart
-│   ├── inicia_con_google.dart
-│   ├── local_database.dart
-│   ├── local_storage_service.dart
-│   ├── notificacion_service.dart
-│   ├── notification_service.dart
-│   ├── notifications_settings.dart
-│   ├── password_reset.dart
-│   ├── tarea_repository.dart
-│   └── tareas_firestore_service.dart
-├── utils
-│   ├── permissions.dart
-│   ├── tarea_firestore_mapper.dart
-│   ├── tarea_helpers.dart
-│   ├── tareas_location_helper.dart
-│   └── theme.dart
-└── widgets
-    ├── boton_agregar.dart
-    ├── boton_inicio.dart
-    ├── bottom_navigation_bar.dart
-    ├── buscar_tareas.dart
-    ├── google.dart
-    ├── login_input.dart
-    ├── nombre_tarea.dart
-    ├── tarea_card.dart
-    ├── toggle_notifications.dart
-    └── ui.dart
+    controller/      # Logica de estado y reglas de negocio
+    dialogs/         # Crear/editar tarea
+    models/          # Entidades (ej. tarea)
+    repositories/    # Acceso a datos
+    screens/         # Pantallas principales
+    services/        # Auth, almacenamiento, notificaciones, conectividad
+    theme/           # Definicion de temas de la app
+    utils/           # Helpers y utilidades
+    widgets/         # Componentes reutilizables
 ```
 
-## Uso
+## Flujo de uso
 
-1. **Añadir una tarea**: Toca el botón "+" en la barra inferior y escribe el nombre de tu tarea. Puedes seleccionar un color personalizado para categorizarla.
+1. Crear una tarea desde el boton flotante en `Tareas` o `Matriz`.
+2. Revisar tareas en lista o en la Matriz de Eisenhower.
+3. Marcar tareas completadas o editarlas desde sus opciones.
+4. Usar `Mas` para opciones adicionales y pantalla `Acerca de`.
 
-2. **Gestionar tareas**: Cada tarea tiene un menú de opciones (⋮) donde puedes editarla o eliminarla.
+## Capturas de pantalla
 
-3. **Vistas**: Toca el botón de vistas para acceder a diferentes modos de visualización (Calendario, Código, Semana, Tabla de progreso).
+Agrega tus imagenes en `assets/screenshots/` y actualiza las rutas si lo necesitas.
 
-4. **Cuenta**: Accede al sistema de autenticación tocando el icono de perfil.
+| Pantalla | Vista |
+| --- | --- |
+| Tareas | `![Tareas](assets/screenshots/tareas.png)` |
+| Matriz Eisenhower | `![Matriz](assets/screenshots/matriz.png)` |
+| Dialogo crear/editar | `![Dialogo](assets/screenshots/dialogo_tarea.png)` |
+| Opciones / Acerca de | `![Mas](assets/screenshots/more_options.png)` |
 
-## Desarrollo
+Ejemplo listo para pegar cuando tengas archivos:
 
-Para ejecutar la aplicación en modo debug:
+```md
+![Pantalla Tareas](assets/screenshots/tareas.png)
+![Matriz Eisenhower](assets/screenshots/matriz.png)
+```
+
+## Novedades recientes
+
+- Reorden de la barra inferior a `Tareas`, `Matriz`, `Mas`.
+- Ajuste de colores en tema claro para tarjetas y barra de navegacion inferior.
+- Aplicacion del tema en selectores de fecha y hora.
+- Ajustes de estilo en dialogos de confirmacion (incluyendo botones de accion).
+- Correccion de visibilidad del dia actual en el date picker.
+- Actualizacion de la pantalla `Acerca de` con alcance funcional y privacidad.
+
+## Politica de privacidad (resumen)
+
+- La app procesa datos de tareas y configuraciones necesarias para su funcionamiento.
+- La informacion se usa para organizacion, visualizacion y recordatorios.
+- Los datos pueden almacenarse localmente y sincronizarse con cuenta autenticada.
+- No se comercializan datos personales para publicidad.
+- El usuario puede editar o eliminar su informacion desde la app.
+
+## Comandos utiles
+
 ```bash
 flutter run --debug
-```
-
-Para compilar una versión de release:
-```bash
-flutter build apk  # Para Android
-flutter build web  # Para Web
+flutter test
+flutter build apk
+flutter build appbundle
 ```
 
 ## Licencia
 
-Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
+Proyecto bajo licencia MIT. Ver `LICENSE`.
 
 ## Autor
 
 Cristian Villalobos Cuadrado
-
-## Contribuciones
-
-Las contribuciones son bienvenidas. Por favor, abre un issue o pull request para sugerencias y mejoras.
