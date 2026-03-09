@@ -89,7 +89,7 @@ class _TareasInicioState extends State<TareasInicio> {
 
   Future<void> editarTarea(Tarea tarea) async {
     if (!mounted || _controller == null) return;
-    
+
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -123,7 +123,7 @@ class _TareasInicioState extends State<TareasInicio> {
             await _controller!.moverTarea(tareaEditada, claveVieja, nuevaClave);
           }
         }
-        
+
         if (mounted) setState(() => _ordenarTareas());
       } catch (e) {
         debugPrint('Error procesando edición: $e');
@@ -134,11 +134,11 @@ class _TareasInicioState extends State<TareasInicio> {
 
   void _mostrarError(String mensaje) {
     if (!mounted) return;
-    
+
     try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mensaje)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(mensaje)));
     } catch (e) {
       debugPrint('Error mostrando snackbar: $e');
     }
@@ -162,7 +162,7 @@ class _TareasInicioState extends State<TareasInicio> {
 
   void _onEliminarTarea(Tarea tarea) async {
     if (!mounted || _controller == null) return;
-    
+
     try {
       final confirmado =
           await showDialog<bool>(
@@ -327,9 +327,7 @@ class _TareasInicioState extends State<TareasInicio> {
 
   Widget _buildBody() {
     if (!_isInitialized || _controller == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_selectedIndex == 0) {
