@@ -39,11 +39,11 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Build release APK
-        run: flutter build apk --release --split-per-abi
+      - name: Build debug APK
+        run: flutter build apk --debug --split-per-abi
 
-      - name: Collect release APK
-        run: ls -la build/app/outputs/flutter-apk/app-release.apk || true
+      - name: Collect debug APK
+        run: ls -la build/app/outputs/flutter-apk/app-debug.apk || true
 
       - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
