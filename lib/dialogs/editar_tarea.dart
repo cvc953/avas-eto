@@ -290,6 +290,12 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                             lastDate: DateTime.now().add(
                               const Duration(days: 365),
                             ),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context),
+                                child: child!,
+                              );
+                            },
                           );
                           if (pickedDate != null && mounted) {
                             setState(() => _selectedDate = pickedDate);
@@ -389,6 +395,12 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                           final pickedTime = await showTimePicker(
                             context: context,
                             initialTime: _selectedTime,
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context),
+                                child: child!,
+                              );
+                            },
                           );
                           if (pickedTime != null && mounted) {
                             setState(() => _selectedTime = pickedTime);

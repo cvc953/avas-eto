@@ -157,7 +157,7 @@ class _EisenhowerScreenState extends State<EisenhowerScreen> {
         bottomNavigationBar: CustomBottomNavBar(
           currentIndex: widget.currentIndex,
           onSelect: (i) {
-            if (i == 1) {
+            if (i == 0) {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const TareasInicio()),

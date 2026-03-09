@@ -33,12 +33,12 @@ class CustomBottomNavBar extends StatelessWidget {
       onTap: (i) => onSelect?.call(i),
       items: [
         BottomNavigationBarItem(
-          icon: const Icon(Icons.grid_view),
-          label: 'Matriz',
-        ),
-        BottomNavigationBarItem(
           icon: const Icon(Icons.view_list),
           label: 'Tareas',
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.grid_view),
+          label: 'Matriz',
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.more_horiz),

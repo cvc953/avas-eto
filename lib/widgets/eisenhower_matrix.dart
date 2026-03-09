@@ -81,7 +81,7 @@ class EisenhowerMatrix extends StatelessWidget {
                               : (Theme.of(context).brightness == Brightness.dark
                                   ? Colors.white
                                   : Colors.black87),
-                      fontSize: 20,
+                      fontSize: 16,
                       decoration:
                           tarea.completada
                               ? TextDecoration.lineThrough
@@ -127,8 +127,8 @@ class EisenhowerMatrix extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 20,
-                height: 20,
+                width: 25,
+                height: 25,
                 decoration: BoxDecoration(
                   color: accent,
                   shape: BoxShape.circle,
@@ -147,12 +147,12 @@ class EisenhowerMatrix extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: accent,
                     fontWeight: FontWeight.w500,
-                    fontSize: 16,
+                    fontSize: 12,
                   ),
                 ),
               ),

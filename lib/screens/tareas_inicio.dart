@@ -22,7 +22,7 @@ class TareasInicio extends StatefulWidget {
 class _TareasInicioState extends State<TareasInicio> {
   bool _isOnline = true;
   String _tipoOrdenamiento = 'reciente';
-  int _selectedIndex = 1; // 0: Matriz, 1: Tareas, 2: Más
+  int _selectedIndex = 0; // 0: Tareas, 1: Matriz, 2: Más
   TareasController? _controller;
   bool _isInitialized = false;
   DateTime? _lastBackPressedAt;
@@ -321,7 +321,7 @@ class _TareasInicioState extends State<TareasInicio> {
             body: _buildBody(),
           ),
           floatingActionButton:
-              _selectedIndex == 1
+              _selectedIndex == 0
                   ? FloatingActionButton(
                     onPressed: _addTareas,
                     backgroundColor: Colors.blueAccent,
@@ -345,7 +345,7 @@ class _TareasInicioState extends State<TareasInicio> {
                 );
                 return;
               }
-              if (i == 0) {
+              if (i == 1) {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
@@ -355,7 +355,7 @@ class _TareasInicioState extends State<TareasInicio> {
                           onToggle:
                               (tarea, completada) async =>
                                   await _marcarCompletada(tarea, completada),
-                          currentIndex: 0,
+                          currentIndex: 1,
                         ),
                   ),
                 );
@@ -375,7 +375,7 @@ class _TareasInicioState extends State<TareasInicio> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_selectedIndex == 0) {
+    if (_selectedIndex == 1) {
       return EisenhowerMatrix(
         tareas: _controller!.tareas.values.expand((e) => e).toList(),
         onToggle:

@@ -239,9 +239,9 @@ class _MoreOptionsState extends State<MoreOptions> {
                         backgroundColor: Colors.blueAccent,
                       ),
                       onPressed: () {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (_) => Login()),
-                        );
+                        Navigator.of(
+                          context,
+                        ).push(MaterialPageRoute(builder: (_) => Login()));
                       },
                       child: const Text(
                         'Iniciar sesión',
@@ -335,6 +335,11 @@ class _MoreOptionsState extends State<MoreOptions> {
               currentIndex: 2,
               onSelect: (i) {
                 if (i == 0) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => TareasInicio()),
+                  );
+                } else if (i == 1) {
                   if (controller != null && onAddTask != null) {
                     Navigator.pushReplacement(
                       context,
@@ -343,7 +348,7 @@ class _MoreOptionsState extends State<MoreOptions> {
                             (_) => EisenhowerScreen(
                               onAddTask: onAddTask!,
                               onToggle: onToggle,
-                              currentIndex: 0,
+                              currentIndex: 1,
                             ),
                       ),
                     );
@@ -353,11 +358,6 @@ class _MoreOptionsState extends State<MoreOptions> {
                       MaterialPageRoute(builder: (_) => TareasInicio()),
                     );
                   }
-                } else if (i == 1) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => TareasInicio()),
-                  );
                 } else if (i == 2) {
                   Navigator.pushReplacement(
                     context,

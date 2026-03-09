@@ -13,7 +13,7 @@ class AppTheme {
   // Colores tema claro
   static const Color lightBackgroundColor = Colors.white;
   static const Color lightSurfaceColor = Color(0xFFF5F5F5);
-  static const Color lightCardColor = Color(0xFFFFFFFF);
+  static const Color lightCardColor = Color(0xFFF5F5F5);
 
   // Tema oscuro
   static final ThemeData darkTheme = ThemeData.dark().copyWith(
@@ -70,6 +70,21 @@ class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 1,
     ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: darkSurfaceColor,
+      titleTextStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+      contentTextStyle: const TextStyle(color: Colors.white70, fontSize: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: primaryColor,
+      ),
+    ),
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.white),
       bodyMedium: TextStyle(color: Colors.white70),
@@ -80,12 +95,64 @@ class AppTheme {
     ),
     iconTheme: const IconThemeData(color: Colors.white),
     dividerColor: Colors.white24,
+    datePickerTheme: DatePickerThemeData(
+      backgroundColor: darkSurfaceColor,
+      headerBackgroundColor: primaryColor,
+      headerForegroundColor: Colors.white,
+      dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return Colors.white;
+        }
+        return Colors.white;
+      }),
+      dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColor;
+        }
+        return Colors.transparent;
+      }),
+      todayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColor;
+        }
+        return Colors.transparent;
+      }),
+      todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return Colors.white;
+        }
+        return primaryColor;
+      }),
+      yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return Colors.white;
+        }
+        return Colors.white;
+      }),
+      yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColor;
+        }
+        return Colors.transparent;
+      }),
+    ),
+    timePickerTheme: TimePickerThemeData(
+      backgroundColor: darkSurfaceColor,
+      hourMinuteColor: darkCardColor,
+      hourMinuteTextColor: Colors.white,
+      dialBackgroundColor: darkCardColor,
+      dialHandColor: primaryColor,
+      dialTextColor: Colors.white,
+      entryModeIconColor: Colors.white,
+      helpTextStyle: const TextStyle(color: Colors.white),
+    ),
   );
 
   // Tema claro
   static final ThemeData lightTheme = ThemeData.light().copyWith(
     primaryColor: primaryColor,
     scaffoldBackgroundColor: lightBackgroundColor,
+    cardColor: lightCardColor,
     appBarTheme: const AppBarTheme(
       backgroundColor: lightBackgroundColor,
       elevation: 0,
@@ -98,7 +165,7 @@ class AppTheme {
       iconTheme: IconThemeData(color: Colors.black),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: lightBackgroundColor,
+      backgroundColor: lightSurfaceColor,
       selectedItemColor: primaryColor,
       unselectedItemColor: Colors.grey,
     ),
@@ -137,6 +204,21 @@ class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,
     ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: lightBackgroundColor,
+      titleTextStyle: const TextStyle(
+        color: Colors.black,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+      contentTextStyle: const TextStyle(color: Colors.black87, fontSize: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: primaryColor,
+      ),
+    ),
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.black87),
       bodyMedium: TextStyle(color: Colors.black87),
@@ -147,5 +229,56 @@ class AppTheme {
     ),
     iconTheme: const IconThemeData(color: Colors.black87),
     dividerColor: Colors.black12,
+    datePickerTheme: DatePickerThemeData(
+      backgroundColor: lightBackgroundColor,
+      headerBackgroundColor: primaryColor,
+      headerForegroundColor: Colors.white,
+      dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return Colors.white;
+        }
+        return Colors.black87;
+      }),
+      dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColor;
+        }
+        return Colors.transparent;
+      }),
+      todayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColor;
+        }
+        return Colors.transparent;
+      }),
+      todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return Colors.white;
+        }
+        return primaryColor;
+      }),
+      yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return Colors.white;
+        }
+        return Colors.black87;
+      }),
+      yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColor;
+        }
+        return Colors.transparent;
+      }),
+    ),
+    timePickerTheme: TimePickerThemeData(
+      backgroundColor: lightBackgroundColor,
+      hourMinuteColor: lightSurfaceColor,
+      hourMinuteTextColor: Colors.black87,
+      dialBackgroundColor: lightSurfaceColor,
+      dialHandColor: primaryColor,
+      dialTextColor: Colors.black87,
+      entryModeIconColor: Colors.black87,
+      helpTextStyle: const TextStyle(color: Colors.black87),
+    ),
   );
 }

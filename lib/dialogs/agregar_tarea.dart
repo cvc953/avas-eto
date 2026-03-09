@@ -248,6 +248,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                             lastDate: DateTime.now().add(
                               const Duration(days: 365),
                             ),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context),
+                                child: child!,
+                              );
+                            },
                           );
                           if (pickedDate != null && mounted) {
                             setState(() {
@@ -353,6 +359,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                           final pickedTime = await showTimePicker(
                             context: context,
                             initialTime: _selectedTime,
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context),
+                                child: child!,
+                              );
+                            },
                           );
                           if (pickedTime != null && mounted) {
                             setState(() {
