@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/notification_service.dart';
+import 'services/theme_service.dart';
+import 'utils/theme.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'services/local_database.dart';
@@ -59,28 +61,54 @@ void main() async {
     MyApp(
       firebaseEnabled: firebaseSupported && firebaseApp != null,
       tareaRepository: tareaRepository,
+      themeService: ThemeService.instance,
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final bool firebaseEnabled;
   final TareaRepository tareaRepository;
+  final ThemeService themeService;
 
   const MyApp({
     super.key,
     required this.firebaseEnabled,
-    required this.tareaRepository, // Corregido
+    required this.tareaRepository,
+    required this.themeService,
   });
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    widget.themeService.addListener(_onThemeChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.themeService.removeListener(_onThemeChanged);
+    super.dispose();
+  }
+
+  void _onThemeChanged() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
+      themeMode: widget.themeService.themeMode,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       home:
-          firebaseEnabled
-              ? Tareas(tareaRepository: tareaRepository) // Corregido
+          widget.firebaseEnabled
+              ? Tareas(tareaRepository: widget.tareaRepository)
               : Scaffold(
                 body: Center(
                   child: Column(
@@ -97,7 +125,7 @@ class MyApp extends StatelessWidget {
                               MaterialPageRoute(
                                 builder:
                                     (context) => Tareas(
-                                      tareaRepository: tareaRepository,
+                                      tareaRepository: widget.tareaRepository,
                                     ),
                               ),
                             ),
