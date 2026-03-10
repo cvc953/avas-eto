@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/tarea.dart';
 import 'tareas_list.dart';
 
-class QuadrantDetailScreen extends StatelessWidget {
+class QuadrantDetailScreen extends StatefulWidget {
   final String title;
   final Color accentColor;
   final List<Tarea> tareas;
@@ -21,6 +21,34 @@ class QuadrantDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<QuadrantDetailScreen> createState() => _QuadrantDetailScreenState();
+}
+
+class _QuadrantDetailScreenState extends State<QuadrantDetailScreen> {
+  late List<Tarea> _tareasLocales;
+
+  @override
+  void initState() {
+    super.initState();
+    _tareasLocales = List.from(widget.tareas);
+  }
+
+  void _handleToggle(Tarea tarea, bool value) async {
+    // Actualización optimista local
+    setState(() {
+      final index = _tareasLocales.indexWhere((t) => t.id == tarea.id);
+      if (index != -1) {
+        _tareasLocales[index] = tarea.copyWith(completada: value);
+      }
+    });
+
+    // Llamar al callback del padre
+    if (widget.onToggle != null) {
+      await widget.onToggle!(tarea, value);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -36,14 +64,14 @@ class QuadrantDetailScreen extends StatelessWidget {
               width: 8,
               height: 30,
               decoration: BoxDecoration(
-                color: accentColor,
+                color: widget.accentColor,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                title,
+                widget.title,
                 style: Theme.of(context).appBarTheme.titleTextStyle,
               ),
             ),
@@ -51,7 +79,7 @@ class QuadrantDetailScreen extends StatelessWidget {
         ),
       ),
       body:
-          tareas.isEmpty
+          _tareasLocales.isEmpty
               ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -70,14 +98,10 @@ class QuadrantDetailScreen extends StatelessWidget {
                 ),
               )
               : TareasList(
-                tareas: tareas,
-                onEliminar: onDelete ?? (_) {},
-                onEditar: onTapTask ?? (_) {},
-                onCheck: (tarea, value) {
-                  if (onToggle != null) {
-                    onToggle!(tarea, value);
-                  }
-                },
+                tareas: _tareasLocales,
+                onEliminar: widget.onDelete ?? (_) {},
+                onEditar: widget.onTapTask ?? (_) {},
+                onCheck: _handleToggle,
               ),
     );
   }

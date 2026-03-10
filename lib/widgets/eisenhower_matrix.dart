@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/tarea.dart';
 
-class EisenhowerMatrix extends StatelessWidget {
+class EisenhowerMatrix extends StatefulWidget {
   final List<Tarea> tareas;
   final Future<void> Function(Tarea tarea, bool completada)? onToggle;
   final void Function(Tarea tarea)? onTapTask;
@@ -16,10 +16,48 @@ class EisenhowerMatrix extends StatelessWidget {
     this.onTapQuadrant,
   });
 
+  @override
+  State<EisenhowerMatrix> createState() => _EisenhowerMatrixState();
+}
+
+class _EisenhowerMatrixState extends State<EisenhowerMatrix> {
+  late List<Tarea> _tareasLocales;
+
+  @override
+  void initState() {
+    super.initState();
+    _tareasLocales = List.from(widget.tareas);
+  }
+
+  @override
+  void didUpdateWidget(EisenhowerMatrix oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.tareas != oldWidget.tareas) {
+      _tareasLocales = List.from(widget.tareas);
+    }
+  }
+
+  Future<void> _handleToggle(Tarea tarea, bool completada) async {
+    // Mover la tarea al final de su lista antes de llamar el callback
+    setState(() {
+      final index = _tareasLocales.indexWhere((t) => t.id == tarea.id);
+      if (index != -1) {
+        final tareaActualizada = _tareasLocales[index].copyWith(completada: completada);
+        _tareasLocales.removeAt(index);
+        _tareasLocales.add(tareaActualizada);
+      }
+    });
+
+    // Llamar el callback original
+    if (widget.onToggle != null) {
+      await widget.onToggle!(tarea, completada);
+    }
+  }
+
   List<Tarea> _filter(bool urgent, bool important) {
     // Simple heuristic: prioridad Alta -> important, fechaVencimiento próxima -> urgent
     final now = DateTime.now();
-    return tareas.where((t) {
+    final filteredTasks = _tareasLocales.where((t) {
       final importantMatch =
           t.prioridad.toLowerCase() == 'alta' ||
           t.prioridad.toLowerCase() == 'media';
@@ -29,6 +67,15 @@ class EisenhowerMatrix extends StatelessWidget {
       return (urgent ? urgentMatch : !urgentMatch) &&
           (important ? importantMatch : !importantMatch);
     }).toList();
+
+    // Ordenar: completadas al final
+    filteredTasks.sort((a, b) {
+      if (a.completada && !b.completada) return 1;
+      if (!a.completada && b.completada) return -1;
+      return 0;
+    });
+
+    return filteredTasks;
   }
 
   Widget _taskRow(BuildContext context, Tarea tarea, Color accent) {
@@ -48,7 +95,7 @@ class EisenhowerMatrix extends StatelessWidget {
           opacity: tarea.completada ? 0.75 : 1,
           child: InkWell(
             borderRadius: BorderRadius.circular(10),
-            onTap: onTapTask == null ? null : () => onTapTask!(tarea),
+            onTap: widget.onTapTask == null ? null : () => widget.onTapTask!(tarea),
             child: Row(
               children: [
                 SizedBox(
@@ -57,8 +104,8 @@ class EisenhowerMatrix extends StatelessWidget {
                   child: Checkbox(
                     value: tarea.completada,
                     onChanged: (value) {
-                      if (value == null || onToggle == null) return;
-                      onToggle!.call(tarea, value);
+                      if (value == null || widget.onToggle == null) return;
+                      _handleToggle(tarea, value);
                     },
                     side: BorderSide(
                       color: tarea.completada ? Colors.grey.shade700 : accent,
@@ -120,9 +167,9 @@ class EisenhowerMatrix extends StatelessWidget {
 
     return InkWell(
       onTap:
-          onTapQuadrant == null
+          widget.onTapQuadrant == null
               ? null
-              : () => onTapQuadrant!(title, accent, items),
+              : () => widget.onTapQuadrant!(title, accent, items),
       borderRadius: BorderRadius.circular(24),
       child: Container(
         decoration: BoxDecoration(
