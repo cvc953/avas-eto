@@ -79,10 +79,10 @@ lib/
 
 | Pantalla | Vista |
 | --- | --- |
-| Tareas | ![Tareas](assets/screenshots/tareas.jpg) |
-| Matriz Eisenhower | ![Matriz](assets/screenshots/matriz.jpg) |
-| Dialogo crear/editar | ![Dialogo](assets/screenshots/dialogo_tarea.jpg) |
-| Opciones / Acerca de | ![Mas](assets/screenshots/more_options.jpg) |
+| Tareas | <img src="assets/screenshots/tareas.jpg" alt="Tareas" width="220" /> |
+| Matriz Eisenhower | <img src="assets/screenshots/matriz.jpg" alt="Matriz" width="220" /> |
+| Dialogo crear/editar | <img src="assets/screenshots/dialogo_tarea.jpg" alt="Dialogo" width="220" /> |
+| Opciones / Acerca de | <img src="assets/screenshots/more_options.jpg" alt="Mas" width="220" /> |
 
 ## Novedades recientes
 
