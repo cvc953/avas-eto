@@ -112,7 +112,7 @@ flutter build appbundle
 
 ## Licencia
 
-Proyecto bajo licencia MIT. Ver `LICENSE`.
+Proyecto bajo licencia MIT. Ver [LICENSE](./LICENSE).
 
 ## Autor
 
