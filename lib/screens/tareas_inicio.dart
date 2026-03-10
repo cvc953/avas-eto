@@ -68,6 +68,8 @@ class _TareasInicioState extends State<TareasInicio> {
         if (mounted) setState(() => _isOnline = isOnline);
       });
 
+      await _controller!.init();
+
       _controller!.ordenar(_tipoOrdenamiento);
 
       if (mounted) setState(() => _isInitialized = true);

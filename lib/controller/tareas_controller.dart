@@ -46,6 +46,11 @@ class TareasController {
 
   /// Carga inicial: prioriza local y deja que el repo sincronice si es necesario.
   Future<void> init() async {
+    final online = await _conectividad.checkConnectivity();
+    if (online) {
+      await _repository.sincronizarDesdeServidor();
+    }
+
     final local = await _localStorage.getTareas();
     tareas.clear();
     for (var tarea in local) {

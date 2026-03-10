@@ -73,6 +73,31 @@ class TareasRepository {
 
   TareasRepository(this.localStorage);
 
+  /// Descarga las tareas del usuario autenticado y las persiste en local.
+  ///
+  /// Retorna cuantas tareas se procesaron desde Firestore.
+  Future<int> sincronizarDesdeServidor() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return 0;
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('tareas')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      for (final doc in snapshot.docs) {
+        final tarea = TareaMapper.fromFirestoreQueryDocument(doc);
+        await localStorage.saveTarea(tarea);
+      }
+
+      return snapshot.docs.length;
+    } catch (e) {
+      print('Error sincronizando tareas desde Firestore: $e');
+      return 0;
+    }
+  }
+
   Future<void> guardar(Tarea tarea, String clave, bool online) async {
     if (online) {
       final user = FirebaseAuth.instance.currentUser;
