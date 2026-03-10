@@ -1,9 +1,15 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/tarea.dart';
 import '../services/local_storage_service.dart';
 import '../mappers/tarea_mapper.dart';
 import '../services/notification_service.dart';
+import '../services/drive_upload_orchestrator.dart';
+import '../services/background_upload_scheduler.dart';
+import '../services/upload_queue_service.dart';
+import '../utils/attachment_utils.dart';
 
 /// Canonical repository implementation that centralizes local + optional
 /// Firestore sync behavior.
@@ -70,8 +76,14 @@ class TareaRepository {
 /// (guardar/eliminar/marcarCompletada).
 class TareasRepository {
   final LocalStorageService localStorage;
+  final UploadQueueService _uploadQueueService;
+  final DriveUploadOrchestrator _driveUploadOrchestrator;
 
-  TareasRepository(this.localStorage);
+  TareasRepository(
+    this.localStorage,
+    this._uploadQueueService,
+    this._driveUploadOrchestrator,
+  );
 
   /// Descarga las tareas del usuario autenticado y las persiste en local.
   ///
@@ -99,46 +111,38 @@ class TareasRepository {
     }
   }
 
+  Future<void> processPendingUploads() async {
+    await _driveUploadOrchestrator.processPendingUploads();
+  }
+
   Future<void> guardar(Tarea tarea, String clave, bool online) async {
+    final tareaPersistida = await localStorage.saveTareaAndReturn(tarea);
+
     if (online) {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        final data = TareaMapper.toFirestoreMap(tarea, clave);
+        final data = TareaMapper.toFirestoreMap(tareaPersistida, clave);
         data['userId'] = user.uid;
 
-        // If the tarea already has an id, update the existing document.
-        if (tarea.id.isNotEmpty) {
-          try {
-            await FirebaseFirestore.instance
-                .collection('tareas')
-                .doc(tarea.id)
-                .set(data);
-            // Ensure local store is updated and re-schedule notifications.
-            await localStorage.saveTarea(tarea);
-            await NotificationService().cancelNotifications(tarea);
-            await NotificationService().notifyTaskCreated(tarea);
-            return;
-          } catch (e) {
-            print('Error actualizando tarea en Firestore: $e');
-          }
+        try {
+          await FirebaseFirestore.instance
+              .collection('tareas')
+              .doc(tareaPersistida.id)
+              .set(data);
+        } catch (e) {
+          print('Error actualizando tarea en Firestore: $e');
         }
-
-        // Otherwise create a new document and persist the generated id.
-        final docRef = await FirebaseFirestore.instance
-            .collection('tareas')
-            .add(data);
-
-        final tareaConId = tarea.copyWith(id: docRef.id);
-        await localStorage.saveTarea(tareaConId);
-        await NotificationService().notifyTaskCreated(tareaConId);
-        return;
       }
     }
 
-    // Offline or no user: persist locally and schedule notifications.
-    await localStorage.saveTarea(tarea);
-    await NotificationService().cancelNotifications(tarea);
-    await NotificationService().notifyTaskCreated(tarea);
+    await _uploadQueueService.enqueueAttachmentsForTask(tareaPersistida);
+    await NotificationService().cancelNotifications(tareaPersistida);
+    await NotificationService().notifyTaskCreated(tareaPersistida);
+
+    if (tareaPersistida.adjuntos.any(attachmentNeedsUpload)) {
+      unawaited(_driveUploadOrchestrator.processPendingUploads());
+      unawaited(BackgroundUploadScheduler.triggerNow());
+    }
   }
 
   Future<void> eliminar(Tarea tarea, bool online) async {
@@ -151,6 +155,7 @@ class TareasRepository {
       } catch (_) {}
     }
     await localStorage.deleteTarea(tarea.id);
+    await _uploadQueueService.deleteByTaskId(tarea.id);
     await NotificationService().cancelNotifications(tarea);
   }
 

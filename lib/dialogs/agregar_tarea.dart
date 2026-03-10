@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 import '../models/tarea.dart';
 import '../services/inicia_con_google.dart';
-import '../services/drive_service.dart';
 
 class AddTaskDialog extends StatefulWidget {
   final Function(Tarea, String) onSave;
@@ -319,8 +318,21 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       final duracionMinutos =
           fechaVencimiento.difference(fechaInicio).inMinutes;
 
-      // If user granted Drive access, upload attachments and replace entries with Drive references.
-      await _maybeUploadAdjuntosToDrive(_adjuntos);
+      final hasLocalAttachments = _adjuntos.any(
+        (attachment) => attachment['path'] is String,
+      );
+      if (hasLocalAttachments) {
+        final token = await getGoogleAccessToken(requestDrive: true);
+        if (mounted && token == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Los adjuntos se guardaron localmente. La subida a Drive quedara pendiente hasta autorizar el acceso.',
+              ),
+            ),
+          );
+        }
+      }
 
       final nuevaTarea = Tarea(
         id: '', // Se asignará al guardar
@@ -343,6 +355,16 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         TimeOfDay(hour: fechaVencimiento.hour, minute: fechaVencimiento.minute),
       );
       widget.onSave(nuevaTarea, clave);
+
+      if (mounted && hasLocalAttachments) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'La tarea se guardo y los adjuntos se subiran en segundo plano.',
+            ),
+          ),
+        );
+      }
 
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -568,33 +590,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo abrir el archivo adjunto.')),
       );
-    }
-  }
-
-  Future<void> _maybeUploadAdjuntosToDrive(
-    List<Map<String, dynamic>> adjuntos,
-  ) async {
-    try {
-      final token = await getGoogleAccessToken(requestDrive: true);
-      if (token == null) return;
-
-      for (var i = 0; i < adjuntos.length; i++) {
-        final it = adjuntos[i];
-        final path = it['path'] as String?;
-        if (path == null) continue;
-        final file = File(path);
-        if (!await file.exists()) continue;
-        final id = await uploadFileToDrive(file, token);
-        if (id != null) {
-          adjuntos[i] = {
-            'driveId': id,
-            'name': it['name'] ?? file.uri.pathSegments.last,
-            'size': it['size'] ?? await file.length(),
-          };
-        }
-      }
-    } catch (e) {
-      debugPrint('Error uploading attachments to Drive: $e');
     }
   }
 

@@ -1,5 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Requerido en release para llamadas de red (Firebase/Google APIs/Drive). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Permisos de almacenamiento -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -38,6 +41,8 @@
                 <action android:name="NOTIFICATION_ACTION" />
             </intent-filter>
         </receiver>
+        <!-- Required by WorkManager to reschedule tasks after reboot/app update -->
+        <receiver android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver" android:enabled="true" android:exported="false" android:directBootAware="false" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

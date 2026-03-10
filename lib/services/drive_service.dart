@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 // Minimal Drive upload helper using a two-step upload (create metadata, then upload media).
@@ -26,6 +27,9 @@ Future<String?> uploadFileToDrive(
     );
 
     if (metaRes.statusCode != 200 && metaRes.statusCode != 201) {
+      debugPrint(
+        'Drive metadata create failed: ${metaRes.statusCode} ${metaRes.body}',
+      );
       return null;
     }
 
@@ -35,7 +39,7 @@ Future<String?> uploadFileToDrive(
 
     // Upload media
     final bytes = await file.readAsBytes();
-    final uploadRes = await usedClient.put(
+    final uploadRes = await usedClient.patch(
       Uri.parse(
         'https://www.googleapis.com/upload/drive/v3/files/$fileId?uploadType=media',
       ),
@@ -43,9 +47,16 @@ Future<String?> uploadFileToDrive(
       body: bytes,
     );
 
-    if (uploadRes.statusCode == 200) return fileId;
+    if (uploadRes.statusCode == 200 || uploadRes.statusCode == 201) {
+      return fileId;
+    }
+    debugPrint(
+      'Drive media upload failed: ${uploadRes.statusCode} ${uploadRes.body}',
+    );
     return null;
-  } catch (e) {
+  } catch (e, s) {
+    debugPrint('Drive upload exception: $e');
+    debugPrintStack(stackTrace: s);
     return null;
   } finally {
     if (client == null) {

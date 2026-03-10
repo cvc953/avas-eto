@@ -1,4 +1,6 @@
 import 'package:avas_eto/services/notifications_settings.dart';
+import 'package:avas_eto/services/background_upload_scheduler.dart';
+import 'package:avas_eto/services/upload_preferences_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 
@@ -7,12 +9,15 @@ class SettingsController extends ChangeNotifier {
   static const String _themeKey = "theme_mode";
 
   ThemeMode _themeMode = ThemeMode.system;
+  bool _mobileDataUploadsEnabled = false;
 
   ThemeMode get themeMode => _themeMode;
+  bool get mobileDataUploadsEnabled => _mobileDataUploadsEnabled;
 
   /// Inicializa el controlador cargando las preferencias guardadas
   Future<void> init() async {
     await _loadThemeMode();
+    await _loadMobileDataUploadsPreference();
   }
 
   /// Carga el modo de tema guardado
@@ -20,6 +25,12 @@ class SettingsController extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final themeString = prefs.getString(_themeKey) ?? 'system';
     _themeMode = _themeModeFromString(themeString);
+    notifyListeners();
+  }
+
+  Future<void> _loadMobileDataUploadsPreference() async {
+    _mobileDataUploadsEnabled =
+        await UploadPreferencesService.isMobileDataUploadEnabled();
     notifyListeners();
   }
 
@@ -64,5 +75,13 @@ class SettingsController extends ChangeNotifier {
 
   Future<void> setEnabled(bool value) async {
     await NotificationSettings.setEnabled(value);
+  }
+
+  Future<void> setMobileDataUploadsEnabled(bool value) async {
+    if (_mobileDataUploadsEnabled == value) return;
+    _mobileDataUploadsEnabled = value;
+    await UploadPreferencesService.setMobileDataUploadEnabled(value);
+    await BackgroundUploadScheduler.ensureScheduled();
+    notifyListeners();
   }
 }

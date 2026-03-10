@@ -53,6 +53,7 @@ dependencies:
   url_launcher: ^6.2.6
   file_picker: ^8.1.2
   provider: ^6.0.5
+  workmanager: ^0.7.0
 
 dev_dependencies:
   flutter_test:

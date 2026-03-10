@@ -4,6 +4,7 @@ import '../models/tarea.dart';
 import 'notifications_settings.dart';
 
 class NotificationService {
+  static const int _driveUploadNotificationId = 9042;
   static final NotificationService _instance = NotificationService._internal();
 
   factory NotificationService() => _instance;
@@ -22,6 +23,15 @@ class NotificationService {
         importance: NotificationImportance.Max,
         playSound: true,
         enableVibration: true,
+      ),
+      NotificationChannel(
+        channelKey: 'drive_upload_channel',
+        channelName: 'Subidas a Google Drive',
+        channelDescription: 'Estado y progreso de archivos en subida',
+        defaultColor: Colors.blue,
+        importance: NotificationImportance.High,
+        playSound: false,
+        enableVibration: false,
       ),
     ], debug: false);
   }
@@ -99,5 +109,64 @@ class NotificationService {
   Future<void> cancelAllNotifications() async {
     await AwesomeNotifications().cancelAllSchedules();
     await AwesomeNotifications().cancelAll();
+  }
+
+  Future<void> showDriveUploadStatus({
+    required String fileName,
+    required int completed,
+    required int total,
+  }) async {
+    final enabled = await NotificationSettings.isEnabled();
+    if (!enabled || total <= 0) return;
+
+    final progress = ((completed / total) * 100).clamp(0, 100).toDouble();
+    await AwesomeNotifications().createNotification(
+      content: NotificationContent(
+        id: _driveUploadNotificationId,
+        channelKey: 'drive_upload_channel',
+        title: 'Subiendo adjuntos a Google Drive',
+        body: '$completed de $total completados. Archivo actual: $fileName',
+        category: NotificationCategory.Progress,
+        notificationLayout: NotificationLayout.ProgressBar,
+        progress: progress,
+        locked: true,
+      ),
+    );
+  }
+
+  Future<void> completeDriveUploadStatus(int total) async {
+    final enabled = await NotificationSettings.isEnabled();
+    if (!enabled) return;
+
+    await AwesomeNotifications().createNotification(
+      content: NotificationContent(
+        id: _driveUploadNotificationId,
+        channelKey: 'drive_upload_channel',
+        title: 'Subida completada',
+        body: 'Se subieron $total adjuntos a Google Drive.',
+        category: NotificationCategory.Progress,
+        notificationLayout: NotificationLayout.Default,
+      ),
+    );
+  }
+
+  Future<void> failDriveUploadStatus(String message) async {
+    final enabled = await NotificationSettings.isEnabled();
+    if (!enabled) return;
+
+    await AwesomeNotifications().createNotification(
+      content: NotificationContent(
+        id: _driveUploadNotificationId,
+        channelKey: 'drive_upload_channel',
+        title: 'Subida incompleta a Google Drive',
+        body: message,
+        category: NotificationCategory.Status,
+        notificationLayout: NotificationLayout.Default,
+      ),
+    );
+  }
+
+  Future<void> cancelDriveUploadStatus() async {
+    await AwesomeNotifications().cancel(_driveUploadNotificationId);
   }
 }

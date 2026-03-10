@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/tarea.dart';
+import '../utils/attachment_utils.dart';
 
 Tarea tareaFromFirestore(QueryDocumentSnapshot doc) {
   final data = doc.data() as Map<String, dynamic>;
@@ -42,5 +43,5 @@ List<Map<String, dynamic>> _parseAdjuntos(dynamic rawAdjuntos) {
       parsed.add(Map<String, dynamic>.from(item));
     }
   }
-  return parsed;
+  return normalizeAttachments(parsed);
 }

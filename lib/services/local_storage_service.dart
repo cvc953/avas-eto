@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'local_database.dart';
 import '../models/tarea.dart';
+import '../utils/attachment_utils.dart';
 
 class LocalStorageService {
   static const String _ownerUserIdKey = '_ownerUserId';
@@ -19,6 +20,10 @@ class LocalStorageService {
   }
 
   Future<void> saveTarea(Tarea tarea) async {
+    await saveTareaAndReturn(tarea);
+  }
+
+  Future<Tarea> saveTareaAndReturn(Tarea tarea) async {
     try {
       final database = await _localDb.db;
 
@@ -35,10 +40,49 @@ class LocalStorageService {
 
       await _store.record(tareaConId.id).put(database, map);
       debugPrint('Tarea guardada LOCALMENTE: ${tareaConId.id}');
+      return tareaConId;
     } catch (e) {
       debugPrint('Error guardando localmente: $e');
       throw Exception('Error en saveTarea: $e');
     }
+  }
+
+  Future<Tarea?> getTareaById(String id) async {
+    try {
+      final database = await _localDb.db;
+      final data = await _store.record(id).get(database);
+      if (data == null) return null;
+
+      final storedOwner = data[_ownerUserIdKey] as String?;
+      if (storedOwner != null && storedOwner != _activeOwnerId()) {
+        return null;
+      }
+
+      return Tarea.fromMap(data);
+    } catch (e) {
+      debugPrint('Error obteniendo tarea $id: $e');
+      return null;
+    }
+  }
+
+  Future<void> updateAttachment(
+    String taskId,
+    String attachmentId,
+    Map<String, dynamic> updatedAttachment,
+  ) async {
+    final tarea = await getTareaById(taskId);
+    if (tarea == null) return;
+
+    final attachments = tarea.adjuntos
+        .map((attachment) {
+          if (attachmentIdOf(attachment) == attachmentId) {
+            return normalizeAttachment(updatedAttachment);
+          }
+          return normalizeAttachment(attachment);
+        })
+        .toList(growable: false);
+
+    await saveTarea(tarea.copyWith(adjuntos: attachments));
   }
 
   Future<List<Tarea>> getTareas() async {

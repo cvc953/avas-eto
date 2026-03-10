@@ -4,6 +4,10 @@ import 'package:avas_eto/repositories/tareas_repository.dart';
 import 'package:avas_eto/services/conectividad_service.dart';
 import 'package:avas_eto/utils/task_key_generator.dart';
 import 'package:avas_eto/services/local_database.dart';
+import 'package:avas_eto/services/drive_upload_orchestrator.dart';
+import 'package:avas_eto/services/notification_service.dart';
+import 'package:avas_eto/services/upload_queue_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Controller que centraliza la lógica de negocio para las tareas.
 class TareasController {
@@ -23,7 +27,18 @@ class TareasController {
     final localDb = LocalDatabase();
     final localStorage = LocalStorageService(localDb);
     final conectividad = ConectividadService();
-    final repo = TareasRepository(localStorage);
+    final uploadQueueService = UploadQueueService(localDb);
+    final repo = TareasRepository(
+      localStorage,
+      uploadQueueService,
+      DriveUploadOrchestrator(
+        uploadQueueService,
+        localStorage,
+        conectividad,
+        NotificationService(),
+        FirebaseFirestore.instance,
+      ),
+    );
 
     final controller = TareasController(repo, localStorage, conectividad);
     await controller.init();
@@ -36,7 +51,12 @@ class TareasController {
 
   /// Permite a la UI suscribirse a cambios de conectividad.
   void setupConnectivityListener(void Function(bool) onChange) {
-    _conectividad.setupListener(onChange);
+    _conectividad.setupListener((online) {
+      if (online) {
+        _repository.processPendingUploads();
+      }
+      onChange(online);
+    });
   }
 
   /// Limpia recursos asociados (p.ej. listeners).
@@ -49,6 +69,7 @@ class TareasController {
     final online = await _conectividad.checkConnectivity();
     if (online) {
       await _repository.sincronizarDesdeServidor();
+      await _repository.processPendingUploads();
     }
 
     final local = await _localStorage.getTareas();

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/tarea.dart';
 import 'package:flutter/material.dart';
+import '../utils/attachment_utils.dart';
 
 /// Mapper centralizado para conversiones entre Tarea y Firestore
 class TareaMapper {
@@ -19,7 +20,7 @@ class TareaMapper {
       'vencimiento': Timestamp.fromDate(tarea.fechaVencimiento),
       'duracionMinutos': tarea.duracionMinutos,
       'todoElDia': tarea.todoElDia,
-      'adjuntos': tarea.adjuntos,
+      'adjuntos': normalizeAttachments(tarea.adjuntos),
       'completadaEn':
           tarea.completada
               ? Timestamp.fromDate(tarea.fechaCompletada)
@@ -86,6 +87,6 @@ class TareaMapper {
         parsed.add(Map<String, dynamic>.from(item));
       }
     }
-    return parsed;
+    return normalizeAttachments(parsed);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/attachment_utils.dart';
 
 class Tarea {
   final String id;
@@ -42,7 +43,7 @@ class Tarea {
                      fechaVencimiento.subtract(const Duration(minutes: 60)),
                )
                .inMinutes,
-       adjuntos = List.unmodifiable(adjuntos ?? const []);
+       adjuntos = List.unmodifiable(normalizeAttachments(adjuntos ?? const []));
 
   // Actualiza copyWith
   Tarea copyWith({
@@ -93,7 +94,7 @@ class Tarea {
       'fechaInicio': fechaInicio.toIso8601String(),
       'duracionMinutos': duracionMinutos,
       'todoElDia': todoElDia,
-      'adjuntos': adjuntos,
+      'adjuntos': normalizeAttachments(adjuntos),
       'fechaCompletada': fechaCompletada.toIso8601String(),
       'vecesPospuesta': vecesPospuesta,
     };
@@ -135,6 +136,6 @@ class Tarea {
         parsed.add(Map<String, dynamic>.from(item));
       }
     }
-    return parsed;
+    return normalizeAttachments(parsed);
   }
 }

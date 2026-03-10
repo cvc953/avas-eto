@@ -40,6 +40,7 @@ class _MoreOptionsState extends State<MoreOptions> {
   late final AuthController _authController;
   late final SettingsController _settingsController;
   bool notificationsEnabled = true;
+  bool mobileDataUploadsEnabled = false;
   DateTime? _lastBackPressedAt;
 
   Future<bool> _onWillPop() async {
@@ -78,6 +79,7 @@ class _MoreOptionsState extends State<MoreOptions> {
   void enableNotifications() async {
     // Lógica para habilitar o deshabilitar notificaciones (delegada al SettingsController)
     notificationsEnabled = await _settingsController.isEnabled();
+    mobileDataUploadsEnabled = _settingsController.mobileDataUploadsEnabled;
     setState(() {});
   }
 
@@ -262,6 +264,40 @@ class _MoreOptionsState extends State<MoreOptions> {
                     await _settingsController.setEnabled(value);
                     setState(() {
                       notificationsEnabled = value;
+                    });
+                  },
+                  activeThumbColor: Colors.blueAccent,
+                ),
+              ),
+              ListTile(
+                leading: Icon(
+                  mobileDataUploadsEnabled
+                      ? Icons.perm_data_setting
+                      : Icons.wifi,
+                  color: Theme.of(context).iconTheme.color,
+                ),
+                title: Text(
+                  'Subir adjuntos con datos móviles',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+                subtitle: Text(
+                  mobileDataUploadsEnabled
+                      ? 'Permitido tambien fuera de Wi-Fi'
+                      : 'Solo se subiran con Wi-Fi',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                ),
+                trailing: Switch(
+                  value: mobileDataUploadsEnabled,
+                  onChanged: (bool value) async {
+                    await _settingsController.setMobileDataUploadsEnabled(
+                      value,
+                    );
+                    setState(() {
+                      mobileDataUploadsEnabled = value;
                     });
                   },
                   activeThumbColor: Colors.blueAccent,

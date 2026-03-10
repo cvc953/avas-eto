@@ -34,7 +34,10 @@ Future<User?> signInWithGoogle() async {
   }
 }
 
-Future<String?> getGoogleAccessToken({bool requestDrive = false}) async {
+Future<String?> getGoogleAccessToken({
+  bool requestDrive = false,
+  bool interactiveScopePrompt = true,
+}) async {
   final account =
       _googleSignIn.currentUser ?? await _googleSignIn.signInSilently();
 
@@ -43,9 +46,17 @@ Future<String?> getGoogleAccessToken({bool requestDrive = false}) async {
   // Solicita scope de Drive solo si el usuario intenta adjuntar
   if (requestDrive) {
     try {
-      await _googleSignIn.requestScopes([
-        'https://www.googleapis.com/auth/drive.file',
-      ]);
+      const driveScopes = ['https://www.googleapis.com/auth/drive.file'];
+      final alreadyGranted = await _googleSignIn.canAccessScopes(driveScopes);
+      final granted =
+          alreadyGranted ||
+          (interactiveScopePrompt
+              ? await _googleSignIn.requestScopes(driveScopes)
+              : false);
+      if (!granted) {
+        debugPrint('Permiso de Drive no otorgado por el usuario.');
+        return null;
+      }
     } catch (e) {
       debugPrint('Error solicitando Drive scope: $e');
       return null; // Usuario rechazó el permiso

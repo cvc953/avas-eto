@@ -20,6 +20,9 @@ import 'services/local_storage_service.dart';
 import 'services/tarea_repository.dart';
 import 'package:avas_eto/repositories/tareas_repository.dart';
 import 'package:avas_eto/utils/permissions.dart';
+import 'package:avas_eto/services/upload_queue_service.dart';
+import 'package:avas_eto/services/drive_upload_orchestrator.dart';
+import 'package:avas_eto/services/background_upload_scheduler.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -52,6 +55,8 @@ void main() async {
 
   AppPermissions.Requestnotifications();
 
+  await BackgroundUploadScheduler.initialize();
+
   // Inicializar servicio de notificaciones (Awesome Notifications)
   // Esto prepara canales y permisos dentro del servicio
   NotificationService();
@@ -59,6 +64,8 @@ void main() async {
   // 2. Inicialización de la base de datos local
   final localDb = LocalDatabase();
   final localStorage = LocalStorageService(localDb);
+  final uploadQueueService = UploadQueueService(localDb);
+  final conectividadService = ConectividadService();
 
   // 3. Creación del repositorio (corregido)
   final tareaRepository = TareaRepository(
@@ -69,19 +76,33 @@ void main() async {
   );
 
   // Wrapper providing the legacy API expected by controllers
-  final tareasRepository = TareasRepository(localStorage);
+  final driveUploadOrchestrator = DriveUploadOrchestrator(
+    uploadQueueService,
+    localStorage,
+    conectividadService,
+    NotificationService(),
+    firebaseSupported && firebaseApp != null
+        ? FirebaseFirestore.instance
+        : null,
+  );
+  final tareasRepository = TareasRepository(
+    localStorage,
+    uploadQueueService,
+    driveUploadOrchestrator,
+  );
 
   // Controllers to provide via Provider
   final authController = AuthController();
   final settingsController = SettingsController();
   await settingsController.init(); // Inicializar para cargar preferencias
-  final conectividadService = ConectividadService();
   final tareasController = TareasController(
     tareasRepository,
     localStorage,
     conectividadService,
   );
   await tareasController.init();
+  await driveUploadOrchestrator.processPendingUploads();
+  await BackgroundUploadScheduler.ensureScheduled();
 
   runApp(
     MultiProvider(

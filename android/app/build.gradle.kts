@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -5,6 +8,17 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
 }
+
+// Load key.properties if it exists (local builds).
+// CI uses environment variables as fallback.
+val keyPropertiesFile = rootProject.file("key.properties")
+val keyProperties = Properties()
+if (keyPropertiesFile.exists()) {
+    keyProperties.load(FileInputStream(keyPropertiesFile))
+}
+
+fun keyProp(name: String): String? =
+    keyProperties.getProperty(name) ?: System.getenv(name)
 
 dependencies {
   implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
@@ -45,10 +59,10 @@ android {
 
   signingConfigs {
         create("release") {
-            storeFile = file("upload-keystore.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("KEY_ALIAS")
-            keyPassword = System.getenv("KEY_PASSWORD")
+            storeFile = file(keyProp("storeFile") ?: "upload-keystore.jks")
+            storePassword = keyProp("storePassword") ?: System.getenv("KEYSTORE_PASSWORD")
+            keyAlias = keyProp("keyAlias") ?: System.getenv("KEY_ALIAS")
+            keyPassword = keyProp("keyPassword") ?: System.getenv("KEY_PASSWORD")
         }
     }
 

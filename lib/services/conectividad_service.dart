@@ -11,8 +11,25 @@ class ConectividadService {
   /// Verifica la conectividad actual
   Future<bool> checkConnectivity() async {
     final result = await _connectivity.checkConnectivity();
-    _isOnline = result != ConnectivityResult.none;
+    _isOnline = result.isNotEmpty && !result.contains(ConnectivityResult.none);
     return _isOnline;
+  }
+
+  Future<List<ConnectivityResult>> currentConnections() async {
+    return _connectivity.checkConnectivity();
+  }
+
+  Future<bool> isUsingMobileData() async {
+    final result = await currentConnections();
+    return result.contains(ConnectivityResult.mobile) &&
+        !result.contains(ConnectivityResult.wifi) &&
+        !result.contains(ConnectivityResult.ethernet);
+  }
+
+  Future<bool> isUsingUnmeteredConnection() async {
+    final result = await currentConnections();
+    return result.contains(ConnectivityResult.wifi) ||
+        result.contains(ConnectivityResult.ethernet);
   }
 
   /// Configura escucha de cambios de conectividad
