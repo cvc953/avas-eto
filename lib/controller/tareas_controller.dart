@@ -113,17 +113,25 @@ class TareasController {
   List<Tarea> obtenerTodasLasTareas() {
     final list = tareas.values.expand((e) => e).toList();
 
-    if (_ordenActual == 'reciente') {
-      list.sort((a, b) => b.fechaCreacion.compareTo(a.fechaCreacion));
-    } else if (_ordenActual == 'prioridad') {
-      final prioridadValor = {'Alta': 3, 'Media': 2, 'Baja': 1};
-      list.sort((a, b) {
+    // Ordenar con completadas al final, manteniendo el orden interno
+    list.sort((a, b) {
+      // Primero: completadas al final
+      if (a.completada && !b.completada) return 1;
+      if (!a.completada && b.completada) return -1;
+      
+      // Segundo: aplicar el orden seleccionado solo entre tareas del mismo estado
+      if (_ordenActual == 'reciente') {
+        return b.fechaCreacion.compareTo(a.fechaCreacion);
+      } else if (_ordenActual == 'prioridad') {
+        final prioridadValor = {'Alta': 3, 'Media': 2, 'Baja': 1};
         final valA = prioridadValor[a.prioridad] ?? 0;
         final valB = prioridadValor[b.prioridad] ?? 0;
         if (valA != valB) return valB.compareTo(valA);
         return a.fechaVencimiento.compareTo(b.fechaVencimiento);
-      });
-    }
+      }
+      
+      return 0;
+    });
 
     return list;
   }

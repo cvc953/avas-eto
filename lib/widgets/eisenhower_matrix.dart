@@ -32,44 +32,18 @@ class _EisenhowerMatrixState extends State<EisenhowerMatrix> {
   @override
   void didUpdateWidget(EisenhowerMatrix oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Solo resetear si cambia el conteo de tareas o hay tareas diferentes (por ID)
-    if (widget.tareas.length != oldWidget.tareas.length ||
-        !_tieneMismosIds(widget.tareas, oldWidget.tareas)) {
-      _tareasLocales = List.from(widget.tareas);
-    } else {
-      // Sincronizar estados actualizados sin perder el orden local
-      _sincronizarEstados();
-    }
-  }
-
-  bool _tieneMismosIds(List<Tarea> lista1, List<Tarea> lista2) {
-    if (lista1.length != lista2.length) return false;
-    final ids1 = lista1.map((t) => t.id).toSet();
-    final ids2 = lista2.map((t) => t.id).toSet();
-    return ids1.difference(ids2).isEmpty && ids2.difference(ids1).isEmpty;
-  }
-
-  void _sincronizarEstados() {
-    // Actualizar cada tarea local con los datos más recientes del widget
-    final mapaActualizado = {for (var t in widget.tareas) t.id: t};
-    setState(() {
-      _tareasLocales =
-          _tareasLocales.map((t) {
-            return mapaActualizado[t.id] ?? t;
-          }).toList();
-    });
+    // Siempre actualizar la lista local cuando cambia la lista del widget
+    _tareasLocales = List.from(widget.tareas);
   }
 
   Future<void> _handleToggle(Tarea tarea, bool completada) async {
-    // Mover la tarea al final de su lista antes de llamar el callback
+    // Actualización optimista del estado (sin reordenar, el _filter lo hace)
     setState(() {
       final index = _tareasLocales.indexWhere((t) => t.id == tarea.id);
       if (index != -1) {
-        final tareaActualizada = _tareasLocales[index].copyWith(
+        _tareasLocales[index] = _tareasLocales[index].copyWith(
           completada: completada,
         );
-        _tareasLocales.removeAt(index);
-        _tareasLocales.add(tareaActualizada);
       }
     });
 
