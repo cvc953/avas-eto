@@ -19,7 +19,7 @@ class TareaCard extends StatelessWidget {
         tarea.prioridad.toLowerCase() == 'alta' ||
         tarea.prioridad.toLowerCase() == 'media';
     final isUrgent = tarea.fechaVencimiento.isBefore(
-      now.add(const Duration(hours: 24)),
+      now.add(const Duration(days: 2)),
     );
 
     if (isUrgent && isImportant) return const Color(0xFFFF5F6D);

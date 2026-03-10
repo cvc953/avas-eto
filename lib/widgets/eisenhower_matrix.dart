@@ -24,7 +24,7 @@ class EisenhowerMatrix extends StatelessWidget {
           t.prioridad.toLowerCase() == 'alta' ||
           t.prioridad.toLowerCase() == 'media';
       final urgentMatch = t.fechaVencimiento.isBefore(
-        now.add(Duration(hours: 24)),
+        now.add(const Duration(days: 2)),
       );
       return (urgent ? urgentMatch : !urgentMatch) &&
           (important ? importantMatch : !importantMatch);
