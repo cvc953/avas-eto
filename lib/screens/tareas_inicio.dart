@@ -136,17 +136,23 @@ class _TareasInicioState extends State<TareasInicio> {
           );
 
           // Detectar cambio de fecha límite y aumentar contador de postergaciones
-          final fechaCambio = tarea.fechaVencimiento != tareaEditada.fechaVencimiento;
-          final tareaConContador = fechaCambio
-              ? tareaEditada.copyWith(
-                  vecesPospuesta: tareaEditada.vecesPospuesta + 1,
-                )
-              : tareaEditada;
+          final fechaCambio =
+              tarea.fechaVencimiento != tareaEditada.fechaVencimiento;
+          final tareaConContador =
+              fechaCambio
+                  ? tareaEditada.copyWith(
+                    vecesPospuesta: tareaEditada.vecesPospuesta + 1,
+                  )
+                  : tareaEditada;
 
           if (nuevaClave == claveVieja) {
             await _controller!.actualizar(tareaConContador, claveVieja);
           } else {
-            await _controller!.moverTarea(tareaConContador, claveVieja, nuevaClave);
+            await _controller!.moverTarea(
+              tareaConContador,
+              claveVieja,
+              nuevaClave,
+            );
           }
         }
 
