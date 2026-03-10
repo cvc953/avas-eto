@@ -110,6 +110,7 @@ scripts/generate_packages_txt_from_lock.sh
 windows/flutter/generated_plugin_registrant.cc
 windows/flutter/generated_plugins.cmake
 .env.local
+<<<<<<< HEAD
 .gitignore
 android/app/.project
 android/app/upload-keystore.jks.bak.20260310-144804
@@ -117,3 +118,9 @@ android/app/upload-keystore.jks.bak.20260310-144804
 android/app/.classpath
 .gitignore
 upload-keystore.jks
+=======
+android/app/upload-keystore.jks
+android/app/upload-keystore.jks.bak.20260310-144804
+android/app/.project
+android/app/.classpath
+>>>>>>> a843f0c (feat: update .gitignore and enhance Google sign-in with Drive scope request)

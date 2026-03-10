@@ -34,10 +34,24 @@ Future<User?> signInWithGoogle() async {
   }
 }
 
-Future<String?> getGoogleAccessToken() async {
+Future<String?> getGoogleAccessToken({bool requestDrive = false}) async {
   final account =
       _googleSignIn.currentUser ?? await _googleSignIn.signInSilently();
+
   if (account == null) return null;
+
+  // Solicita scope de Drive solo si el usuario intenta adjuntar
+  if (requestDrive) {
+    try {
+      await _googleSignIn.requestScopes([
+        'https://www.googleapis.com/auth/drive.file',
+      ]);
+    } catch (e) {
+      debugPrint('Error solicitando Drive scope: $e');
+      return null; // Usuario rechazó el permiso
+    }
+  }
+
   final auth = await account.authentication;
   return auth.accessToken;
 }

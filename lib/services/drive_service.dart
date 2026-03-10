@@ -4,10 +4,15 @@ import 'package:http/http.dart' as http;
 
 // Minimal Drive upload helper using a two-step upload (create metadata, then upload media).
 // Requires an OAuth2 access token with scope 'https://www.googleapis.com/auth/drive.file'.
-Future<String?> uploadFileToDrive(File file, String accessToken, {http.Client? client}) async {
+Future<String?> uploadFileToDrive(
+  File file,
+  String accessToken, {
+  http.Client? client,
+}) async {
   final http.Client usedClient = client ?? http.Client();
   try {
-    final name = file.uri.pathSegments.isNotEmpty ? file.uri.pathSegments.last : 'file';
+    final name =
+        file.uri.pathSegments.isNotEmpty ? file.uri.pathSegments.last : 'file';
     final mime = _guessMimeType(file.path);
 
     // Create file metadata
@@ -31,11 +36,10 @@ Future<String?> uploadFileToDrive(File file, String accessToken, {http.Client? c
     // Upload media
     final bytes = await file.readAsBytes();
     final uploadRes = await usedClient.put(
-      Uri.parse('https://www.googleapis.com/upload/drive/v3/files/$fileId?uploadType=media'),
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': mime,
-      },
+      Uri.parse(
+        'https://www.googleapis.com/upload/drive/v3/files/$fileId?uploadType=media',
+      ),
+      headers: {'Authorization': 'Bearer $accessToken', 'Content-Type': mime},
       body: bytes,
     );
 
