@@ -70,6 +70,65 @@ class TareasController {
     }
   }
 
+  /// Calcula el score de foco para una tarea
+  /// scoreUrgencia = max(0, 7 - dias_restantes)
+  /// scoreImportancia = prioridad_usuario * 3
+  /// scoreProcrastinacion = veces_pospuesta * 2
+  /// scoreFocoHoy = scoreImportancia + scoreUrgencia + scoreProcrastinacion
+  double _calcularScoreFoco(Tarea tarea) {
+    final now = DateTime.now();
+    final diasRestantes = tarea.fechaVencimiento.difference(now).inDays;
+    
+    // Importancia del usuario (prioridad)
+    final prioridadValor = {'alta': 3, 'media': 2, 'baja': 1};
+    final importancia = prioridadValor[tarea.prioridad.toLowerCase()] ?? 1;
+    final scoreImportancia = importancia * 3;
+    
+    // Urgencia basada en días restantes (ventana de 7 días)
+    final scoreUrgencia = (7 - diasRestantes).clamp(0, double.infinity).toDouble();
+    
+    // Procrastinación: número de veces que se pospuso la tarea
+    final scoreProcrastinacion = tarea.vecesPospuesta * 2.0;
+    
+    return scoreImportancia.toDouble() + scoreUrgencia + scoreProcrastinacion;
+  }
+
+  /// Retorna tareas pendientes ordenadas por score de foco (mayor a menor)
+  /// Máximo 5 tareas
+  List<Tarea> obtenerFocoHoy() {
+    final pendientes = tareas.values
+        .expand((e) => e)
+        .where((t) => !t.completada)
+        .toList();
+    
+    pendientes.sort((a, b) {
+      final scoreA = _calcularScoreFoco(a);
+      final scoreB = _calcularScoreFoco(b);
+      return scoreB.compareTo(scoreA);
+    });
+    
+    return pendientes.take(5).toList();
+  }
+
+  /// Retorna todas las tareas sin filtrar
+  List<Tarea> obtenerTodasLasTareas() {
+    final list = tareas.values.expand((e) => e).toList();
+    
+    if (_ordenActual == 'reciente') {
+      list.sort((a, b) => b.fechaCreacion.compareTo(a.fechaCreacion));
+    } else if (_ordenActual == 'prioridad') {
+      final prioridadValor = {'Alta': 3, 'Media': 2, 'Baja': 1};
+      list.sort((a, b) {
+        final valA = prioridadValor[a.prioridad] ?? 0;
+        final valB = prioridadValor[b.prioridad] ?? 0;
+        if (valA != valB) return valB.compareTo(valA);
+        return a.fechaVencimiento.compareTo(b.fechaVencimiento);
+      });
+    }
+    
+    return list;
+  }
+
   List<Tarea> filtrar(bool completadas) {
     final list =
         tareas.values

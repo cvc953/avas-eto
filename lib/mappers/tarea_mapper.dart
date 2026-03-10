@@ -20,6 +20,7 @@ class TareaMapper {
           tarea.completada
               ? Timestamp.fromDate(tarea.fechaCompletada)
               : Timestamp.fromDate(DateTime.now()),
+      'vecesPospuesta': tarea.vecesPospuesta,
     };
   }
 
@@ -52,6 +53,7 @@ class TareaMapper {
           (data['vencimiento'] as Timestamp?)?.toDate() ?? DateTime.now(),
       fechaCompletada:
           (data['completadaEn'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      vecesPospuesta: data['vecesPospuesta'] ?? 0,
     );
   }
 

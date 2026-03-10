@@ -10,6 +10,7 @@ class Tarea {
   final DateTime fechaCreacion;
   final DateTime fechaVencimiento;
   final DateTime fechaCompletada;
+  final int vecesPospuesta;
 
   Tarea({
     required this.id,
@@ -21,6 +22,7 @@ class Tarea {
     required this.fechaCreacion,
     required this.fechaVencimiento,
     required this.fechaCompletada,
+    this.vecesPospuesta = 0,
   });
 
   // Actualiza copyWith
@@ -34,6 +36,7 @@ class Tarea {
     DateTime? fechaCreacion,
     DateTime? fechaVencimiento,
     DateTime? fechaCompletada,
+    int? vecesPospuesta,
   }) {
     return Tarea(
       id: id ?? this.id,
@@ -45,6 +48,7 @@ class Tarea {
       fechaCreacion: fechaCreacion ?? this.fechaCreacion,
       fechaVencimiento: fechaVencimiento ?? this.fechaVencimiento,
       fechaCompletada: fechaCompletada ?? this.fechaCompletada,
+      vecesPospuesta: vecesPospuesta ?? this.vecesPospuesta,
     );
   }
 
@@ -60,6 +64,7 @@ class Tarea {
       'fechaCreacion': fechaCreacion.toIso8601String(),
       'fechaVencimiento': fechaVencimiento.toIso8601String(),
       'fechaCompletada': fechaCompletada.toIso8601String(),
+      'vecesPospuesta': vecesPospuesta,
     };
   }
 
@@ -77,6 +82,7 @@ class Tarea {
       fechaCreacion: DateTime.parse(map['fechaCreacion']),
       fechaVencimiento: DateTime.parse(map['fechaVencimiento']),
       fechaCompletada: DateTime.parse(map['fechaCompletada']),
+      vecesPospuesta: map['vecesPospuesta'] ?? 0,
     );
   }
 }

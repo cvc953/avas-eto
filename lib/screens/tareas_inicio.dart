@@ -135,10 +135,18 @@ class _TareasInicioState extends State<TareasInicio> {
             tarea.fechaVencimiento,
           );
 
+          // Detectar cambio de fecha límite y aumentar contador de postergaciones
+          final fechaCambio = tarea.fechaVencimiento != tareaEditada.fechaVencimiento;
+          final tareaConContador = fechaCambio
+              ? tareaEditada.copyWith(
+                  vecesPospuesta: tareaEditada.vecesPospuesta + 1,
+                )
+              : tareaEditada;
+
           if (nuevaClave == claveVieja) {
-            await _controller!.actualizar(tareaEditada, claveVieja);
+            await _controller!.actualizar(tareaConContador, claveVieja);
           } else {
-            await _controller!.moverTarea(tareaEditada, claveVieja, nuevaClave);
+            await _controller!.moverTarea(tareaConContador, claveVieja, nuevaClave);
           }
         }
 
@@ -350,7 +358,7 @@ class _TareasInicioState extends State<TareasInicio> {
         ),
       ],
       bottom: TabBar(
-        tabs: const [Tab(text: 'Pendientes'), Tab(text: 'Completadas')],
+        tabs: const [Tab(text: 'Foco de hoy'), Tab(text: 'Todas')],
         unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color,
         labelColor: Theme.of(context).textTheme.bodyLarge?.color,
         indicatorColor: Theme.of(context).primaryColor,
@@ -383,8 +391,8 @@ class _TareasInicioState extends State<TareasInicio> {
     }
 
     return TareasTabsView(
-      tareasPendientes: _controller!.filtrar(false),
-      tareasCompletadas: _controller!.filtrar(true),
+      tareasFoco: _controller!.obtenerFocoHoy(),
+      tareasTodas: _controller!.obtenerTodasLasTareas(),
       onCheck: _marcarCompletada,
       onEditar: _onEditarTarea,
       onEliminar: _onEliminarTarea,
