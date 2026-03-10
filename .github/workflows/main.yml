@@ -89,8 +89,23 @@ jobs:
       - name: Decode keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
 
+      - name: Print CI keystore certificate fingerprints
+        run: |
+          keytool -list -v \
+            -keystore android/app/upload-keystore.jks \
+            -alias "$KEY_ALIAS" \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -keypass "$KEY_PASSWORD" | sed -n '1,120p'
+
       - name: Build release APKs
         run: flutter build apk --release --split-per-abi
+
+      - name: Print APK signing certificate fingerprints
+        run: |
+          for apk in build/app/outputs/flutter-apk/*-release.apk; do
+            echo "===== $apk ====="
+            keytool -printcert -jarfile "$apk" | sed -n '1,80p'
+          done
 
       - name: Resolve release tag
         id: release_tag
