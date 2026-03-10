@@ -77,21 +77,12 @@ lib/
 
 ## Capturas de pantalla
 
-Agrega tus imagenes en `assets/screenshots/` y actualiza las rutas si lo necesitas.
-
 | Pantalla | Vista |
 | --- | --- |
-| Tareas | `![Tareas](assets/screenshots/tareas.png)` |
-| Matriz Eisenhower | `![Matriz](assets/screenshots/matriz.png)` |
-| Dialogo crear/editar | `![Dialogo](assets/screenshots/dialogo_tarea.png)` |
-| Opciones / Acerca de | `![Mas](assets/screenshots/more_options.png)` |
-
-Ejemplo listo para pegar cuando tengas archivos:
-
-```md
-![Pantalla Tareas](assets/screenshots/tareas.png)
-![Matriz Eisenhower](assets/screenshots/matriz.png)
-```
+| Tareas | ![Tareas](assets/screenshots/tareas.jpg) |
+| Matriz Eisenhower | ![Matriz](assets/screenshots/matriz.jpg) |
+| Dialogo crear/editar | ![Dialogo](assets/screenshots/dialogo_tarea.jpg) |
+| Opciones / Acerca de | ![Mas](assets/screenshots/more_options.jpg) |
 
 ## Novedades recientes
 
