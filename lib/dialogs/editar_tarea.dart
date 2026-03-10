@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import '../models/tarea.dart';
+import '../services/inicia_con_google.dart';
+import '../services/drive_service.dart';
 
 class EditTaskDialog extends StatefulWidget {
   final Tarea tarea;
@@ -350,6 +352,9 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
       final duracionMinutos =
           fechaVencimiento.difference(fechaInicio).inMinutes;
 
+      // If user granted Drive access, upload attachments and replace entries with Drive references.
+      await _maybeUploadAdjuntosToDrive(_adjuntos);
+
       final tareaEditada = widget.tarea.copyWith(
         title: _tareaController.text.trim(),
         descripcion: _descripcionController.text.trim(),
@@ -618,6 +623,33 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo abrir el archivo adjunto.')),
       );
+    }
+  }
+
+  Future<void> _maybeUploadAdjuntosToDrive(
+    List<Map<String, dynamic>> adjuntos,
+  ) async {
+    try {
+      final token = await getGoogleAccessToken();
+      if (token == null) return;
+
+      for (var i = 0; i < adjuntos.length; i++) {
+        final it = adjuntos[i];
+        final path = it['path'] as String?;
+        if (path == null) continue;
+        final file = File(path);
+        if (!await file.exists()) continue;
+        final id = await uploadFileToDrive(file, token);
+        if (id != null) {
+          adjuntos[i] = {
+            'driveId': id,
+            'name': it['name'] ?? file.uri.pathSegments.last,
+            'size': it['size'] ?? await file.length(),
+          };
+        }
+      }
+    } catch (e) {
+      debugPrint('Error uploading attachments to Drive: $e');
     }
   }
 

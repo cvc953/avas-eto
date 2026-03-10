@@ -2,7 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 
-final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
+final GoogleSignIn _googleSignIn = GoogleSignIn(
+  scopes: ['email', 'https://www.googleapis.com/auth/drive.file'],
+);
 
 Future<User?> signInWithGoogle() async {
   try {
@@ -30,4 +32,12 @@ Future<User?> signInWithGoogle() async {
     print("Error al iniciar sesión con Google: $e");
     return null;
   }
+}
+
+Future<String?> getGoogleAccessToken() async {
+  final account =
+      _googleSignIn.currentUser ?? await _googleSignIn.signInSilently();
+  if (account == null) return null;
+  final auth = await account.authentication;
+  return auth.accessToken;
 }
