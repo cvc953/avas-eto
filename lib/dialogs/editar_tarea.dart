@@ -165,11 +165,11 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     Color _priorityColor(String p) {
       switch (p) {
         case 'Alta':
-          return const Color(0xFFFF5F6D);
+          return const Color(0xFFFF6D00);
         case 'Media':
-          return const Color(0xFFFFBC1F);
+          return const Color(0xFF1565C0);
         case 'Baja':
-          return const Color(0xFF00D4B5);
+          return const Color(0xFFFBC02D);
         default:
           return Colors.grey;
       }
@@ -329,7 +329,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                                 (context) => SimpleDialog(
                                   backgroundColor: sheetColor,
                                   title: Text(
-                                    'Prioridad',
+                                    'Importancia',
                                     style: TextStyle(color: titleColor),
                                   ),
                                   children:

@@ -28,9 +28,6 @@ class TareasList extends StatelessWidget {
     }
     return CustomScrollView(
       slivers: [
-        SliverOverlapInjector(
-          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-        ),
         SliverList(
           delegate: SliverChildBuilderDelegate((context, index) {
             final tarea = tareas[index];

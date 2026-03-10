@@ -4,12 +4,12 @@ import 'package:avas_eto/utils/task_key_generator.dart';
 import '../dialogs/agregar_tarea.dart';
 import 'package:flutter/material.dart';
 import 'package:avas_eto/screens/more_options.dart';
-import 'package:avas_eto/screens/eisenhower_screen.dart';
 import '../models/tarea.dart';
 import '../dialogs/editar_tarea.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import '../widgets/eisenhower_matrix.dart';
 import 'tareas_tab_view.dart';
+import 'quadrant_detail_screen.dart';
 
 class TareasInicio extends StatefulWidget {
   const TareasInicio({super.key});
@@ -243,10 +243,24 @@ class _TareasInicioState extends State<TareasInicio> {
     }
   }
 
+  void _onTapQuadrant(String title, Color color, List<Tarea> tasks) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder:
+            (_) => QuadrantDetailScreen(
+              title: title,
+              accentColor: color,
+              tareas: tasks,
+              onToggle: _marcarCompletada,
+              onTapTask: _onEditarTarea,
+              onDelete: _onEliminarTarea,
+            ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<String> tabs = <String>['Pendientes', 'Completadas'];
-
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -257,115 +271,89 @@ class _TareasInicioState extends State<TareasInicio> {
         }
       },
       child: DefaultTabController(
-        length: tabs.length,
+        length: 2,
         child: Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          body: NestedScrollView(
-            headerSliverBuilder: (
-              BuildContext context,
-              bool innerBoxIsScrolled,
-            ) {
-              return [
-                SliverOverlapAbsorber(
-                  handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                    context,
-                  ),
-                  sliver: SliverAppBar(
-                    backgroundColor:
-                        Theme.of(context).appBarTheme.backgroundColor,
-                    automaticallyImplyLeading: false,
-                    title: Text(
-                      'Tareas',
-                      style: Theme.of(context).appBarTheme.titleTextStyle,
-                    ),
-                    actions: [
-                      PopupMenuButton<String>(
-                        menuPadding: const EdgeInsets.all(10),
-                        onSelected: (value) {
-                          setState(() {
-                            _tipoOrdenamiento = value;
-                            _ordenarTareas();
-                          });
-                        },
-                        itemBuilder:
-                            (BuildContext context) => [
-                              const PopupMenuItem(
-                                value: 'reciente',
-                                child: Text('Más recientes'),
-                              ),
-                              const PopupMenuItem(
-                                value: 'prioridad',
-                                child: Text('Por prioridad'),
-                              ),
-                            ],
-                        child: const Padding(
-                          padding: EdgeInsets.all(10),
-                          child: Icon(Icons.sort),
-                        ),
-                      ),
-                    ],
-                    pinned: true,
-                    expandedHeight: 100.0,
-                    forceElevated: innerBoxIsScrolled,
-                    bottom: TabBar(
-                      tabs: tabs.map((String name) => Tab(text: name)).toList(),
-                      unselectedLabelColor:
-                          Theme.of(context).textTheme.bodyMedium?.color,
-                      labelColor: Theme.of(context).textTheme.bodyLarge?.color,
-                      indicatorColor: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                ),
-              ];
-            },
-            body: _buildBody(),
-          ),
+          appBar: _buildAppBar(),
+          body: _buildBody(),
           floatingActionButton:
-              _selectedIndex == 0
-                  ? FloatingActionButton(
+              _selectedIndex == 2
+                  ? null
+                  : FloatingActionButton(
                     onPressed: _addTareas,
                     backgroundColor: Colors.blueAccent,
                     child: const Icon(Icons.add),
-                  )
-                  : null,
+                  ),
           bottomNavigationBar: CustomBottomNavBar(
             currentIndex: _selectedIndex,
-            onSelect: (i) {
-              if (i == 2) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (_) => MoreOptions(
-                          onAddTask: (t) async => await _guardarTarea(t),
-                          onToggle:
-                              (t, c) async => await _marcarCompletada(t, c),
-                        ),
-                  ),
-                );
-                return;
-              }
-              if (i == 1) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (_) => EisenhowerScreen(
-                          onAddTask: (t) async => await _guardarTarea(t),
-                          onToggle:
-                              (tarea, completada) async =>
-                                  await _marcarCompletada(tarea, completada),
-                          currentIndex: 1,
-                        ),
-                  ),
-                );
-                return;
-              }
-
-              setState(() => _selectedIndex = i);
-            },
+            onSelect: (i) => setState(() => _selectedIndex = i),
           ),
         ),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    if (_selectedIndex == 1) {
+      return AppBar(
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        automaticallyImplyLeading: false,
+        title: Text(
+          'Matriz de Eisenhower',
+          style: Theme.of(context).appBarTheme.titleTextStyle,
+        ),
+      );
+    }
+
+    if (_selectedIndex == 2) {
+      return AppBar(
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        automaticallyImplyLeading: false,
+        title: Text(
+          'Más opciones',
+          style: Theme.of(context).appBarTheme.titleTextStyle,
+        ),
+      );
+    }
+
+    return AppBar(
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+      automaticallyImplyLeading: false,
+      title: Text(
+        'Tareas',
+        style: Theme.of(context).appBarTheme.titleTextStyle,
+      ),
+      actions: [
+        PopupMenuButton<String>(
+          menuPadding: const EdgeInsets.all(10),
+          onSelected: (value) {
+            setState(() {
+              _tipoOrdenamiento = value;
+              _ordenarTareas();
+            });
+          },
+          itemBuilder:
+              (BuildContext context) => [
+                const PopupMenuItem(
+                  value: 'reciente',
+                  child: Text('Más recientes'),
+                ),
+                const PopupMenuItem(
+                  value: 'prioridad',
+                  child: Text('Por prioridad'),
+                ),
+              ],
+          child: const Padding(
+            padding: EdgeInsets.all(10),
+            child: Icon(Icons.sort),
+          ),
+        ),
+      ],
+      bottom: TabBar(
+        tabs: const [Tab(text: 'Pendientes'), Tab(text: 'Completadas')],
+        unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color,
+        labelColor: Theme.of(context).textTheme.bodyLarge?.color,
+        indicatorColor: Theme.of(context).primaryColor,
       ),
     );
   }
@@ -375,12 +363,22 @@ class _TareasInicioState extends State<TareasInicio> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    if (_selectedIndex == 2) {
+      return MoreOptions(
+        embedded: true,
+        onAddTask: (t) async => await _guardarTarea(t),
+        onToggle: (t, c) async => await _marcarCompletada(t, c),
+      );
+    }
+
     if (_selectedIndex == 1) {
       return EisenhowerMatrix(
         tareas: _controller!.tareas.values.expand((e) => e).toList(),
         onToggle:
             (tarea, completada) async =>
                 await _marcarCompletada(tarea, completada),
+        onTapTask: _onEditarTarea,
+        onTapQuadrant: _onTapQuadrant,
       );
     }
 

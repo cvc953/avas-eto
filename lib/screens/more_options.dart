@@ -15,6 +15,7 @@ class MoreOptions extends StatefulWidget {
   final Future<void> Function(dynamic tarea, bool completada)? onToggle;
   final AuthController? authController;
   final SettingsController? settingsController;
+  final bool embedded;
 
   const MoreOptions({
     super.key,
@@ -23,6 +24,7 @@ class MoreOptions extends StatefulWidget {
     this.onToggle,
     this.authController,
     this.settingsController,
+    this.embedded = false,
   });
 
   @override
@@ -170,6 +172,160 @@ class _MoreOptionsState extends State<MoreOptions> {
 
   @override
   Widget build(BuildContext context) {
+    final content = StreamBuilder<User?>(
+      stream: _authController.authStateChanges(),
+      builder: (context, snapshot) {
+        final user = snapshot.data;
+
+        return Center(
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+
+              if (user != null) ...[
+                CircleAvatar(
+                  radius: 40,
+                  backgroundImage:
+                      user.photoURL != null
+                          ? NetworkImage(user.photoURL!)
+                          : null,
+                  child:
+                      user.photoURL == null
+                          ? const Icon(Icons.account_circle, size: 80)
+                          : null,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Hola, ${user.email}',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                  ),
+                  onPressed: () => _confirmSignOut(context),
+                  child: const Text(
+                    'Cerrar sesión',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ] else ...[
+                const Icon(Icons.account_circle, size: 80),
+                const SizedBox(height: 20),
+                Text(
+                  'Inicia sesión para más opciones',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                  ),
+                  onPressed: () {
+                    Navigator.of(
+                      context,
+                    ).push(MaterialPageRoute(builder: (_) => Login()));
+                  },
+                  child: const Text(
+                    'Iniciar sesión',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 30),
+              ListTile(
+                leading:
+                    notificationsEnabled == true
+                        ? Icon(
+                          Icons.notifications_on,
+                          color: Theme.of(context).iconTheme.color,
+                        )
+                        : Icon(
+                          Icons.notifications_off,
+                          color: Theme.of(context).iconTheme.color,
+                        ),
+                title: Text(
+                  'Notificaciones',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+                trailing: Switch(
+                  value: notificationsEnabled,
+                  onChanged: (bool value) async {
+                    await _settingsController.setEnabled(value);
+                    setState(() {
+                      notificationsEnabled = value;
+                    });
+                  },
+                  activeThumbColor: Colors.blueAccent,
+                ),
+              ),
+              // Selector de tema
+              ListTile(
+                leading: Icon(
+                  _settingsController.themeMode == ThemeMode.dark
+                      ? Icons.dark_mode
+                      : _settingsController.themeMode == ThemeMode.light
+                      ? Icons.light_mode
+                      : Icons.brightness_auto,
+                  color: Theme.of(context).iconTheme.color,
+                ),
+                title: Text(
+                  'Tema',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+                subtitle: Text(
+                  _getThemeModeLabel(_settingsController.themeMode),
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                ),
+                onTap: () => _showThemeDialog(),
+              ),
+              Divider(color: Theme.of(context).dividerColor),
+              ListTile(
+                leading: Icon(
+                  Icons.info,
+                  color: Theme.of(context).iconTheme.color,
+                ),
+                title: Text(
+                  'Acerca de',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => AboutScreen(
+                            onAddTask: widget.onAddTask,
+                            onToggle: widget.onToggle,
+                          ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (widget.embedded) {
+      return SingleChildScrollView(child: content);
+    }
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -179,208 +335,48 @@ class _MoreOptionsState extends State<MoreOptions> {
           Navigator.of(context).pop();
         }
       },
-      child: StreamBuilder<User?>(
-        stream: _authController.authStateChanges(),
-        builder: (context, snapshot) {
-          final user = snapshot.data;
-
-          return Scaffold(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            appBar: AppBar(
-              automaticallyImplyLeading: false,
-              title: Center(
-                child: Text(
-                  'Más opciones',
-                  style: Theme.of(context).appBarTheme.titleTextStyle,
-                ),
-              ),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: Center(
+            child: Text(
+              'Más opciones',
+              style: Theme.of(context).appBarTheme.titleTextStyle,
             ),
-            //automaticallyImplyLeading: false,
-            body: Center(
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-
-                  if (user != null) ...[
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundImage:
-                          user.photoURL != null
-                              ? NetworkImage(user.photoURL!)
-                              : null,
-                      child:
-                          user.photoURL == null
-                              ? const Icon(Icons.account_circle, size: 80)
-                              : null,
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Hola, ${user.email}',
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                      ),
-                      onPressed: () => _confirmSignOut(context),
-                      child: const Text(
-                        'Cerrar sesión',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ] else ...[
-                    const Icon(Icons.account_circle, size: 80),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Inicia sesión para más opciones',
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                      ),
-                      onPressed: () {
-                        Navigator.of(
-                          context,
-                        ).push(MaterialPageRoute(builder: (_) => Login()));
-                      },
-                      child: const Text(
-                        'Iniciar sesión',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 30),
-                  ListTile(
-                    leading:
-                        notificationsEnabled == true
-                            ? Icon(
-                              Icons.notifications_on,
-                              color: Theme.of(context).iconTheme.color,
-                            )
-                            : Icon(
-                              Icons.notifications_off,
-                              color: Theme.of(context).iconTheme.color,
-                            ),
-                    title: Text(
-                      'Notificaciones',
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                    trailing: Switch(
-                      value: notificationsEnabled,
-                      onChanged: (bool value) async {
-                        await _settingsController.setEnabled(value);
-                        setState(() {
-                          notificationsEnabled = value;
-                        });
-                      },
-                      activeThumbColor: Colors.blueAccent,
-                    ),
-                  ),
-                  // Selector de tema
-                  ListTile(
-                    leading: Icon(
-                      _settingsController.themeMode == ThemeMode.dark
-                          ? Icons.dark_mode
-                          : _settingsController.themeMode == ThemeMode.light
-                          ? Icons.light_mode
-                          : Icons.brightness_auto,
-                      color: Theme.of(context).iconTheme.color,
-                    ),
-                    title: Text(
-                      'Tema',
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                    subtitle: Text(
-                      _getThemeModeLabel(_settingsController.themeMode),
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                      ),
-                    ),
-                    onTap: () => _showThemeDialog(),
-                  ),
-                  Divider(color: Theme.of(context).dividerColor),
-                  ListTile(
-                    leading: Icon(
-                      Icons.info,
-                      color: Theme.of(context).iconTheme.color,
-                    ),
-                    title: Text(
-                      'Acerca de',
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => AboutScreen(
-                                onAddTask: widget.onAddTask,
-                                onToggle: widget.onToggle,
-                              ),
+          ),
+        ),
+        body: content,
+        bottomNavigationBar: CustomBottomNavBar(
+          currentIndex: 2,
+          onSelect: (i) {
+            if (i == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => TareasInicio()),
+              );
+            } else if (i == 1) {
+              if (controller != null && onAddTask != null) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (_) => EisenhowerScreen(
+                          onAddTask: onAddTask!,
+                          onToggle: onToggle,
+                          currentIndex: 1,
                         ),
-                      );
-                    },
                   ),
-                ],
-              ),
-            ),
-            bottomNavigationBar: CustomBottomNavBar(
-              currentIndex: 2,
-              onSelect: (i) {
-                if (i == 0) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => TareasInicio()),
-                  );
-                } else if (i == 1) {
-                  if (controller != null && onAddTask != null) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (_) => EisenhowerScreen(
-                              onAddTask: onAddTask!,
-                              onToggle: onToggle,
-                              currentIndex: 1,
-                            ),
-                      ),
-                    );
-                  } else {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => TareasInicio()),
-                    );
-                  }
-                } else if (i == 2) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) => MoreOptions(
-                            onAddTask: onAddTask,
-                            onToggle: onToggle,
-                          ),
-                    ),
-                  );
-                }
-              },
-            ),
-          );
-        },
+                );
+              } else {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => TareasInicio()),
+                );
+              }
+            }
+          },
+        ),
       ),
     );
   }

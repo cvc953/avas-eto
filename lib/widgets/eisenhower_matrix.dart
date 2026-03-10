@@ -5,12 +5,15 @@ class EisenhowerMatrix extends StatelessWidget {
   final List<Tarea> tareas;
   final Future<void> Function(Tarea tarea, bool completada)? onToggle;
   final void Function(Tarea tarea)? onTapTask;
+  final void Function(String title, Color color, List<Tarea> tasks)?
+  onTapQuadrant;
 
   const EisenhowerMatrix({
     super.key,
     required this.tareas,
     this.onToggle,
     this.onTapTask,
+    this.onTapQuadrant,
   });
 
   List<Tarea> _filter(bool urgent, bool important) {
@@ -115,67 +118,74 @@ class EisenhowerMatrix extends StatelessWidget {
     final emptyColor =
         Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: quadrantBg,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 25,
-                height: 25,
-                decoration: BoxDecoration(
-                  color: accent,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  numeral,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+    return InkWell(
+      onTap:
+          onTapQuadrant == null
+              ? null
+              : () => onTapQuadrant!(title, accent, items),
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: quadrantBg,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 25,
+                  height: 25,
+                  decoration: BoxDecoration(
                     color: accent,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    numeral,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Expanded(
-            child:
-                items.isEmpty
-                    ? Center(
-                      child: Text(
-                        'Sin tareas',
-                        style: TextStyle(color: emptyColor, fontSize: 20),
-                      ),
-                    )
-                    : ListView.builder(
-                      itemCount: items.length,
-                      itemBuilder:
-                          (context, index) =>
-                              _taskRow(context, items[index], accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: accent,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
                     ),
-          ),
-        ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child:
+                  items.isEmpty
+                      ? Center(
+                        child: Text(
+                          'Sin tareas',
+                          style: TextStyle(color: emptyColor, fontSize: 20),
+                        ),
+                      )
+                      : ListView.builder(
+                        itemCount: items.length,
+                        itemBuilder:
+                            (context, index) =>
+                                _taskRow(context, items[index], accent),
+                      ),
+            ),
+          ],
+        ),
       ),
     );
   }

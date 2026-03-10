@@ -13,22 +13,24 @@ class TareaCard extends StatelessWidget {
     required this.onTap,
   });
 
-  Color _priorityColor(String prioridad) {
-    switch (prioridad) {
-      case 'Alta':
-        return const Color(0xFFFF5F6D);
-      case 'Media':
-        return const Color(0xFFFFBC1F);
-      case 'Baja':
-        return const Color(0xFF00D4B5);
-      default:
-        return Colors.grey;
-    }
+  Color _quadrantColor(Tarea tarea) {
+    final now = DateTime.now();
+    final isImportant =
+        tarea.prioridad.toLowerCase() == 'alta' ||
+        tarea.prioridad.toLowerCase() == 'media';
+    final isUrgent = tarea.fechaVencimiento.isBefore(
+      now.add(const Duration(hours: 24)),
+    );
+
+    if (isUrgent && isImportant) return const Color(0xFFFF5F6D);
+    if (!isUrgent && isImportant) return const Color(0xFFFFBC1F);
+    if (isUrgent && !isImportant) return const Color(0xFF4E7BFF);
+    return const Color(0xFF00D4B5);
   }
 
   @override
   Widget build(BuildContext context) {
-    final priorityColor = _priorityColor(tarea.prioridad);
+    final quadrantColor = _quadrantColor(tarea);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
@@ -62,8 +64,8 @@ class TareaCard extends StatelessWidget {
                       Checkbox(
                         value: tarea.completada,
                         onChanged: onCheck,
-                        activeColor: priorityColor,
-                        side: BorderSide(color: priorityColor, width: 1.5),
+                        activeColor: quadrantColor,
+                        side: BorderSide(color: quadrantColor, width: 1.5),
                       ),
                       const SizedBox(width: 8),
                       Expanded(

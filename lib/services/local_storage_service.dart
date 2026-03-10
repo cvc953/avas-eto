@@ -1,14 +1,22 @@
 import 'package:sembast/sembast.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'local_database.dart';
 import '../models/tarea.dart';
 
 class LocalStorageService {
+  static const String _ownerUserIdKey = '_ownerUserId';
+  static const String _anonymousUserId = '__anonymous__';
+
   final StoreRef<String, Map<String, dynamic>> _store =
       StoreRef<String, Map<String, dynamic>>.main();
   final LocalDatabase _localDb;
 
   LocalStorageService(this._localDb);
+
+  String _activeOwnerId() {
+    return FirebaseAuth.instance.currentUser?.uid ?? _anonymousUserId;
+  }
 
   Future<void> saveTarea(Tarea tarea) async {
     try {
@@ -22,7 +30,10 @@ class LocalStorageService {
               )
               : tarea;
 
-      await _store.record(tareaConId.id).put(database, tareaConId.toMap());
+      final map = tareaConId.toMap();
+      map[_ownerUserIdKey] = _activeOwnerId();
+
+      await _store.record(tareaConId.id).put(database, map);
       debugPrint('Tarea guardada LOCALMENTE: ${tareaConId.id}');
     } catch (e) {
       debugPrint('Error guardando localmente: $e');
@@ -34,8 +45,18 @@ class LocalStorageService {
     try {
       final database = await _localDb.db;
       final records = await _store.find(database);
+      final ownerId = _activeOwnerId();
 
-      return records.map((record) {
+      final visibles = records.where((record) {
+        final storedOwner = record.value[_ownerUserIdKey] as String?;
+        if (storedOwner == null) {
+          // Datos heredados sin owner: solo visibles en modo anonimo.
+          return ownerId == _anonymousUserId;
+        }
+        return storedOwner == ownerId;
+      });
+
+      return visibles.map((record) {
         try {
           return Tarea.fromMap(record.value);
         } catch (e) {
