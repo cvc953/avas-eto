@@ -81,10 +81,11 @@ class TareasRepository {
     if (user == null) return 0;
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('tareas')
-          .where('userId', isEqualTo: user.uid)
-          .get();
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('tareas')
+              .where('userId', isEqualTo: user.uid)
+              .get();
 
       for (final doc in snapshot.docs) {
         final tarea = TareaMapper.fromFirestoreQueryDocument(doc);
