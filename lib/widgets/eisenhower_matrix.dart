@@ -42,7 +42,9 @@ class _EisenhowerMatrixState extends State<EisenhowerMatrix> {
     setState(() {
       final index = _tareasLocales.indexWhere((t) => t.id == tarea.id);
       if (index != -1) {
-        final tareaActualizada = _tareasLocales[index].copyWith(completada: completada);
+        final tareaActualizada = _tareasLocales[index].copyWith(
+          completada: completada,
+        );
         _tareasLocales.removeAt(index);
         _tareasLocales.add(tareaActualizada);
       }
@@ -57,16 +59,17 @@ class _EisenhowerMatrixState extends State<EisenhowerMatrix> {
   List<Tarea> _filter(bool urgent, bool important) {
     // Simple heuristic: prioridad Alta -> important, fechaVencimiento próxima -> urgent
     final now = DateTime.now();
-    final filteredTasks = _tareasLocales.where((t) {
-      final importantMatch =
-          t.prioridad.toLowerCase() == 'alta' ||
-          t.prioridad.toLowerCase() == 'media';
-      final urgentMatch = t.fechaVencimiento.isBefore(
-        now.add(const Duration(days: 2)),
-      );
-      return (urgent ? urgentMatch : !urgentMatch) &&
-          (important ? importantMatch : !importantMatch);
-    }).toList();
+    final filteredTasks =
+        _tareasLocales.where((t) {
+          final importantMatch =
+              t.prioridad.toLowerCase() == 'alta' ||
+              t.prioridad.toLowerCase() == 'media';
+          final urgentMatch = t.fechaVencimiento.isBefore(
+            now.add(const Duration(days: 2)),
+          );
+          return (urgent ? urgentMatch : !urgentMatch) &&
+              (important ? importantMatch : !importantMatch);
+        }).toList();
 
     // Ordenar: completadas al final
     filteredTasks.sort((a, b) {
@@ -95,7 +98,10 @@ class _EisenhowerMatrixState extends State<EisenhowerMatrix> {
           opacity: tarea.completada ? 0.75 : 1,
           child: InkWell(
             borderRadius: BorderRadius.circular(10),
-            onTap: widget.onTapTask == null ? null : () => widget.onTapTask!(tarea),
+            onTap:
+                widget.onTapTask == null
+                    ? null
+                    : () => widget.onTapTask!(tarea),
             child: Row(
               children: [
                 SizedBox(
