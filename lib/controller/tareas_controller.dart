@@ -118,7 +118,7 @@ class TareasController {
       // Primero: completadas al final
       if (a.completada && !b.completada) return 1;
       if (!a.completada && b.completada) return -1;
-      
+
       // Segundo: aplicar el orden seleccionado solo entre tareas del mismo estado
       if (_ordenActual == 'reciente') {
         return b.fechaCreacion.compareTo(a.fechaCreacion);
@@ -129,7 +129,7 @@ class TareasController {
         if (valA != valB) return valB.compareTo(valA);
         return a.fechaVencimiento.compareTo(b.fechaVencimiento);
       }
-      
+
       return 0;
     });
 
