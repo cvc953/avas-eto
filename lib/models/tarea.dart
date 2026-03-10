@@ -9,6 +9,10 @@ class Tarea {
   final bool completada;
   final DateTime fechaCreacion;
   final DateTime fechaVencimiento;
+  final DateTime fechaInicio;
+  final int duracionMinutos;
+  final bool todoElDia;
+  final List<Map<String, dynamic>> adjuntos;
   final DateTime fechaCompletada;
   final int vecesPospuesta;
 
@@ -21,9 +25,24 @@ class Tarea {
     this.completada = false,
     required this.fechaCreacion,
     required this.fechaVencimiento,
+    DateTime? fechaInicio,
+    int? duracionMinutos,
+    this.todoElDia = false,
+    List<Map<String, dynamic>>? adjuntos,
     required this.fechaCompletada,
     this.vecesPospuesta = 0,
-  });
+  }) : fechaInicio =
+           fechaInicio ??
+         fechaVencimiento.subtract(Duration(minutes: duracionMinutos ?? 60)),
+       duracionMinutos =
+         duracionMinutos ??
+         fechaVencimiento
+           .difference(
+           fechaInicio ??
+             fechaVencimiento.subtract(const Duration(minutes: 60)),
+           )
+           .inMinutes,
+       adjuntos = List.unmodifiable(adjuntos ?? const []);
 
   // Actualiza copyWith
   Tarea copyWith({
@@ -35,6 +54,10 @@ class Tarea {
     bool? completada,
     DateTime? fechaCreacion,
     DateTime? fechaVencimiento,
+    DateTime? fechaInicio,
+    int? duracionMinutos,
+    bool? todoElDia,
+    List<Map<String, dynamic>>? adjuntos,
     DateTime? fechaCompletada,
     int? vecesPospuesta,
   }) {
@@ -47,6 +70,10 @@ class Tarea {
       completada: completada ?? this.completada,
       fechaCreacion: fechaCreacion ?? this.fechaCreacion,
       fechaVencimiento: fechaVencimiento ?? this.fechaVencimiento,
+      fechaInicio: fechaInicio ?? this.fechaInicio,
+      duracionMinutos: duracionMinutos ?? this.duracionMinutos,
+      todoElDia: todoElDia ?? this.todoElDia,
+      adjuntos: adjuntos ?? this.adjuntos,
       fechaCompletada: fechaCompletada ?? this.fechaCompletada,
       vecesPospuesta: vecesPospuesta ?? this.vecesPospuesta,
     );
@@ -63,6 +90,10 @@ class Tarea {
       'completada': completada,
       'fechaCreacion': fechaCreacion.toIso8601String(),
       'fechaVencimiento': fechaVencimiento.toIso8601String(),
+      'fechaInicio': fechaInicio.toIso8601String(),
+      'duracionMinutos': duracionMinutos,
+      'todoElDia': todoElDia,
+      'adjuntos': adjuntos,
       'fechaCompletada': fechaCompletada.toIso8601String(),
       'vecesPospuesta': vecesPospuesta,
     };
@@ -81,8 +112,29 @@ class Tarea {
       completada: map['completada'] ?? false,
       fechaCreacion: DateTime.parse(map['fechaCreacion']),
       fechaVencimiento: DateTime.parse(map['fechaVencimiento']),
+      fechaInicio:
+          map['fechaInicio'] != null
+              ? DateTime.parse(map['fechaInicio'])
+              : DateTime.parse(map['fechaVencimiento']).subtract(
+                Duration(minutes: (map['duracionMinutos'] ?? 60) as int),
+              ),
+      duracionMinutos: map['duracionMinutos'] ?? 60,
+      todoElDia: map['todoElDia'] ?? false,
+      adjuntos: _parseAdjuntos(map['adjuntos']),
       fechaCompletada: DateTime.parse(map['fechaCompletada']),
       vecesPospuesta: map['vecesPospuesta'] ?? 0,
     );
+  }
+
+  static List<Map<String, dynamic>> _parseAdjuntos(dynamic rawAdjuntos) {
+    if (rawAdjuntos is! List) return const [];
+
+    final parsed = <Map<String, dynamic>>[];
+    for (final item in rawAdjuntos) {
+      if (item is Map) {
+        parsed.add(Map<String, dynamic>.from(item));
+      }
+    }
+    return parsed;
   }
 }

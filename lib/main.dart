@@ -10,6 +10,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'services/notification_service.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -26,6 +28,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Required for DateFormat(..., 'es') used in schedule sheets.
+  await initializeDateFormatting('es');
+  Intl.defaultLocale = 'es';
 
   // 1. Inicialización de Firebase
   final bool firebaseSupported = kIsWeb || Platform.isAndroid || Platform.isIOS;

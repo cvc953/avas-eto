@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
 import '../models/tarea.dart';
 
 class EditTaskDialog extends StatefulWidget {
@@ -22,12 +26,18 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   late TextEditingController _tareaController;
   late TextEditingController _descripcionController;
   late Color _colorSeleccionado;
-  late TimeOfDay _selectedTime;
+  late TimeOfDay _selectedStartTime;
+  late TimeOfDay _selectedEndTime;
   late DateTime _selectedDate;
   late String _prioridadSeleccionada;
+  late List<Map<String, dynamic>> _adjuntos;
+  late bool _todoElDia;
   late String _initialTitle;
   late String _initialDescripcion;
   late String _initialPrioridad;
+  late List<Map<String, dynamic>> _initialAdjuntos;
+  late bool _initialTodoElDia;
+  late DateTime _initialFechaInicio;
   late DateTime _initialFechaVencimiento;
   bool _isSaving = false;
 
@@ -70,16 +80,227 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
       text: widget.tarea.descripcion,
     );
     _colorSeleccionado = widget.tarea.color;
-    _selectedTime = TimeOfDay(
+    final inicio = widget.tarea.fechaInicio;
+    _selectedStartTime = TimeOfDay(hour: inicio.hour, minute: inicio.minute);
+    _selectedEndTime = TimeOfDay(
       hour: widget.tarea.fechaVencimiento.hour,
       minute: widget.tarea.fechaVencimiento.minute,
     );
-    _selectedDate = widget.tarea.fechaVencimiento;
+    _selectedDate = inicio;
     _prioridadSeleccionada = widget.tarea.prioridad;
+    _adjuntos = List<Map<String, dynamic>>.from(widget.tarea.adjuntos);
+    _todoElDia = widget.tarea.todoElDia;
     _initialTitle = widget.tarea.title;
     _initialDescripcion = widget.tarea.descripcion;
     _initialPrioridad = widget.tarea.prioridad;
+    _initialAdjuntos = List<Map<String, dynamic>>.from(widget.tarea.adjuntos);
+    _initialTodoElDia = widget.tarea.todoElDia;
+    _initialFechaInicio = widget.tarea.fechaInicio;
     _initialFechaVencimiento = widget.tarea.fechaVencimiento;
+  }
+
+  DateTime _dateTimeFromTimeOfDay(DateTime date, TimeOfDay time) {
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+  }
+
+  String _formatTimeLabel(TimeOfDay time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _buildScheduleSummary() {
+    if (_todoElDia) return 'Todo el dia';
+
+    final start = _dateTimeFromTimeOfDay(_selectedDate, _selectedStartTime);
+    final end = _dateTimeFromTimeOfDay(_selectedDate, _selectedEndTime);
+    final durationMinutes = end.difference(start).inMinutes;
+    final hours = durationMinutes ~/ 60;
+    final minutes = durationMinutes % 60;
+    final durationLabel =
+        hours > 0
+            ? minutes > 0
+                ? '${hours}h ${minutes}m'
+                : '${hours}h'
+            : '${minutes}m';
+
+    return '${_formatTimeLabel(_selectedStartTime)} - ${_formatTimeLabel(_selectedEndTime)} · $durationLabel';
+  }
+
+  Future<void> _openScheduleSheet() async {
+    DateTime tempDate = _selectedDate;
+    TimeOfDay tempStart = _selectedStartTime;
+    TimeOfDay tempEnd = _selectedEndTime;
+    bool tempAllDay = _todoElDia;
+
+    String buildTempSummary() {
+      if (tempAllDay) return 'Todo el dia';
+      final start = _dateTimeFromTimeOfDay(tempDate, tempStart);
+      final end = _dateTimeFromTimeOfDay(tempDate, tempEnd);
+      final durationMinutes = end.difference(start).inMinutes;
+      final hours = durationMinutes ~/ 60;
+      final minutes = durationMinutes % 60;
+      final durationLabel =
+          hours > 0
+              ? minutes > 0
+                  ? '${hours}h ${minutes}m'
+                  : '${hours}h'
+              : '${minutes}m';
+      return '${_formatTimeLabel(tempStart)} - ${_formatTimeLabel(tempEnd)} · $durationLabel';
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).cardColor,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(sheetContext),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Duracion',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Card(
+                            elevation: 0,
+                            child: ListTile(
+                              title: const Text('Fecha'),
+                              subtitle: Text(
+                                DateFormat('EEE, MMM d', 'es').format(tempDate),
+                              ),
+                              onTap: () async {
+                                final pickedDate = await showDatePicker(
+                                  context: sheetContext,
+                                  initialDate: tempDate,
+                                  firstDate: DateTime.now().subtract(
+                                    const Duration(days: 365),
+                                  ),
+                                  lastDate: DateTime.now().add(
+                                    const Duration(days: 365),
+                                  ),
+                                );
+                                if (pickedDate != null) {
+                                  setSheetState(() => tempDate = pickedDate);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Card(
+                            elevation: 0,
+                            child: ListTile(
+                              title: const Text('Hora'),
+                              subtitle: Text(
+                                tempAllDay
+                                    ? 'Todo el dia'
+                                    : '${_formatTimeLabel(tempStart)} - ${_formatTimeLabel(tempEnd)}',
+                              ),
+                              onTap: tempAllDay
+                                  ? null
+                                  : () async {
+                                      final start = await showTimePicker(
+                                        context: sheetContext,
+                                        initialTime: tempStart,
+                                      );
+                                      if (start == null) return;
+                                      final end = await showTimePicker(
+                                        context: sheetContext,
+                                        initialTime: tempEnd,
+                                      );
+                                      if (end == null) return;
+                                      setSheetState(() {
+                                        tempStart = start;
+                                        tempEnd = end;
+                                      });
+                                    },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Todo el dia'),
+                      value: tempAllDay,
+                      onChanged: (value) {
+                        setSheetState(() => tempAllDay = value);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      buildTempSummary(),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final start = _dateTimeFromTimeOfDay(tempDate, tempStart);
+                          final end = _dateTimeFromTimeOfDay(tempDate, tempEnd);
+                          if (!tempAllDay && !end.isAfter(start)) {
+                            ScaffoldMessenger.of(sheetContext).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'La hora final debe ser posterior a la hora de inicio.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          setState(() {
+                            _selectedDate = tempDate;
+                            _selectedStartTime = tempStart;
+                            _selectedEndTime = tempEnd;
+                            _todoElDia = tempAllDay;
+                          });
+                          Navigator.pop(sheetContext);
+                        },
+                        child: const Text('Aplicar'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -95,21 +316,55 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     setState(() => _isSaving = true);
 
     try {
+      final fechaInicio =
+          _todoElDia
+              ? DateTime(
+                _selectedDate.year,
+                _selectedDate.month,
+                _selectedDate.day,
+              )
+              : _dateTimeFromTimeOfDay(_selectedDate, _selectedStartTime);
+      final fechaVencimiento =
+          _todoElDia
+              ? DateTime(
+                _selectedDate.year,
+                _selectedDate.month,
+                _selectedDate.day,
+                23,
+                59,
+              )
+              : _dateTimeFromTimeOfDay(_selectedDate, _selectedEndTime);
+
+      if (!_todoElDia && !fechaVencimiento.isAfter(fechaInicio)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('La hora final debe ser posterior a la hora de inicio.'),
+            ),
+          );
+        }
+        setState(() => _isSaving = false);
+        return;
+      }
+
+      final duracionMinutos = fechaVencimiento.difference(fechaInicio).inMinutes;
+
       final tareaEditada = widget.tarea.copyWith(
         title: _tareaController.text.trim(),
         descripcion: _descripcionController.text.trim(),
         prioridad: _prioridadSeleccionada,
         color: _colorSeleccionado,
-        fechaVencimiento: DateTime(
-          _selectedDate.year,
-          _selectedDate.month,
-          _selectedDate.day,
-          _selectedTime.hour,
-          _selectedTime.minute,
-        ),
+        fechaInicio: fechaInicio,
+        fechaVencimiento: fechaVencimiento,
+        duracionMinutos: duracionMinutos,
+        todoElDia: _todoElDia,
+        adjuntos: _adjuntos,
       );
 
-      final clave = _formatDateKey(_selectedDate, _selectedTime);
+      final clave = _formatDateKey(
+        fechaVencimiento,
+        TimeOfDay(hour: fechaVencimiento.hour, minute: fechaVencimiento.minute),
+      );
 
       // Call onSave which will close the dialog
       widget.onSave(tareaEditada, clave);
@@ -134,17 +389,260 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     final descripcionChanged =
         _descripcionController.text.trim() != _initialDescripcion.trim();
     final prioridadChanged = _prioridadSeleccionada != _initialPrioridad;
+    final fechaInicio =
+        _todoElDia
+            ? DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day)
+            : _dateTimeFromTimeOfDay(_selectedDate, _selectedStartTime);
+    final fechaVencimiento =
+        _todoElDia
+            ? DateTime(
+              _selectedDate.year,
+              _selectedDate.month,
+              _selectedDate.day,
+              23,
+              59,
+            )
+            : _dateTimeFromTimeOfDay(_selectedDate, _selectedEndTime);
     final fechaChanged =
-        _selectedDate.year != _initialFechaVencimiento.year ||
-        _selectedDate.month != _initialFechaVencimiento.month ||
-        _selectedDate.day != _initialFechaVencimiento.day ||
-        _selectedTime.hour != _initialFechaVencimiento.hour ||
-        _selectedTime.minute != _initialFechaVencimiento.minute;
+        fechaInicio != _initialFechaInicio ||
+        fechaVencimiento != _initialFechaVencimiento;
+    final todoElDiaChanged = _todoElDia != _initialTodoElDia;
+    final adjuntosChanged = _adjuntos.length != _initialAdjuntos.length;
 
     return titleChanged ||
         descripcionChanged ||
         prioridadChanged ||
-        fechaChanged;
+        fechaChanged ||
+        todoElDiaChanged ||
+        adjuntosChanged;
+  }
+
+  Future<void> _pickAttachment() async {
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      withData: false,
+    );
+
+    if (result == null || !mounted) return;
+
+    setState(() {
+      for (final file in result.files) {
+        if (file.path == null) continue;
+        _adjuntos.add({
+          'path': file.path,
+          'name': file.name,
+          'size': file.size,
+        });
+      }
+    });
+  }
+
+  Future<void> _pickPhotoGallery() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: true,
+      withData: false,
+    );
+
+    if (result == null || !mounted) return;
+
+    setState(() {
+      for (final file in result.files) {
+        if (file.path == null) continue;
+        _adjuntos.add({
+          'path': file.path,
+          'name': file.name,
+          'size': file.size,
+        });
+      }
+    });
+  }
+
+  void _showCameraUnavailableMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Tomar foto requiere el plugin de camara. Activalo cuando haya conexion para instalar dependencias.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showAttachmentOptions() async {
+    return showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Theme.of(context).cardColor,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.attach_file),
+                title: const Text('Seleccionar archivos'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickAttachment();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Tomar foto'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showCameraUnavailableMessage();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Elegir foto de galería'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickPhotoGallery();
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _removeAttachment(int index) {
+    setState(() {
+      _adjuntos.removeAt(index);
+    });
+  }
+
+  bool _isImageAttachment(Map<String, dynamic> item) {
+    final raw = ((item['name'] as String?) ?? (item['path'] as String?) ?? '')
+        .toLowerCase();
+    return raw.endsWith('.png') ||
+        raw.endsWith('.jpg') ||
+        raw.endsWith('.jpeg') ||
+        raw.endsWith('.gif') ||
+        raw.endsWith('.webp') ||
+        raw.endsWith('.bmp');
+  }
+
+  Widget _buildAttachmentWidget(Map<String, dynamic> item, int index) {
+    final name = (item['name'] as String?) ?? 'archivo';
+    final path = item['path'] as String?;
+
+    if (_isImageAttachment(item) && path != null && path.isNotEmpty) {
+      return GestureDetector(
+        onTap: () => _openAttachment(item),
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.file(
+                File(path),
+                width: 88,
+                height: 88,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 88,
+                    height: 88,
+                    color: Theme.of(context).dividerColor,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.broken_image),
+                  );
+                },
+              ),
+            ),
+            Positioned(
+              right: 4,
+              top: 4,
+              child: InkWell(
+                onTap: () => _removeAttachment(index),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.all(3),
+                  child: const Icon(Icons.close, color: Colors.white, size: 14),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return InputChip(
+      label: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 180),
+        child: Text(name, overflow: TextOverflow.ellipsis),
+      ),
+      onPressed: () => _openAttachment(item),
+      onDeleted: () => _removeAttachment(index),
+    );
+  }
+
+  Future<void> _openAttachment(Map<String, dynamic> item) async {
+    final path = item['path'] as String?;
+    if (path == null || path.isEmpty) return;
+
+    if (_isImageAttachment(item)) {
+      _openImagePreview(path, (item['name'] as String?) ?? 'Imagen');
+      return;
+    }
+
+    if (Platform.isAndroid) {
+      try {
+        const channel = MethodChannel('com.cvc.avas_eto/open_file');
+        final res = await channel.invokeMethod('openFile', {'path': path});
+        debugPrint('openAttachment(edit): platform openFile result=$res');
+        return;
+      } catch (e, st) {
+        debugPrint('openAttachment(edit): platform openFile failed: $e\n$st');
+      }
+    }
+
+    final uri = Uri.file(path);
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir el archivo adjunto.')),
+      );
+    }
+  }
+
+  Future<void> _openImagePreview(String path, String title) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return Dialog.fullscreen(
+          child: Scaffold(
+            appBar: AppBar(title: Text(title)),
+            body: InteractiveViewer(
+              minScale: 0.8,
+              maxScale: 5,
+              child: Center(
+                child: Image.file(
+                  File(path),
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Text('No se pudo cargar la imagen');
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActionItem({required Widget icon, required Widget label}) {
+    return Column(children: [icon, const SizedBox(height: 4), label]);
   }
 
   @override
@@ -180,7 +678,10 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
         left: 16,
         right: 16,
         top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        bottom:
+            MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).viewPadding.bottom +
+            16,
       ),
       decoration: BoxDecoration(
         color: sheetColor,
@@ -263,161 +764,135 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                           vertical: 12,
                         ),
                       ),
-                      maxLines: 2,
+                      minLines: 1,
+                      maxLines: null,
                       maxLength: 200,
                     ),
                   ],
                 ),
               ),
+              if (_adjuntos.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: List.generate(_adjuntos.length, (index) {
+                    final item = _adjuntos[index];
+                    return _buildAttachmentWidget(item, index);
+                  }),
+                ),
+              ],
               const SizedBox(height: 12),
-              // Compact icons: date, priority, then time (time moved to the right)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  // Date icon + small label
-                  Column(
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return Wrap(
+                    spacing: 10,
+                    runSpacing: 12,
                     children: [
-                      IconButton(
-                        tooltip: 'Seleccionar fecha',
-                        icon: Icon(Icons.calendar_today, color: iconColor),
-                        onPressed: () async {
-                          final pickedDate = await showDatePicker(
-                            context: context,
-                            initialDate: _selectedDate,
-                            firstDate: DateTime.now().subtract(
-                              const Duration(days: 365),
-                            ),
-                            lastDate: DateTime.now().add(
-                              const Duration(days: 365),
-                            ),
-                            builder: (context, child) {
-                              return Theme(
-                                data: Theme.of(context),
-                                child: child!,
-                              );
-                            },
-                          );
-                          if (pickedDate != null && mounted) {
-                            setState(() => _selectedDate = pickedDate);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        DateFormat('dd/MM').format(_selectedDate),
-                        style: TextStyle(
-                          color: secondaryTextColor,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 18),
-                  // Priority icon + small label
-                  Column(
-                    children: [
-                      IconButton(
-                        tooltip: 'Seleccionar prioridad',
-                        icon: Icon(
-                          Icons.flag,
-                          color: _priorityColor(_prioridadSeleccionada),
-                        ),
-                        onPressed: () async {
-                          final selected = await showDialog<String?>(
-                            context: context,
-                            builder:
-                                (context) => SimpleDialog(
-                                  backgroundColor: sheetColor,
-                                  title: Text(
-                                    'Importancia',
-                                    style: TextStyle(color: titleColor),
-                                  ),
-                                  children:
-                                      ['Alta', 'Media', 'Baja', 'Ninguna']
-                                          .map(
-                                            (p) => SimpleDialogOption(
-                                              onPressed:
-                                                  () =>
-                                                      Navigator.pop(context, p),
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.flag,
-                                                    color: _priorityColor(p),
-                                                  ),
-                                                  const SizedBox(width: 12),
-                                                  Text(
-                                                    p,
-                                                    style: TextStyle(
-                                                      color: titleColor,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          )
-                                          .toList(),
-                                ),
-                          );
-                          if (selected != null && mounted) {
-                            setState(() => _prioridadSeleccionada = selected);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
+                      _buildActionItem(
+                        icon: IconButton(
+                          tooltip: 'Seleccionar prioridad',
+                          icon: Icon(
                             Icons.flag,
                             color: _priorityColor(_prioridadSeleccionada),
-                            size: 14,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            _prioridadSeleccionada,
-                            style: TextStyle(
-                              color: secondaryTextColor,
-                              fontSize: 12,
+                          onPressed: () async {
+                            final selected = await showDialog<String?>(
+                              context: context,
+                              builder:
+                                  (context) => SimpleDialog(
+                                    backgroundColor: sheetColor,
+                                    title: Text(
+                                      'Importancia',
+                                      style: TextStyle(color: titleColor),
+                                    ),
+                                    children:
+                                        ['Alta', 'Media', 'Baja', 'Ninguna']
+                                            .map(
+                                              (p) => SimpleDialogOption(
+                                                onPressed:
+                                                    () => Navigator.pop(
+                                                      context,
+                                                      p,
+                                                    ),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.flag,
+                                                      color: _priorityColor(p),
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                    Text(
+                                                      p,
+                                                      style: TextStyle(
+                                                        color: titleColor,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            )
+                                            .toList(),
+                                  ),
+                            );
+                            if (selected != null && mounted) {
+                              setState(() => _prioridadSeleccionada = selected);
+                            }
+                          },
+                        ),
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.flag,
+                              color: _priorityColor(_prioridadSeleccionada),
+                              size: 14,
                             ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _prioridadSeleccionada,
+                              style: TextStyle(
+                                color: secondaryTextColor,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      _buildActionItem(
+                        icon: IconButton(
+                          tooltip: 'Horario',
+                          icon: Icon(Icons.access_time, color: iconColor),
+                          onPressed: _openScheduleSheet,
+                        ),
+                        label: Text(
+                          _buildScheduleSummary(),
+                          style: TextStyle(
+                            color: secondaryTextColor,
+                            fontSize: 12,
                           ),
-                        ],
+                        ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(width: 18),
-                  // Time icon + small label (moved to the right)
-                  Column(
-                    children: [
-                      IconButton(
-                        tooltip: 'Seleccionar hora',
-                        icon: Icon(Icons.access_time, color: iconColor),
-                        onPressed: () async {
-                          final pickedTime = await showTimePicker(
-                            context: context,
-                            initialTime: _selectedTime,
-                            builder: (context, child) {
-                              return Theme(
-                                data: Theme.of(context),
-                                child: child!,
-                              );
-                            },
-                          );
-                          if (pickedTime != null && mounted) {
-                            setState(() => _selectedTime = pickedTime);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
-                        style: TextStyle(
-                          color: secondaryTextColor,
-                          fontSize: 12,
+                      _buildActionItem(
+                        icon: IconButton(
+                          tooltip: 'Adjuntar',
+                          icon: Icon(Icons.attach_file, color: iconColor),
+                          onPressed: _showAttachmentOptions,
+                        ),
+                        label: Text(
+                          _adjuntos.isEmpty
+                              ? 'Adjuntar'
+                              : '${_adjuntos.length} archivo(s)',
+                          style: TextStyle(
+                            color: secondaryTextColor,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],
-                  ),
-                ],
+                  );
+                },
               ),
               const SizedBox(height: 12),
               const SizedBox(height: 18),

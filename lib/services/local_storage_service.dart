@@ -68,7 +68,11 @@ class LocalStorageService {
             prioridad: 'media',
             color: Colors.grey,
             fechaCreacion: DateTime.now(),
+            fechaInicio: DateTime.now(),
             fechaVencimiento: DateTime.now(),
+            duracionMinutos: 60,
+            todoElDia: false,
+            adjuntos: const [],
             fechaCompletada: DateTime.now(),
           );
         }
