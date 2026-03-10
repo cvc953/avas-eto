@@ -33,15 +33,15 @@ class Tarea {
     this.vecesPospuesta = 0,
   }) : fechaInicio =
            fechaInicio ??
-         fechaVencimiento.subtract(Duration(minutes: duracionMinutos ?? 60)),
+           fechaVencimiento.subtract(Duration(minutes: duracionMinutos ?? 60)),
        duracionMinutos =
-         duracionMinutos ??
-         fechaVencimiento
-           .difference(
-           fechaInicio ??
-             fechaVencimiento.subtract(const Duration(minutes: 60)),
-           )
-           .inMinutes,
+           duracionMinutos ??
+           fechaVencimiento
+               .difference(
+                 fechaInicio ??
+                     fechaVencimiento.subtract(const Duration(minutes: 60)),
+               )
+               .inMinutes,
        adjuntos = List.unmodifiable(adjuntos ?? const []);
 
   // Actualiza copyWith

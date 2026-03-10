@@ -100,13 +100,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   }
 
   DateTime _dateTimeFromTimeOfDay(DateTime date, TimeOfDay time) {
-    return DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
+    return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
   String _formatTimeLabel(TimeOfDay time) {
@@ -228,24 +222,25 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                                     ? 'Todo el dia'
                                     : '${_formatTimeLabel(tempStart)} - ${_formatTimeLabel(tempEnd)}',
                               ),
-                              onTap: tempAllDay
-                                  ? null
-                                  : () async {
-                                      final start = await showTimePicker(
-                                        context: sheetContext,
-                                        initialTime: tempStart,
-                                      );
-                                      if (start == null) return;
-                                      final end = await showTimePicker(
-                                        context: sheetContext,
-                                        initialTime: tempEnd,
-                                      );
-                                      if (end == null) return;
-                                      setSheetState(() {
-                                        tempStart = start;
-                                        tempEnd = end;
-                                      });
-                                    },
+                              onTap:
+                                  tempAllDay
+                                      ? null
+                                      : () async {
+                                        final start = await showTimePicker(
+                                          context: sheetContext,
+                                          initialTime: tempStart,
+                                        );
+                                        if (start == null) return;
+                                        final end = await showTimePicker(
+                                          context: sheetContext,
+                                          initialTime: tempEnd,
+                                        );
+                                        if (end == null) return;
+                                        setSheetState(() {
+                                          tempStart = start;
+                                          tempEnd = end;
+                                        });
+                                      },
                             ),
                           ),
                         ),
@@ -270,7 +265,10 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          final start = _dateTimeFromTimeOfDay(tempDate, tempStart);
+                          final start = _dateTimeFromTimeOfDay(
+                            tempDate,
+                            tempStart,
+                          );
                           final end = _dateTimeFromTimeOfDay(tempDate, tempEnd);
                           if (!tempAllDay && !end.isAfter(start)) {
                             ScaffoldMessenger.of(sheetContext).showSnackBar(
@@ -339,7 +337,9 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('La hora final debe ser posterior a la hora de inicio.'),
+              content: Text(
+                'La hora final debe ser posterior a la hora de inicio.',
+              ),
             ),
           );
         }
@@ -347,7 +347,8 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
         return;
       }
 
-      final duracionMinutos = fechaVencimiento.difference(fechaInicio).inMinutes;
+      final duracionMinutos =
+          fechaVencimiento.difference(fechaInicio).inMinutes;
 
       final tareaEditada = widget.tarea.copyWith(
         title: _tareaController.text.trim(),
@@ -391,7 +392,11 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     final prioridadChanged = _prioridadSeleccionada != _initialPrioridad;
     final fechaInicio =
         _todoElDia
-            ? DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day)
+            ? DateTime(
+              _selectedDate.year,
+              _selectedDate.month,
+              _selectedDate.day,
+            )
             : _dateTimeFromTimeOfDay(_selectedDate, _selectedStartTime);
     final fechaVencimiento =
         _todoElDia
@@ -517,8 +522,9 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   }
 
   bool _isImageAttachment(Map<String, dynamic> item) {
-    final raw = ((item['name'] as String?) ?? (item['path'] as String?) ?? '')
-        .toLowerCase();
+    final raw =
+        ((item['name'] as String?) ?? (item['path'] as String?) ?? '')
+            .toLowerCase();
     return raw.endsWith('.png') ||
         raw.endsWith('.jpg') ||
         raw.endsWith('.jpeg') ||
