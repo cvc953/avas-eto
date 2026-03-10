@@ -630,7 +630,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     List<Map<String, dynamic>> adjuntos,
   ) async {
     try {
-      final token = await getGoogleAccessToken();
+      final token = await getGoogleAccessToken(requestDrive: true);
       if (token == null) return;
 
       for (var i = 0; i < adjuntos.length; i++) {

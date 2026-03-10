@@ -3,7 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 
 final GoogleSignIn _googleSignIn = GoogleSignIn(
-  scopes: ['email', 'https://www.googleapis.com/auth/drive.file'],
+  scopes: ['email'], // Drive solicitado solo cuando sea necesario
 );
 
 Future<User?> signInWithGoogle() async {
