@@ -7,6 +7,7 @@ import 'dart:io';
 import '../models/tarea.dart';
 import '../services/attachment_storage_service.dart';
 import '../services/inicia_con_google.dart';
+import 'task_dialog_ui.dart';
 import '../utils/app_toast.dart';
 
 class AddTaskDialog extends StatefulWidget {
@@ -632,290 +633,204 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
-  Widget _buildActionItem({required Widget icon, required Widget label}) {
-    return Column(children: [icon, const SizedBox(height: 4), label]);
+  Color _priorityColor(String prioridad) {
+    switch (prioridad) {
+      case 'Alta':
+        return const Color(0xFFFF6D00);
+      case 'Media':
+        return const Color(0xFF1565C0);
+      case 'Baja':
+        return const Color(0xFFFBC02D);
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _buildMetaLabel() {
+    final dateLabel = DateFormat('EEE d MMM', 'es').format(_selectedDate);
+    if (_todoElDia) return '$dateLabel · Todo el dia';
+    return '$dateLabel · ${_buildScheduleSummary()}';
+  }
+
+  Future<void> _showPriorityPicker(Color sheetColor, Color titleColor) async {
+    final selected = await showDialog<String?>(
+      context: context,
+      builder:
+          (context) => SimpleDialog(
+            backgroundColor: sheetColor,
+            title: Text('Importancia', style: TextStyle(color: titleColor)),
+            children:
+                ['Alta', 'Media', 'Baja', 'Ninguna']
+                    .map(
+                      (p) => SimpleDialogOption(
+                        onPressed: () => Navigator.pop(context, p),
+                        child: Row(
+                          children: [
+                            Icon(Icons.flag, color: _priorityColor(p)),
+                            const SizedBox(width: 12),
+                            Text(p, style: TextStyle(color: titleColor)),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+          ),
+    );
+    if (selected != null && mounted) {
+      setState(() {
+        _prioridadSeleccionada = selected;
+        _hasChanges = true;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final sheetColor =
-        isDark ? const Color(0xFF121212) : Theme.of(context).cardColor;
+    final theme = Theme.of(context);
     final titleColor =
-        Theme.of(context).textTheme.titleLarge?.color ??
-        (isDark ? Colors.white : Colors.black87);
-    final secondaryTextColor =
-        Theme.of(context).textTheme.bodyMedium?.color ??
-        (isDark ? Colors.white70 : Colors.black54);
-    final iconColor =
-        Theme.of(context).iconTheme.color ??
-        (isDark ? Colors.white : Colors.black87);
+        theme.textTheme.titleLarge?.color ??
+        (theme.brightness == Brightness.dark ? Colors.white : Colors.black87);
 
-    Color _priorityColor(String p) {
-      switch (p) {
-        case 'Alta':
-          return const Color(0xFFFF6D00);
-        case 'Media':
-          return const Color(0xFF1565C0);
-        case 'Baja':
-          return const Color(0xFFFBC02D);
-        default:
-          return Colors.grey;
-      }
-    }
-
-    // Bottom sheet style content
-    return Container(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom:
-            MediaQuery.of(context).viewInsets.bottom +
-            MediaQuery.of(context).viewPadding.bottom +
-            16,
-      ),
-      decoration: BoxDecoration(
-        color: sheetColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.grey[700] : Colors.grey[400],
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ),
-              Text(
-                'Nueva Tarea',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: titleColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: sheetColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _tareaController,
-                      onChanged: (_) => _markChanged(),
-                      decoration: const InputDecoration(
-                        labelText: 'Tarea*',
-                        hintText: 'Ej: Hacer presentación',
-                        filled: false,
-                        fillColor: Colors.transparent,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        counterText: '',
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                      ),
-                      keyboardType: TextInputType.multiline,
-                      minLines: 1,
-                      maxLines: null,
-                      maxLength: 50,
-                      validator:
-                          (value) =>
-                              value?.trim().isEmpty ?? true
-                                  ? 'Este campo es requerido'
-                                  : null,
-                    ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor),
-                    TextFormField(
-                      controller: _descripcionController,
-                      onChanged: (_) => _markChanged(),
-                      decoration: const InputDecoration(
-                        labelText: 'Descripción',
-                        hintText: 'Detalles de la tarea',
-                        filled: false,
-                        fillColor: Colors.transparent,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        counterText: '',
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                      ),
-                      minLines: 1,
-                      maxLines: null,
-                      maxLength: 200,
-                    ),
-                  ],
-                ),
-              ),
-              if (_adjuntos.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: List.generate(_adjuntos.length, (index) {
-                    final item = _adjuntos[index];
-                    return _buildAttachmentWidget(item, index);
-                  }),
-                ),
-              ],
-              const SizedBox(height: 12),
-
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  return Wrap(
-                    spacing: 10,
-                    runSpacing: 12,
-                    children: [
-                      _buildActionItem(
-                        icon: IconButton(
-                          tooltip: 'Seleccionar prioridad',
-                          icon: Icon(
-                            Icons.flag,
-                            color: _priorityColor(_prioridadSeleccionada),
-                          ),
-                          onPressed: () async {
-                            final selected = await showDialog<String?>(
-                              context: context,
-                              builder:
-                                  (context) => SimpleDialog(
-                                    backgroundColor: sheetColor,
-                                    title: Text(
-                                      'Importancia',
-                                      style: TextStyle(color: titleColor),
-                                    ),
-                                    children:
-                                        ['Alta', 'Media', 'Baja', 'Ninguna']
-                                            .map(
-                                              (p) => SimpleDialogOption(
-                                                onPressed:
-                                                    () => Navigator.pop(
-                                                      context,
-                                                      p,
-                                                    ),
-                                                child: Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.flag,
-                                                      color: _priorityColor(p),
-                                                    ),
-                                                    const SizedBox(width: 12),
-                                                    Text(
-                                                      p,
-                                                      style: TextStyle(
-                                                        color: titleColor,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            )
-                                            .toList(),
-                                  ),
-                            );
-                            if (selected != null && mounted) {
-                              setState(() {
-                                _prioridadSeleccionada = selected;
-                                _hasChanges = true;
-                              });
-                            }
-                          },
-                        ),
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.flag,
-                              color: _priorityColor(_prioridadSeleccionada),
-                              size: 14,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _prioridadSeleccionada,
-                              style: TextStyle(
-                                color: secondaryTextColor,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      _buildActionItem(
-                        icon: IconButton(
-                          tooltip: 'Horario',
-                          icon: Icon(Icons.access_time, color: iconColor),
-                          onPressed: _openScheduleSheet,
-                        ),
-                        label: Text(
-                          _buildScheduleSummary(),
-                          style: TextStyle(
-                            color: secondaryTextColor,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      _buildActionItem(
-                        icon: IconButton(
-                          tooltip: 'Adjuntar',
-                          icon: Icon(Icons.attach_file, color: iconColor),
-                          onPressed: _showAttachmentOptions,
-                        ),
-                        label: Text(
-                          _adjuntos.isEmpty
-                              ? 'Adjuntar'
-                              : '${_adjuntos.length} archivo(s)',
-                          style: TextStyle(
-                            color: secondaryTextColor,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-
-              const SizedBox(height: 18),
-              if (_hasChanges)
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: _isSaving ? null : _saveTask,
-                  child:
-                      _isSaving
-                          ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Text(
-                            'Guardar',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                ),
-            ],
+    return Form(
+      key: _formKey,
+      child: TaskDialogShell(
+        title: 'Nueva tarea',
+        trailing: [
+          TaskDialogToolbarButton(
+            icon: Icons.close_rounded,
+            onPressed: () => Navigator.pop(context),
           ),
+        ],
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TaskDialogMetaTile(
+              icon: Icons.event_outlined,
+              label: _buildMetaLabel(),
+              onTap: _openScheduleSheet,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _tareaController,
+              onChanged: (_) => _markChanged(),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+              decoration: const InputDecoration(
+                hintText: 'Título',
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                counterText: '',
+                contentPadding: EdgeInsets.zero,
+              ),
+              keyboardType: TextInputType.multiline,
+              minLines: 1,
+              maxLines: null,
+              maxLength: 50,
+              validator:
+                  (value) =>
+                      value?.trim().isEmpty ?? true
+                          ? 'Este campo es requerido'
+                          : null,
+            ),
+            Divider(height: 24, color: theme.dividerColor),
+            TextFormField(
+              controller: _descripcionController,
+              onChanged: (_) => _markChanged(),
+              style: theme.textTheme.bodyLarge,
+              decoration: InputDecoration(
+                hintText: 'Notas',
+                hintStyle: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.hintColor,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                counterText: '',
+                contentPadding: EdgeInsets.zero,
+              ),
+              minLines: 3,
+              maxLines: null,
+              maxLength: 200,
+            ),
+            if (_adjuntos.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: List.generate(_adjuntos.length, (index) {
+                  final item = _adjuntos[index];
+                  return _buildAttachmentWidget(item, index);
+                }),
+              ),
+            ],
+          ],
+        ),
+        footer: Row(
+          children: [
+            TaskDialogToolbarButton(
+              icon: Icons.flag_outlined,
+              color: _priorityColor(_prioridadSeleccionada),
+              onPressed: () => _showPriorityPicker(theme.cardColor, titleColor),
+            ),
+            const SizedBox(width: 8),
+            TaskDialogToolbarButton(
+              icon: Icons.event_outlined,
+              onPressed: _openScheduleSheet,
+            ),
+            const SizedBox(width: 8),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                TaskDialogToolbarButton(
+                  icon: Icons.attach_file_rounded,
+                  onPressed: _showAttachmentOptions,
+                ),
+                if (_adjuntos.isNotEmpty)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '${_adjuntos.length}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const Spacer(),
+            SizedBox(
+              width: 52,
+              height: 52,
+              child: FilledButton(
+                onPressed: (_hasChanges && !_isSaving) ? _saveTask : null,
+                style: FilledButton.styleFrom(
+                  shape: const CircleBorder(),
+                  padding: EdgeInsets.zero,
+                ),
+                child:
+                    _isSaving
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                        : const Icon(Icons.check_rounded),
+              ),
+            ),
+          ],
         ),
       ),
     );
