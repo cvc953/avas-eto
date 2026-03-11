@@ -6,6 +6,9 @@ final GoogleSignIn _googleSignIn = GoogleSignIn(
   scopes: ['email'], // Drive solicitado solo cuando sea necesario
 );
 
+String? _cachedDriveAccessToken;
+DateTime? _cachedDriveAccessTokenAt;
+
 Future<User?> signInWithGoogle() async {
   try {
     await _googleSignIn.signOut();
@@ -38,10 +41,17 @@ Future<String?> getGoogleAccessToken({
   bool requestDrive = false,
   bool interactiveScopePrompt = true,
 }) async {
-  final account =
+  final silentAccount =
       _googleSignIn.currentUser ?? await _googleSignIn.signInSilently();
+  final account =
+      silentAccount ??
+      ((requestDrive && interactiveScopePrompt)
+          ? await _googleSignIn.signIn()
+          : null);
 
-  if (account == null) return null;
+  if (account == null) {
+    return requestDrive ? getCachedDriveAccessToken() : null;
+  }
 
   // Solicita scope de Drive solo si el usuario intenta adjuntar
   if (requestDrive) {
@@ -64,5 +74,22 @@ Future<String?> getGoogleAccessToken({
   }
 
   final auth = await account.authentication;
-  return auth.accessToken;
+  final token = auth.accessToken;
+  if (requestDrive && token != null && token.isNotEmpty) {
+    _cachedDriveAccessToken = token;
+    _cachedDriveAccessTokenAt = DateTime.now();
+  }
+  return token;
+}
+
+String? getCachedDriveAccessToken({Duration maxAge = const Duration(minutes: 50)}) {
+  final token = _cachedDriveAccessToken;
+  final issuedAt = _cachedDriveAccessTokenAt;
+  if (token == null || issuedAt == null) return null;
+  if (DateTime.now().difference(issuedAt) > maxAge) {
+    _cachedDriveAccessToken = null;
+    _cachedDriveAccessTokenAt = null;
+    return null;
+  }
+  return token;
 }

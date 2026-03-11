@@ -321,9 +321,10 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       final hasLocalAttachments = _adjuntos.any(
         (attachment) => attachment['path'] is String,
       );
+      String? driveToken;
       if (hasLocalAttachments) {
-        final token = await getGoogleAccessToken(requestDrive: true);
-        if (mounted && token == null) {
+        driveToken = await getGoogleAccessToken(requestDrive: true);
+        if (mounted && driveToken == null) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -356,7 +357,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       );
       widget.onSave(nuevaTarea, clave);
 
-      if (mounted && hasLocalAttachments) {
+      if (mounted && hasLocalAttachments && driveToken != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(

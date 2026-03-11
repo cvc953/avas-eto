@@ -23,7 +23,7 @@ Future<void> ensureScheduled() async {
     'drive-upload-periodic',
     BackgroundTasks.periodicUploadTask,
     frequency: const Duration(minutes: 15),
-    existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
+    existingWorkPolicy: ExistingWorkPolicy.update,
     constraints: Constraints(
       networkType:
           mobileEnabled ? NetworkType.connected : NetworkType.unmetered,

@@ -354,9 +354,10 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
       final hasLocalAttachments = _adjuntos.any(
         (attachment) => attachment['path'] is String,
       );
+      String? driveToken;
       if (hasLocalAttachments) {
-        final token = await getGoogleAccessToken(requestDrive: true);
-        if (mounted && token == null) {
+        driveToken = await getGoogleAccessToken(requestDrive: true);
+        if (mounted && driveToken == null) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -387,7 +388,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
       // Call onSave which will close the dialog
       widget.onSave(tareaEditada, clave);
 
-      if (mounted && hasLocalAttachments) {
+      if (mounted && hasLocalAttachments && driveToken != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(

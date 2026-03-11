@@ -56,7 +56,9 @@ class DriveUploadOrchestrator {
       );
       if (token == null) {
         debugPrint('DriveUploadOrchestrator: no hay token Drive disponible.');
-        await _notificationService.cancelDriveUploadStatus();
+        await _notificationService.failDriveUploadStatus(
+          'No hay una sesion valida de Google Drive para completar la subida.',
+        );
         return;
       }
 
