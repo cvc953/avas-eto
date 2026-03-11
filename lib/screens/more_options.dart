@@ -75,7 +75,22 @@ class _MoreOptionsState extends State<MoreOptions> {
     controller = Provider.of<TareasController>(context, listen: false);
 
     enableNotifications();
-    _refreshDriveAuthorizationStatus();
+    _loadDriveStatusFast();
+  }
+
+  /// Carga el estado de Drive en 2 pasos:
+  /// 1) Flag persistido en disco → UI instantánea sin parpadeo.
+  /// 2) Verificación completa en segundo plano.
+  Future<void> _loadDriveStatusFast() async {
+    final persisted = await hasDriveGrantedCached();
+    if (!mounted) return;
+    if (persisted) {
+      setState(() {
+        _driveAuthorized = true;
+        _checkingDrive = false;
+      });
+    }
+    await _refreshDriveAuthorizationStatus();
   }
 
   void enableNotifications() async {

@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+const String _kDriveGrantedKey = 'drive_access_granted';
 
 final GoogleSignIn _googleSignIn = GoogleSignIn(
   scopes: ['email', 'https://www.googleapis.com/auth/drive.file'],
@@ -42,6 +45,24 @@ Future<void> _cacheDriveTokenFromAccount(GoogleSignInAccount? account) async {
   if (token == null || token.isEmpty) return;
   _cachedDriveAccessToken = token;
   _cachedDriveAccessTokenAt = DateTime.now();
+  // Persiste que el usuario ya otorgó Drive para que sobreviva reinicios.
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool(_kDriveGrantedKey, true);
+}
+
+/// Persiste que el acceso a Drive fue revocado (sign-out o denegación).
+Future<void> clearDriveGrantedPersisted() async {
+  _cachedDriveAccessToken = null;
+  _cachedDriveAccessTokenAt = null;
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove(_kDriveGrantedKey);
+}
+
+/// Devuelve `true` si el usuario concedió Drive en algún momento anterior
+/// (valor persistido en disco; no requiere red).
+Future<bool> hasDriveGrantedCached() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getBool(_kDriveGrantedKey) ?? false;
 }
 
 Future<GoogleLoginResult> signInWithGoogle({
@@ -108,24 +129,40 @@ Future<bool> _requestDriveScope() async {
 }
 
 Future<bool> isDriveAccessGranted() async {
-  // Fallback defensivo: si ya tenemos un token de Drive confirmado y vigente,
-  // consideramos el acceso como otorgado aunque canAccessScopes falle.
-  if (getCachedDriveAccessToken() != null) {
-    return true;
-  }
+  // 1. Token en memoria y vigente → OK inmediato.
+  if (getCachedDriveAccessToken() != null) return true;
+
+  // 2. Flag persistido en disco: el usuario ya autorizó anteriormente.
+  //    Intentamos obtener un token silencioso para confirmar y refrescar.
+  final persistedGranted = await hasDriveGrantedCached();
 
   final account =
       _googleSignIn.currentUser ?? await _googleSignIn.signInSilently();
-  if (account == null) return false;
+
+  if (account == null) {
+    // Sin sesión activa no podemos confirmar; confiamos en el flag.
+    return persistedGranted;
+  }
+
   try {
     final granted = await _googleSignIn.canAccessScopes(_driveScopes);
     if (granted) {
       await _cacheDriveTokenFromAccount(account);
       return true;
     }
+    // canAccessScopes devolvió false, pero el usuario ya lo otorgó antes:
+    // refrescamos el token silenciosamente y confiamos en el flag.
+    if (persistedGranted) {
+      await _cacheDriveTokenFromAccount(account);
+      return true;
+    }
     return false;
   } catch (e) {
     debugPrint('Error verificando Drive scope: $e');
+    if (persistedGranted) {
+      await _cacheDriveTokenFromAccount(account);
+      return true;
+    }
     return getCachedDriveAccessToken() != null;
   }
 }
@@ -170,6 +207,7 @@ Future<DriveAccessRequestStatus> requestDriveAccessInteractive() async {
     }
 
     if (!granted) {
+      await clearDriveGrantedPersisted();
       return DriveAccessRequestStatus.denied;
     }
 
@@ -202,10 +240,12 @@ Future<String?> getGoogleAccessToken({
 
   // Solicita scope de Drive solo si el usuario intenta adjuntar
   if (requestDrive) {
+    final persistedGranted = await hasDriveGrantedCached();
     try {
       final alreadyGranted = await _googleSignIn.canAccessScopes(_driveScopes);
       final granted =
           alreadyGranted ||
+          persistedGranted ||
           (interactiveScopePrompt
               ? await _googleSignIn.requestScopes(_driveScopes)
               : false);
@@ -215,7 +255,8 @@ Future<String?> getGoogleAccessToken({
       }
     } catch (e) {
       debugPrint('Error solicitando Drive scope: $e');
-      return null; // Usuario rechazó el permiso
+      // Si hay flag persistido confiamos en él aunque el plugin falle.
+      if (!persistedGranted) return null;
     }
   }
 

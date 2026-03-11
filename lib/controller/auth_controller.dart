@@ -1,3 +1,4 @@
+import 'package:avas_eto/services/inicia_con_google.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 /// Encapsula operaciones de autenticación para mantener la UI libre de lógica.
@@ -13,5 +14,6 @@ class AuthController {
 
   Future<void> signOut() async {
     await _auth.signOut();
+    await clearDriveGrantedPersisted();
   }
 }
