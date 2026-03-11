@@ -1,4 +1,7 @@
+import 'dart:io' show Platform;
+
 import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../models/tarea.dart';
 import 'notifications_settings.dart';
@@ -40,29 +43,28 @@ class NotificationService {
     return tarea.id.hashCode & 0x7fffffff;
   }
 
-  String _eisenhowerQuadrantForTask(Tarea tarea) {
-    final now = DateTime.now();
-    final important =
-        tarea.prioridad.toLowerCase() == 'alta' ||
-        tarea.prioridad.toLowerCase() == 'media';
-    final urgent = tarea.fechaVencimiento.isBefore(
-      now.add(const Duration(days: 2)),
-    );
-
-    if (urgent && important) return 'Urgente e importante';
-    if (!urgent && important) return 'No urgente pero importante';
-    if (urgent && !important) return 'Urgente pero no importante';
-    return 'No urgente y no importante';
+  String _importanceLabelForTask(Tarea tarea) {
+    switch (tarea.prioridad.toLowerCase()) {
+      case 'alta':
+        return 'Alta';
+      case 'media':
+        return 'Media';
+      case 'baja':
+        return 'Baja';
+      default:
+        return tarea.prioridad;
+    }
   }
 
-  String _coloredEisenhowerQuadrantForTask(Tarea tarea) {
-    final text = _eisenhowerQuadrantForTask(tarea);
+  String _importanceIconHtml(Tarea tarea) {
     final color = _eisenhowerColorForTask(tarea);
     final hex =
         '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
-    // Return an HTML fragment; some notification clients (Android) render
-    // simple HTML tags. If not supported, the raw tags will be ignored.
-    return '<font color="$hex">$text</font>';
+    return '<font color="$hex">●</font>';
+  }
+
+  String _importanceWithIcon(Tarea tarea) {
+    return '${_importanceIconHtml(tarea)} ${_importanceLabelForTask(tarea)}';
   }
 
   String _overdueTextFor(Tarea tarea) {
@@ -84,29 +86,68 @@ class NotificationService {
     return 'Venció hace ${w == 1 ? '1 semana' : '$w semanas'}';
   }
 
-  String _importanceLabelForTask(Tarea tarea) {
-    final p = tarea.prioridad.toLowerCase();
-    if (p == 'alta') return 'Alta';
-    if (p == 'media') return 'Media';
-    if (p == 'baja') return 'Baja';
-    return tarea.prioridad;
+  int _importanceWeightForTask(Tarea tarea) {
+    switch (tarea.prioridad.toLowerCase()) {
+      case 'alta':
+        return 3;
+      case 'media':
+        return 2;
+      case 'baja':
+        return 1;
+      default:
+        return 1;
+    }
   }
 
-  String _importanceIconHtml(Tarea tarea) {
-    final color = _eisenhowerColorForTask(tarea);
-    final hex =
-        '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
-    return '<font color="$hex">●</font>';
+  int _urgencyDaysRemainingWeightForTask(Tarea tarea, DateTime referenceNow) {
+    final daysRemaining = tarea.fechaInicio.difference(referenceNow).inDays;
+    if (daysRemaining <= 0) return 3;
+    if (daysRemaining == 1) return 2;
+    if (daysRemaining <= 3) return 1;
+    return 0;
   }
 
-  String _importanceWithIcon(Tarea tarea) {
-    return '${_importanceIconHtml(tarea)} ${_importanceLabelForTask(tarea)}';
+  int _procrastinationWeightForTask(Tarea tarea) {
+    return tarea.vecesPospuesta.clamp(0, 3);
+  }
+
+  int _shortDurationBonusForTask(Tarea tarea) {
+    return tarea.duracionMinutos <= 30 ? 1 : 0;
+  }
+
+  int _focusScoreForTask(Tarea tarea, DateTime referenceNow) {
+    final importanciaUsuario = _importanceWeightForTask(tarea);
+    final urgenciaDiasRestantes = _urgencyDaysRemainingWeightForTask(
+      tarea,
+      referenceNow,
+    );
+    final procrastinacion = _procrastinationWeightForTask(tarea);
+    final duracionCortaBonus = _shortDurationBonusForTask(tarea);
+
+    return (importanciaUsuario * 3) +
+        (urgenciaDiasRestantes * 2) +
+        (procrastinacion * 2) +
+        duracionCortaBonus;
+  }
+
+  List<DateTime> _startReminderMomentsForTask(Tarea tarea) {
+    final inicio = tarea.fechaInicio;
+    return [
+      inicio.subtract(const Duration(days: 1)),
+      inicio.subtract(const Duration(hours: 1)),
+      inicio.subtract(const Duration(minutes: 30)),
+      inicio.subtract(const Duration(minutes: 10)),
+      inicio,
+    ];
   }
 
   // Public wrappers for testability
-  String getColoredQuadrantText(Tarea tarea) =>
-      _coloredEisenhowerQuadrantForTask(tarea);
+  String getImportanceText(Tarea tarea) => _importanceWithIcon(tarea);
   String getOverdueText(Tarea tarea) => _overdueTextFor(tarea);
+  int getFocusScore(Tarea tarea, {DateTime? referenceNow}) =>
+      _focusScoreForTask(tarea, referenceNow ?? DateTime.now());
+  List<DateTime> getStartReminderMoments(Tarea tarea) =>
+      _startReminderMomentsForTask(tarea);
 
   Color _eisenhowerColorForTask(Tarea tarea) {
     final now = DateTime.now();
@@ -123,116 +164,147 @@ class NotificationService {
     return const Color(0xFF00D4B5);
   }
 
+  Future<void> _scheduleNotification({
+    required int id,
+    required String title,
+    required String body,
+    required Color color,
+    required String taskId,
+    NotificationSchedule? schedule,
+  }) async {
+    await AwesomeNotifications().createNotification(
+      content: NotificationContent(
+        id: id,
+        channelKey: 'tareas_channel',
+        title: title,
+        body: body,
+        color: color,
+        notificationLayout: NotificationLayout.Default,
+        payload: {'taskId': taskId},
+      ),
+      schedule: schedule,
+    );
+  }
+
+  Future<void> _scheduleDailyOverdueReminder(
+    Tarea tarea,
+    DateTime firstDate,
+  ) async {
+    final id = _baseIdFromTask(tarea) + 7000;
+    final color = _eisenhowerColorForTask(tarea);
+    final body =
+        '${_importanceWithIcon(tarea)} · Foco hoy: ${_focusScoreForTask(tarea, DateTime.now())}';
+
+    if (!kIsWeb && Platform.isAndroid) {
+      final expression =
+          '${firstDate.second} ${firstDate.minute} ${firstDate.hour} * * ? *';
+      await _scheduleNotification(
+        id: id,
+        title: 'Sigue pendiente: ${tarea.title}',
+        body: body,
+        color: color,
+        taskId: tarea.id,
+        schedule: NotificationAndroidCrontab(
+          initialDateTime: firstDate,
+          crontabExpression: expression,
+          repeats: true,
+          preciseAlarm: true,
+        ),
+      );
+      return;
+    }
+
+    await _scheduleNotification(
+      id: id,
+      title: 'Sigue pendiente: ${tarea.title}',
+      body: body,
+      color: color,
+      taskId: tarea.id,
+      schedule: NotificationCalendar(
+        hour: firstDate.hour,
+        minute: firstDate.minute,
+        second: firstDate.second,
+        repeats: true,
+        preciseAlarm: true,
+      ),
+    );
+  }
+
   Future<void> notifyTaskCreated(Tarea tarea) async {
     final enabled = await NotificationSettings.isEnabled();
     if (!enabled) return;
 
     final base = _baseIdFromTask(tarea);
-
-    final Map<int, int> offsets = {
-      -1440: 1000,
-      -180: 2000,
-      -60: 3000,
-      -30: 4000,
-    };
-
-    List<int> chosenOffsets;
-    switch (tarea.prioridad.toLowerCase()) {
-      case 'alta':
-        chosenOffsets = [-1440, -60, -30];
-        break;
-      case 'media':
-        chosenOffsets = [-180, -60];
-        break;
-      case 'baja':
-        chosenOffsets = [-1440];
-        break;
-      default:
-        chosenOffsets = [-60];
-    }
-
-    for (var minutesOffset in chosenOffsets) {
-      final scheduled = tarea.fechaVencimiento.add(
-        Duration(minutes: minutesOffset),
-      );
-      if (scheduled.isBefore(DateTime.now())) continue;
-      final id = base + (offsets[minutesOffset] ?? 0);
-
-      final schedule = NotificationCalendar.fromDate(date: scheduled);
-
-      await AwesomeNotifications().createNotification(
-        content: NotificationContent(
-          id: id,
-          channelKey: 'tareas_channel',
-          title: 'Recordatorio: ${tarea.title}',
-          // Try to use an HTML fragment for the colored quadrant label.
-          body: _coloredEisenhowerQuadrantForTask(tarea),
-          color: _eisenhowerColorForTask(tarea),
-          notificationLayout: NotificationLayout.Default,
-          payload: {'taskId': tarea.id},
-        ),
-        schedule: schedule,
-      );
-    }
-
-    // If the task is already overdue, send an immediate notification
-    // describing how long ago it expired and schedule a follow-up based
-    // on importance.
     final now = DateTime.now();
-    if (tarea.fechaVencimiento.isBefore(now)) {
-      final overdueBody =
-          '${_overdueTextFor(tarea)} — ${_coloredEisenhowerQuadrantForTask(tarea)}';
-      final immediateId = base + 5000;
+    final reminderMoments = _startReminderMomentsForTask(tarea);
+    final reminderIds = [1000, 2000, 3000, 4000, 5000];
 
-      await AwesomeNotifications().createNotification(
-        content: NotificationContent(
-          id: immediateId,
-          channelKey: 'tareas_channel',
-          title: 'Tarea vencida: ${tarea.title}',
-          body: '${_overdueTextFor(tarea)} — ${_importanceWithIcon(tarea)}',
-          color: _eisenhowerColorForTask(tarea),
-          notificationLayout: NotificationLayout.Default,
-          payload: {'taskId': tarea.id},
+    for (var index = 0; index < reminderMoments.length; index++) {
+      final scheduled = reminderMoments[index];
+      if (scheduled.isBefore(now)) continue;
+
+      await _scheduleNotification(
+        id: base + reminderIds[index],
+        title: 'Recordatorio: ${tarea.title}',
+        body: _importanceWithIcon(tarea),
+        color: _eisenhowerColorForTask(tarea),
+        taskId: tarea.id,
+        schedule: NotificationCalendar.fromDate(
+          date: scheduled,
+          preciseAlarm: true,
         ),
       );
+    }
 
-      // Schedule one follow-up reminder depending on priority
-      int daysUntilFollowUp;
-      switch (tarea.prioridad.toLowerCase()) {
-        case 'alta':
-          daysUntilFollowUp = 1; // cada dia
-          break;
-        case 'media':
-          daysUntilFollowUp = 2;
-          break;
-        case 'baja':
-          daysUntilFollowUp = 7;
-          break;
-        default:
-          daysUntilFollowUp = 2;
+    final oneHourAfterEnd = tarea.fechaVencimiento.add(
+      const Duration(hours: 1),
+    );
+    if (!tarea.completada) {
+      if (oneHourAfterEnd.isAfter(now)) {
+        await _scheduleNotification(
+          id: base + 6000,
+          title: 'Tarea vencida: ${tarea.title}',
+          body:
+              '${_importanceWithIcon(tarea)} · Foco hoy: ${_focusScoreForTask(tarea, now)}',
+          color: _eisenhowerColorForTask(tarea),
+          taskId: tarea.id,
+          schedule: NotificationCalendar.fromDate(
+            date: oneHourAfterEnd,
+            preciseAlarm: true,
+          ),
+        );
+      } else {
+        await _scheduleNotification(
+          id: base + 8000,
+          title: 'Tarea vencida: ${tarea.title}',
+          body:
+              '${_overdueTextFor(tarea)} · ${_importanceWithIcon(tarea)} · Foco hoy: ${_focusScoreForTask(tarea, now)}',
+          color: _eisenhowerColorForTask(tarea),
+          taskId: tarea.id,
+        );
       }
 
-      final followUpDate = now.add(Duration(days: daysUntilFollowUp));
-      final followUpId = base + 6000;
-      await AwesomeNotifications().createNotification(
-        content: NotificationContent(
-          id: followUpId,
-          channelKey: 'tareas_channel',
-          title: 'Recordatorio: ${tarea.title}',
-          body: _coloredEisenhowerQuadrantForTask(tarea),
-          color: _eisenhowerColorForTask(tarea),
-          notificationLayout: NotificationLayout.Default,
-          payload: {'taskId': tarea.id},
-        ),
-        schedule: NotificationCalendar.fromDate(date: followUpDate),
-      );
+      final firstDailyFollowUp =
+          oneHourAfterEnd.isAfter(now)
+              ? oneHourAfterEnd.add(const Duration(days: 1))
+              : now.add(const Duration(days: 1));
+      await _scheduleDailyOverdueReminder(tarea, firstDailyFollowUp);
     }
   }
 
   Future<void> cancelNotifications(Tarea tarea) async {
     final base = _baseIdFromTask(tarea);
     final ids =
-        [1000, 2000, 3000, 4000, 5000, 6000].map((o) => base + o).toList();
+        [
+          1000,
+          2000,
+          3000,
+          4000,
+          5000,
+          6000,
+          7000,
+          8000,
+        ].map((o) => base + o).toList();
 
     for (var id in ids) {
       try {

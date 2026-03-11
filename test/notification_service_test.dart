@@ -7,6 +7,9 @@ Future<Tarea> buildTarea(
   String id,
   DateTime fechaVencimiento, {
   String prioridad = 'Media',
+  DateTime? fechaInicio,
+  int duracionMinutos = 60,
+  int vecesPospuesta = 0,
 }) async {
   return Tarea(
     id: id,
@@ -15,22 +18,25 @@ Future<Tarea> buildTarea(
     color: Colors.blue,
     fechaCreacion: DateTime.now(),
     fechaVencimiento: fechaVencimiento,
+    fechaInicio: fechaInicio,
+    duracionMinutos: duracionMinutos,
     fechaCompletada: DateTime.now(),
+    vecesPospuesta: vecesPospuesta,
   );
 }
 
 void main() {
-  test('colored quadrant contains font tag and hex color', () async {
+  test('importance text contains colored icon and priority label', () async {
     final ns = NotificationService();
     final tarea = await buildTarea(
       't1',
       DateTime.now().add(const Duration(days: 1)),
       prioridad: 'Alta',
     );
-    final colored = ns.getColoredQuadrantText(tarea);
-    expect(colored.contains('<font'), isTrue);
-    expect(colored.contains('</font>'), isTrue);
-    expect(colored.contains('#'), isTrue);
+    final importance = ns.getImportanceText(tarea);
+    expect(importance.contains('<font'), isTrue);
+    expect(importance.contains('●'), isTrue);
+    expect(importance.contains('Alta'), isTrue);
   });
 
   test('overdue text produces human readable strings', () async {
@@ -55,5 +61,42 @@ void main() {
     );
     final t3 = ns.getOverdueText(tareaDays);
     expect(t3.contains('día') || t3.contains('días'), isTrue);
+  });
+
+  test('start reminder moments are calculated from fechaInicio', () async {
+    final ns = NotificationService();
+    final start = DateTime(2026, 3, 15, 9, 0);
+    final end = DateTime(2026, 3, 15, 10, 0);
+    final tarea = await buildTarea(
+      'sched1',
+      end,
+      fechaInicio: start,
+      duracionMinutos: 60,
+      prioridad: 'Media',
+    );
+
+    final reminders = ns.getStartReminderMoments(tarea);
+    expect(reminders.length, 5);
+    expect(reminders[0], start.subtract(const Duration(days: 1)));
+    expect(reminders[1], start.subtract(const Duration(hours: 1)));
+    expect(reminders[2], start.subtract(const Duration(minutes: 30)));
+    expect(reminders[3], start.subtract(const Duration(minutes: 10)));
+    expect(reminders[4], start);
+  });
+
+  test('focus score follows the provided formula', () async {
+    final ns = NotificationService();
+    final now = DateTime(2026, 3, 11, 8, 0);
+    final tarea = await buildTarea(
+      'score1',
+      now.add(const Duration(hours: 2)),
+      fechaInicio: now.add(const Duration(hours: 1)),
+      duracionMinutos: 30,
+      prioridad: 'Alta',
+      vecesPospuesta: 2,
+    );
+
+    final score = ns.getFocusScore(tarea, referenceNow: now);
+    expect(score, 18);
   });
 }
