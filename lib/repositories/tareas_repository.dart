@@ -197,30 +197,7 @@ class TareasRepository {
     final tareaPersistida = await localStorage.saveTareaAndReturn(tarea);
 
     if (online) {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final data = TareaMapper.toFirestoreMap(tareaPersistida, clave);
-        data['userId'] = user.uid;
-
-        try {
-          final remoteId = tareaPersistida.firestoreId;
-          if (remoteId != null && remoteId.isNotEmpty) {
-            await FirebaseFirestore.instance
-                .collection('tareas')
-                .doc(remoteId)
-                .set(data, SetOptions(merge: true));
-          } else {
-            final docRef = await FirebaseFirestore.instance
-                .collection('tareas')
-                .add(data);
-            await localStorage.saveTarea(
-              tareaPersistida.copyWith(firestoreId: docRef.id),
-            );
-          }
-        } catch (e) {
-          print('Error actualizando tarea en Firestore: $e');
-        }
-      }
+      unawaited(_syncTaskToFirestore(tareaPersistida, clave));
     }
 
     await _uploadQueueService.enqueueAttachmentsForTask(tareaPersistida);
@@ -230,6 +207,31 @@ class TareasRepository {
     if (tareaPersistida.adjuntos.any(attachmentNeedsUpload)) {
       unawaited(_driveUploadOrchestrator.processPendingUploads());
       unawaited(BackgroundUploadScheduler.triggerNow());
+    }
+  }
+
+  Future<void> _syncTaskToFirestore(Tarea tarea, String clave) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final data = TareaMapper.toFirestoreMap(tarea, clave);
+    data['userId'] = user.uid;
+
+    try {
+      final remoteId = tarea.firestoreId;
+      if (remoteId != null && remoteId.isNotEmpty) {
+        await FirebaseFirestore.instance
+            .collection('tareas')
+            .doc(remoteId)
+            .set(data, SetOptions(merge: true));
+      } else {
+        final docRef = await FirebaseFirestore.instance
+            .collection('tareas')
+            .add(data);
+        await localStorage.saveTarea(tarea.copyWith(firestoreId: docRef.id));
+      }
+    } catch (e) {
+      print('Error actualizando tarea en Firestore: $e');
     }
   }
 
