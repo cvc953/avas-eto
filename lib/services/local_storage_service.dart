@@ -7,6 +7,7 @@ import '../utils/attachment_utils.dart';
 
 class LocalStorageService {
   static const String _ownerUserIdKey = '_ownerUserId';
+  static const String _deviceOwnerIdKey = '_deviceOwnerId';
   static const String _anonymousUserId = '__anonymous__';
 
   final StoreRef<String, Map<String, dynamic>> _store =
@@ -15,8 +16,41 @@ class LocalStorageService {
 
   LocalStorageService(this._localDb);
 
-  String _activeOwnerId() {
-    return FirebaseAuth.instance.currentUser?.uid ?? _anonymousUserId;
+  Future<String> _activeOwnerId() async {
+    final current = FirebaseAuth.instance.currentUser?.uid;
+    if (current != null) return current;
+
+    final persisted = await _getPersistedDeviceOwnerId();
+    if (persisted != null && persisted.isNotEmpty) return persisted;
+
+    return _anonymousUserId;
+  }
+
+  Future<void> setDeviceOwnerId(String? uid) async {
+    try {
+      final database = await _localDb.db;
+      if (uid == null) {
+        await _store.record(_deviceOwnerIdKey).delete(database);
+      } else {
+        await _store.record(_deviceOwnerIdKey).put(database, {'value': uid});
+      }
+    } catch (e) {
+      debugPrint('Error persisting deviceOwnerId: $e');
+    }
+  }
+
+  Future<String?> _getPersistedDeviceOwnerId() async {
+    try {
+      final database = await _localDb.db;
+      final data = await _store.record(_deviceOwnerIdKey).get(database);
+      if (data == null) return null;
+      if (data is Map && data['value'] is String)
+        return data['value'] as String;
+      return null;
+    } catch (e) {
+      debugPrint('Error leyendo deviceOwnerId: $e');
+      return null;
+    }
   }
 
   Future<void> saveTarea(Tarea tarea) async {
@@ -36,7 +70,7 @@ class LocalStorageService {
               : tarea;
 
       final map = tareaConId.toMap();
-      map[_ownerUserIdKey] = _activeOwnerId();
+      map[_ownerUserIdKey] = await _activeOwnerId();
 
       await _store.record(tareaConId.id).put(database, map);
       debugPrint('Tarea guardada LOCALMENTE: ${tareaConId.id}');
@@ -54,7 +88,8 @@ class LocalStorageService {
       if (data == null) return null;
 
       final storedOwner = data[_ownerUserIdKey] as String?;
-      if (storedOwner != null && storedOwner != _activeOwnerId()) {
+      final activeOwner = await _activeOwnerId();
+      if (storedOwner != null && storedOwner != activeOwner) {
         return null;
       }
 
@@ -104,7 +139,7 @@ class LocalStorageService {
     try {
       final database = await _localDb.db;
       final records = await _store.find(database);
-      final ownerId = _activeOwnerId();
+      final ownerId = await _activeOwnerId();
 
       final visibles = records.where((record) {
         final storedOwner = record.value[_ownerUserIdKey] as String?;

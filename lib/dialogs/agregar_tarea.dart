@@ -255,7 +255,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Todo el dia'),
                       value: tempAllDay,
-                      activeColor: AppTheme.primaryColor,
+                      activeThumbColor: AppTheme.primaryColor,
                       activeTrackColor: AppTheme.primaryColor.withAlpha(110),
                       onChanged: (value) {
                         setSheetState(() => tempAllDay = value);

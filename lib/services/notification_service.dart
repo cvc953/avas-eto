@@ -55,6 +55,35 @@ class NotificationService {
     return 'No urgente y no importante';
   }
 
+  String _coloredEisenhowerQuadrantForTask(Tarea tarea) {
+    final text = _eisenhowerQuadrantForTask(tarea);
+    final color = _eisenhowerColorForTask(tarea);
+    final hex =
+        '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+    // Return an HTML fragment; some notification clients (Android) render
+    // simple HTML tags. If not supported, the raw tags will be ignored.
+    return '<font color="$hex">$text</font>';
+  }
+
+  String _overdueTextFor(Tarea tarea) {
+    final now = DateTime.now();
+    final diff = now.difference(tarea.fechaVencimiento);
+    if (diff.inMinutes < 60) {
+      final m = diff.inMinutes;
+      return 'Venció hace ${m == 1 ? '1 minuto' : '$m minutos'}';
+    }
+    if (diff.inHours < 24) {
+      final h = diff.inHours;
+      return 'Venció hace ${h == 1 ? '1 hora' : '$h horas'}';
+    }
+    if (diff.inDays < 7) {
+      final d = diff.inDays;
+      return 'Venció hace ${d == 1 ? '1 día' : '$d días'}';
+    }
+    final w = (diff.inDays / 7).floor();
+    return 'Venció hace ${w == 1 ? '1 semana' : '$w semanas'}';
+  }
+
   Color _eisenhowerColorForTask(Tarea tarea) {
     final now = DateTime.now();
     final important =
@@ -103,7 +132,6 @@ class NotificationService {
         Duration(minutes: minutesOffset),
       );
       if (scheduled.isBefore(DateTime.now())) continue;
-
       final id = base + (offsets[minutesOffset] ?? 0);
 
       final schedule = NotificationCalendar.fromDate(date: scheduled);
@@ -113,7 +141,8 @@ class NotificationService {
           id: id,
           channelKey: 'tareas_channel',
           title: 'Recordatorio: ${tarea.title}',
-          body: _eisenhowerQuadrantForTask(tarea),
+          // Try to use an HTML fragment for the colored quadrant label.
+          body: _coloredEisenhowerQuadrantForTask(tarea),
           color: _eisenhowerColorForTask(tarea),
           notificationLayout: NotificationLayout.Default,
           payload: {'taskId': tarea.id},
@@ -121,11 +150,65 @@ class NotificationService {
         schedule: schedule,
       );
     }
+
+    // If the task is already overdue, send an immediate notification
+    // describing how long ago it expired and schedule a follow-up based
+    // on importance.
+    final now = DateTime.now();
+    if (tarea.fechaVencimiento.isBefore(now)) {
+      final overdueBody =
+          '${_overdueTextFor(tarea)} — ${_coloredEisenhowerQuadrantForTask(tarea)}';
+      final immediateId = base + 5000;
+
+      await AwesomeNotifications().createNotification(
+        content: NotificationContent(
+          id: immediateId,
+          channelKey: 'tareas_channel',
+          title: 'Tarea vencida: ${tarea.title}',
+          body: overdueBody,
+          color: _eisenhowerColorForTask(tarea),
+          notificationLayout: NotificationLayout.Default,
+          payload: {'taskId': tarea.id},
+        ),
+      );
+
+      // Schedule one follow-up reminder depending on priority
+      int daysUntilFollowUp;
+      switch (tarea.prioridad.toLowerCase()) {
+        case 'alta':
+          daysUntilFollowUp = 1; // cada dia
+          break;
+        case 'media':
+          daysUntilFollowUp = 2;
+          break;
+        case 'baja':
+          daysUntilFollowUp = 7;
+          break;
+        default:
+          daysUntilFollowUp = 2;
+      }
+
+      final followUpDate = now.add(Duration(days: daysUntilFollowUp));
+      final followUpId = base + 6000;
+      await AwesomeNotifications().createNotification(
+        content: NotificationContent(
+          id: followUpId,
+          channelKey: 'tareas_channel',
+          title: 'Recordatorio: ${tarea.title}',
+          body: _coloredEisenhowerQuadrantForTask(tarea),
+          color: _eisenhowerColorForTask(tarea),
+          notificationLayout: NotificationLayout.Default,
+          payload: {'taskId': tarea.id},
+        ),
+        schedule: NotificationCalendar.fromDate(date: followUpDate),
+      );
+    }
   }
 
   Future<void> cancelNotifications(Tarea tarea) async {
     final base = _baseIdFromTask(tarea);
-    final ids = [1000, 2000, 3000, 4000].map((o) => base + o).toList();
+    final ids =
+        [1000, 2000, 3000, 4000, 5000, 6000].map((o) => base + o).toList();
 
     for (var id in ids) {
       try {

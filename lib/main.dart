@@ -94,7 +94,7 @@ void main() async {
   );
 
   // Controllers to provide via Provider
-  final authController = AuthController();
+  final authController = AuthController(localStorage: localStorage);
   final settingsController = SettingsController();
   await settingsController.init(); // Inicializar para cargar preferencias
   final tareasController = TareasController(
