@@ -18,6 +18,59 @@ class DriveDownloadOrchestrator {
 
   DriveDownloadOrchestrator(this._localStorage, this._conectividadService);
 
+  Future<Map<String, dynamic>?> ensureAttachmentDownloaded({
+    required String taskId,
+    required Map<String, dynamic> attachment,
+  }) async {
+    final normalized = normalizeAttachment(attachment);
+    final localPath = attachmentPathOf(normalized);
+    if (localPath != null && localPath.isNotEmpty) {
+      final exists = await File(localPath).exists();
+      if (exists) {
+        return normalized;
+      }
+    }
+
+    final driveId = attachmentDriveIdOf(normalized);
+    if (driveId == null || driveId.isEmpty) {
+      return normalized;
+    }
+
+    final online = await _isOnline();
+    if (!online) return null;
+
+    final token = await getGoogleAccessToken(
+      requestDrive: true,
+      interactiveScopePrompt: false,
+    );
+    if (token == null) return null;
+
+    final fileName = attachmentNameOf(normalized) ?? 'drive_$driveId.bin';
+    final downloadedPath = await _downloadDriveFile(
+      token: token,
+      driveId: driveId,
+      fileName: fileName,
+    );
+    if (downloadedPath == null || downloadedPath.isEmpty) {
+      return null;
+    }
+
+    final updatedAttachment = <String, dynamic>{
+      ...normalized,
+      'path': downloadedPath,
+    };
+    final attachmentId = attachmentIdOf(normalized);
+    if (attachmentId != null && attachmentId.isNotEmpty) {
+      await _localStorage.updateAttachment(
+        taskId,
+        attachmentId,
+        updatedAttachment,
+      );
+    }
+
+    return updatedAttachment;
+  }
+
   Future<void> downloadMissingAttachmentsForCurrentUser() async {
     if (_isProcessing) return;
 
@@ -39,35 +92,15 @@ class DriveDownloadOrchestrator {
 
         for (final attachment in tarea.adjuntos) {
           final normalized = normalizeAttachment(attachment);
-          final driveId = attachmentDriveIdOf(normalized);
-          final localPath = attachmentPathOf(normalized);
-
-          if (driveId == null) {
-            updatedAdjuntos.add(normalized);
-            continue;
-          }
-
-          if (localPath != null && localPath.isNotEmpty) {
-            final exists = await File(localPath).exists();
-            if (exists) {
-              updatedAdjuntos.add(normalized);
-              continue;
-            }
-          }
-
-          final fileName = attachmentNameOf(normalized) ?? 'drive_$driveId.bin';
-          final downloadedPath = await _downloadDriveFile(
+          final updatedAttachment = await _downloadAttachmentIfMissing(
             token: token,
-            driveId: driveId,
-            fileName: fileName,
+            taskId: tarea.id,
+            attachment: normalized,
           );
 
-          if (downloadedPath != null) {
+          if (updatedAttachment != null) {
             changed = true;
-            updatedAdjuntos.add(<String, dynamic>{
-              ...normalized,
-              'path': downloadedPath,
-            });
+            updatedAdjuntos.add(updatedAttachment);
           } else {
             updatedAdjuntos.add(normalized);
           }
@@ -85,6 +118,46 @@ class DriveDownloadOrchestrator {
     } finally {
       _isProcessing = false;
     }
+  }
+
+  Future<Map<String, dynamic>?> _downloadAttachmentIfMissing({
+    required String token,
+    required String taskId,
+    required Map<String, dynamic> attachment,
+  }) async {
+    final localPath = attachmentPathOf(attachment);
+    if (localPath != null && localPath.isNotEmpty) {
+      final exists = await File(localPath).exists();
+      if (exists) return null;
+    }
+
+    final driveId = attachmentDriveIdOf(attachment);
+    if (driveId == null || driveId.isEmpty) return null;
+
+    final fileName = attachmentNameOf(attachment) ?? 'drive_$driveId.bin';
+    final downloadedPath = await _downloadDriveFile(
+      token: token,
+      driveId: driveId,
+      fileName: fileName,
+    );
+    if (downloadedPath == null || downloadedPath.isEmpty) {
+      return null;
+    }
+
+    final updatedAttachment = <String, dynamic>{
+      ...attachment,
+      'path': downloadedPath,
+    };
+    final attachmentId = attachmentIdOf(attachment);
+    if (attachmentId != null && attachmentId.isNotEmpty) {
+      await _localStorage.updateAttachment(
+        taskId,
+        attachmentId,
+        updatedAttachment,
+      );
+    }
+
+    return updatedAttachment;
   }
 
   Future<String?> _downloadDriveFile({

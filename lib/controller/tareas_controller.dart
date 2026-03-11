@@ -9,9 +9,12 @@ import 'package:avas_eto/services/drive_download_orchestrator.dart';
 import 'package:avas_eto/services/notification_service.dart';
 import 'package:avas_eto/services/upload_queue_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 
 /// Controller que centraliza la lógica de negocio para las tareas.
 class TareasController {
+  static const Duration _periodicSyncInterval = Duration(minutes: 15);
+
   final TareasRepository _repository;
   final LocalStorageService _localStorage;
   final ConectividadService _conectividad;
@@ -19,6 +22,7 @@ class TareasController {
   final Map<String, List<Tarea>> tareas = {};
   final Set<Tarea> tareasExpandida = {};
   String _ordenActual = 'reciente';
+  Timer? _periodicSyncTimer;
 
   TareasController(this._repository, this._localStorage, this._conectividad);
 
@@ -64,16 +68,17 @@ class TareasController {
 
   /// Limpia recursos asociados (p.ej. listeners).
   void dispose() {
+    _periodicSyncTimer?.cancel();
     _conectividad.dispose();
   }
 
   /// Carga inicial: prioriza local y deja que el repo sincronice si es necesario.
   Future<void> init() async {
+    _startPeriodicSync();
+
     final online = await _conectividad.checkConnectivity();
     if (online) {
-      await _repository.sincronizarDesdeServidor();
-      await _repository.processPendingUploads();
-      await _repository.processPendingDownloads();
+      await _repository.synchronizeNow();
     }
 
     final local = await _localStorage.getTareas();
@@ -92,6 +97,25 @@ class TareasController {
       tareas.putIfAbsent(clave, () => []);
       if (!tareas[clave]!.any((t) => t.id == tarea.id))
         tareas[clave]!.add(tarea);
+    }
+  }
+
+  void _startPeriodicSync() {
+    _periodicSyncTimer?.cancel();
+    _periodicSyncTimer = Timer.periodic(_periodicSyncInterval, (_) {
+      unawaited(_runPeriodicSync());
+    });
+  }
+
+  Future<void> _runPeriodicSync() async {
+    final online = await _conectividad.checkConnectivity();
+    if (!online) return;
+
+    try {
+      await _repository.synchronizeNow();
+    } catch (e) {
+      // La sincronizacion periodica es de mejor esfuerzo; no debe romper la UI.
+      // El flujo manual (abrir adjuntos / reconexion / init) sigue cubriendo casos.
     }
   }
 

@@ -170,6 +170,12 @@ class TareasRepository {
     await _driveDownloadOrchestrator.downloadMissingAttachmentsForCurrentUser();
   }
 
+  Future<void> synchronizeNow() async {
+    await sincronizarDesdeServidor();
+    await processPendingUploads();
+    await processPendingDownloads();
+  }
+
   Future<void> guardar(Tarea tarea, String clave, bool online) async {
     final tareaPersistida = await localStorage.saveTareaAndReturn(tarea);
 

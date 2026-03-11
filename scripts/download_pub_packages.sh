@@ -27,9 +27,8 @@ mkdir -p "$CACHE_DIR"
 echo "Using cache dir: $CACHE_DIR"
 
 while IFS= read -r line || [[ -n "$line" ]]; do
-  # strip whitespace
-  line="${line%%+([[:space:]])}"
-  line="${line##+([[:space:]])}"
+  # strip leading/trailing whitespace without relying on extglob
+  line=$(printf '%s' "$line" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
   [[ -z "$line" || "$line" =~ ^# ]] && continue
 
   if [[ ! "$line" =~ ^([^@]+)@(.+)$ ]]; then
@@ -47,7 +46,8 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   fi
 
   tmpfile="/tmp/${pkg}-${ver}.download"
-  url="https://pub.dev/packages/${pkg}/versions/${ver}/download"
+  encoded_ver=${ver//+/%2B}
+  url="https://pub.dev/api/archives/${pkg}-${encoded_ver}.tar.gz"
 
   echo "Downloading $pkg@$ver from $url"
   if ! curl "${CURL_OPTS[@]}" -o "$tmpfile" "$url" ; then
@@ -60,7 +60,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   mkdir -p "$dest"
   case "$mtype" in
     application/gzip|application/x-gzip)
-      tar -xzf "$tmpfile" -C "$dest" --strip-components=1 || { echo "Tar extraction failed for $tmpfile"; rm -f "$tmpfile"; rm -rf "$dest"; continue; }
+      tar -xzf "$tmpfile" -C "$dest" || { echo "Tar extraction failed for $tmpfile"; rm -f "$tmpfile"; rm -rf "$dest"; continue; }
       ;;
     application/zip)
       unzip -q "$tmpfile" -d "$dest" || { echo "Unzip failed for $tmpfile"; rm -f "$tmpfile"; rm -rf "$dest"; continue; }
@@ -68,7 +68,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     application/octet-stream)
       # try tar first
       if tar -tzf "$tmpfile" >/dev/null 2>&1; then
-        tar -xzf "$tmpfile" -C "$dest" --strip-components=1 || { echo "Tar extraction failed for $tmpfile"; rm -f "$tmpfile"; rm -rf "$dest"; continue; }
+        tar -xzf "$tmpfile" -C "$dest" || { echo "Tar extraction failed for $tmpfile"; rm -f "$tmpfile"; rm -rf "$dest"; continue; }
       else
         echo "Unknown binary format for $tmpfile; please inspect manually.";
         rm -f "$tmpfile"; rm -rf "$dest"; continue
@@ -80,7 +80,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
       ;;
     *)
       # Attempt a generic tar extraction as a fallback
-      if tar -xzf "$tmpfile" -C "$dest" --strip-components=1 2>/dev/null; then
+      if tar -xzf "$tmpfile" -C "$dest" 2>/dev/null; then
         :
       else
         echo "Unknown mime type: $mtype for $pkg@$ver; head of file:";

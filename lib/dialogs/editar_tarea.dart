@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import '../models/tarea.dart';
+import '../services/attachment_availability_service.dart';
 import '../services/attachment_storage_service.dart';
 import '../services/inicia_con_google.dart';
 import '../theme/theme.dart';
@@ -58,6 +59,8 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   late DateTime _initialFechaVencimiento;
   final AttachmentStorageService _attachmentStorageService =
       const AttachmentStorageService();
+  late final AttachmentAvailabilityService _attachmentAvailabilityService =
+      AttachmentAvailabilityService.withDefaults();
   bool _isSaving = false;
 
   Future<void> _confirmDelete() async {
@@ -788,11 +791,39 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   }
 
   Future<void> _openAttachment(Map<String, dynamic> item) async {
-    final path = item['path'] as String?;
-    if (path == null || path.isEmpty) return;
+    var resolvedItem = item;
+    var path = resolvedItem['path'] as String?;
+    final missingLocalPath =
+        path == null || path.isEmpty || !await File(path).exists();
 
-    if (_isImageAttachment(item)) {
-      _openImagePreview(path, (item['name'] as String?) ?? 'Imagen');
+    if (missingLocalPath) {
+      final driveId = resolvedItem['driveId'] as String?;
+      if (driveId != null && driveId.isNotEmpty) {
+        if (mounted) {
+          AppToast.info(context, 'Descargando adjunto...');
+        }
+        final downloaded = await _attachmentAvailabilityService
+            .ensureAttachmentAvailable(tarea: widget.tarea, attachment: item);
+        if (downloaded != null) {
+          resolvedItem = downloaded;
+          path = resolvedItem['path'] as String?;
+          _replaceAttachmentInMemory(resolvedItem);
+        }
+      }
+    }
+
+    if (path == null || path.isEmpty || !await File(path).exists()) {
+      if (mounted) {
+        AppToast.error(
+          context,
+          'El adjunto aun no esta disponible localmente.',
+        );
+      }
+      return;
+    }
+
+    if (_isImageAttachment(resolvedItem)) {
+      _openImagePreview(path, (resolvedItem['name'] as String?) ?? 'Imagen');
       return;
     }
 
@@ -813,6 +844,20 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     if (!opened && mounted) {
       AppToast.error(context, 'No se pudo abrir el archivo adjunto.');
     }
+  }
+
+  void _replaceAttachmentInMemory(Map<String, dynamic> updatedAttachment) {
+    final updatedId = updatedAttachment['attachmentId'];
+    if (updatedId == null) return;
+
+    setState(() {
+      final index = _adjuntos.indexWhere(
+        (attachment) => attachment['attachmentId'] == updatedId,
+      );
+      if (index != -1) {
+        _adjuntos[index] = updatedAttachment;
+      }
+    });
   }
 
   Future<void> _openImagePreview(String path, String title) async {
