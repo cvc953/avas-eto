@@ -222,6 +222,27 @@ Future<DriveAccessRequestStatus> requestDriveAccessInteractive() async {
   }
 }
 
+/// Garantiza el acceso a Drive durante el flujo de inicio de sesion.
+///
+/// Devuelve `granted` si ya estaba autorizado o si se autoriza
+/// interactivamente en este intento.
+Future<DriveAccessRequestStatus> ensureDriveAccessAfterLogin() async {
+  return ensureDriveAccessAfterLoginWithOverrides();
+}
+
+Future<DriveAccessRequestStatus> ensureDriveAccessAfterLoginWithOverrides({
+  Future<bool> Function()? isDriveGranted,
+  Future<DriveAccessRequestStatus> Function()? requestDriveAccess,
+}) async {
+  final grantedCheck = isDriveGranted ?? isDriveAccessGranted;
+  final requestAccess = requestDriveAccess ?? requestDriveAccessInteractive;
+
+  if (await grantedCheck()) {
+    return DriveAccessRequestStatus.granted;
+  }
+  return requestAccess();
+}
+
 Future<String?> getGoogleAccessToken({
   bool requestDrive = false,
   bool interactiveScopePrompt = true,

@@ -6,6 +6,7 @@ import '../models/tarea.dart';
 import '../services/local_storage_service.dart';
 import '../mappers/tarea_mapper.dart';
 import '../services/notification_service.dart';
+import '../services/drive_download_orchestrator.dart';
 import '../services/drive_upload_orchestrator.dart';
 import '../services/background_upload_scheduler.dart';
 import '../services/upload_queue_service.dart';
@@ -78,11 +79,13 @@ class TareasRepository {
   final LocalStorageService localStorage;
   final UploadQueueService _uploadQueueService;
   final DriveUploadOrchestrator _driveUploadOrchestrator;
+  final DriveDownloadOrchestrator _driveDownloadOrchestrator;
 
   TareasRepository(
     this.localStorage,
     this._uploadQueueService,
     this._driveUploadOrchestrator,
+    this._driveDownloadOrchestrator,
   );
 
   /// Descarga las tareas del usuario autenticado y las persiste en local.
@@ -118,6 +121,12 @@ class TareasRepository {
         );
       }
 
+      // Descarga en segundo plano los adjuntos remotos que aun no existen
+      // localmente en este dispositivo.
+      unawaited(
+        _driveDownloadOrchestrator.downloadMissingAttachmentsForCurrentUser(),
+      );
+
       return snapshot.docs.length;
     } catch (e) {
       print('Error sincronizando tareas desde Firestore: $e');
@@ -138,9 +147,6 @@ class TareasRepository {
 
     return fromFirestore
         .map((firestoreAdj) {
-          // Si ya tiene driveId no necesitamos la ruta local.
-          if (attachmentDriveIdOf(firestoreAdj) != null) return firestoreAdj;
-
           final id = attachmentIdOf(firestoreAdj);
           if (id == null) return firestoreAdj;
 
@@ -158,6 +164,10 @@ class TareasRepository {
 
   Future<void> processPendingUploads() async {
     await _driveUploadOrchestrator.processPendingUploads();
+  }
+
+  Future<void> processPendingDownloads() async {
+    await _driveDownloadOrchestrator.downloadMissingAttachmentsForCurrentUser();
   }
 
   Future<void> guardar(Tarea tarea, String clave, bool online) async {

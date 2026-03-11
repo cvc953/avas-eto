@@ -7,8 +7,19 @@ import '../screens/tareas_inicio.dart';
 class Google extends StatelessWidget {
   final VoidCallback onStart;
   final VoidCallback onFinish;
+  final Future<GoogleLoginResult> Function({bool requestDriveAccess})
+  signInWithGoogleFn;
+  final Future<DriveAccessRequestStatus> Function() ensureDriveAccessFn;
+  final Future<void> Function(BuildContext context)? onAuthenticated;
 
-  const Google({super.key, required this.onStart, required this.onFinish});
+  const Google({
+    super.key,
+    required this.onStart,
+    required this.onFinish,
+    this.signInWithGoogleFn = signInWithGoogle,
+    this.ensureDriveAccessFn = ensureDriveAccessAfterLogin,
+    this.onAuthenticated,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +33,19 @@ class Google extends StatelessWidget {
             onPressed: () async {
               onStart();
               try {
-                final result = await signInWithGoogle(requestDriveAccess: true);
+                final result = await signInWithGoogleFn(
+                  requestDriveAccess: true,
+                );
                 if (!context.mounted) return;
 
                 if (result.isAuthenticated) {
-                  if (result.driveGranted) {
+                  var driveGranted = result.driveGranted;
+                  if (!driveGranted) {
+                    final status = await ensureDriveAccessFn();
+                    driveGranted = status == DriveAccessRequestStatus.granted;
+                  }
+
+                  if (driveGranted) {
                     AppToast.success(
                       context,
                       'Sesion iniciada. Drive esta conectado para tus adjuntos.',
@@ -37,10 +56,14 @@ class Google extends StatelessWidget {
                       'Sesion iniciada en modo parcial. Puedes reautorizar Drive en Mas opciones.',
                     );
                   }
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => TareasInicio()),
-                  );
+                  if (onAuthenticated != null) {
+                    await onAuthenticated!(context);
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => TareasInicio()),
+                    );
+                  }
                 } else if (result.status == GoogleLoginStatus.cancelled) {
                   AppToast.info(context, 'Inicio de sesion cancelado.');
                 } else {

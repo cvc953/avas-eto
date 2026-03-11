@@ -3,6 +3,7 @@ import 'package:avas_eto/services/password_reset.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/app_toast.dart';
+import '../services/inicia_con_google.dart';
 import '../widgets/login_input.dart';
 import '../widgets/google.dart';
 import '../widgets/boton_inicio.dart';
@@ -132,6 +133,14 @@ class _LoginState extends State<Login> {
 
     try {
       await auth.signInWithEmailAndPassword(email: email, password: pass);
+
+      final driveStatus = await ensureDriveAccessAfterLogin();
+      if (mounted && driveStatus != DriveAccessRequestStatus.granted) {
+        AppToast.warning(
+          context,
+          'Sesion iniciada. Puedes habilitar Drive en Mas opciones para sincronizar adjuntos.',
+        );
+      }
 
       // Si todo sale bien, navega a la pantalla de tareas inicio
       Navigator.pushReplacement(

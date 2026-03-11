@@ -22,6 +22,7 @@ import 'package:avas_eto/repositories/tareas_repository.dart';
 import 'package:avas_eto/utils/permissions.dart';
 import 'package:avas_eto/services/upload_queue_service.dart';
 import 'package:avas_eto/services/drive_upload_orchestrator.dart';
+import 'package:avas_eto/services/drive_download_orchestrator.dart';
 import 'package:avas_eto/services/background_upload_scheduler.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -89,6 +90,7 @@ void main() async {
     localStorage,
     uploadQueueService,
     driveUploadOrchestrator,
+    DriveDownloadOrchestrator(localStorage, conectividadService),
   );
 
   // Controllers to provide via Provider

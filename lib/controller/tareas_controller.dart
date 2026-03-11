@@ -5,6 +5,7 @@ import 'package:avas_eto/services/conectividad_service.dart';
 import 'package:avas_eto/utils/task_key_generator.dart';
 import 'package:avas_eto/services/local_database.dart';
 import 'package:avas_eto/services/drive_upload_orchestrator.dart';
+import 'package:avas_eto/services/drive_download_orchestrator.dart';
 import 'package:avas_eto/services/notification_service.dart';
 import 'package:avas_eto/services/upload_queue_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -38,6 +39,7 @@ class TareasController {
         NotificationService(),
         FirebaseFirestore.instance,
       ),
+      DriveDownloadOrchestrator(localStorage, conectividad),
     );
 
     final controller = TareasController(repo, localStorage, conectividad);
@@ -54,6 +56,7 @@ class TareasController {
     _conectividad.setupListener((online) {
       if (online) {
         _repository.processPendingUploads();
+        _repository.processPendingDownloads();
       }
       onChange(online);
     });
@@ -70,6 +73,7 @@ class TareasController {
     if (online) {
       await _repository.sincronizarDesdeServidor();
       await _repository.processPendingUploads();
+      await _repository.processPendingDownloads();
     }
 
     final local = await _localStorage.getTareas();
