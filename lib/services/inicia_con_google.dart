@@ -36,6 +36,14 @@ class GoogleLoginResult {
 String? _cachedDriveAccessToken;
 DateTime? _cachedDriveAccessTokenAt;
 
+Future<void> _cacheDriveTokenFromAccount(GoogleSignInAccount? account) async {
+  if (account == null) return;
+  final token = (await account.authentication).accessToken;
+  if (token == null || token.isEmpty) return;
+  _cachedDriveAccessToken = token;
+  _cachedDriveAccessTokenAt = DateTime.now();
+}
+
 Future<GoogleLoginResult> signInWithGoogle({
   bool requestDriveAccess = true,
 }) async {
@@ -65,10 +73,10 @@ Future<GoogleLoginResult> signInWithGoogle({
       driveGranted = await _requestDriveScope();
     }
 
-    final token = googleAuth.accessToken;
-    if (driveGranted && token != null && token.isNotEmpty) {
-      _cachedDriveAccessToken = token;
-      _cachedDriveAccessTokenAt = DateTime.now();
+    if (driveGranted) {
+      // Refresh token after scope grant to ensure it carries Drive permissions.
+      final tokenAccount = _googleSignIn.currentUser ?? googleUser;
+      await _cacheDriveTokenFromAccount(tokenAccount);
     }
 
     return GoogleLoginResult(
@@ -100,43 +108,78 @@ Future<bool> _requestDriveScope() async {
 }
 
 Future<bool> isDriveAccessGranted() async {
+  // Fallback defensivo: si ya tenemos un token de Drive confirmado y vigente,
+  // consideramos el acceso como otorgado aunque canAccessScopes falle.
+  if (getCachedDriveAccessToken() != null) {
+    return true;
+  }
+
   final account =
       _googleSignIn.currentUser ?? await _googleSignIn.signInSilently();
   if (account == null) return false;
   try {
-    return await _googleSignIn.canAccessScopes(_driveScopes);
+    final granted = await _googleSignIn.canAccessScopes(_driveScopes);
+    if (granted) {
+      await _cacheDriveTokenFromAccount(account);
+      return true;
+    }
+    return false;
   } catch (e) {
     debugPrint('Error verificando Drive scope: $e');
-    return false;
+    return getCachedDriveAccessToken() != null;
   }
 }
 
 Future<DriveAccessRequestStatus> requestDriveAccessInteractive() async {
   try {
-    // Fuerza un nuevo consentimiento para que Google muestre los scopes
-    // incluyendo Drive incluso si ya existia una sesion activa previa.
-    await _googleSignIn.disconnect();
-    final account = await _googleSignIn.signIn();
+    // Fuerza un nuevo consentimiento cuando sea posible, pero no aborta
+    // si la desconexion falla por estado interno del plugin.
+    try {
+      await _googleSignIn.disconnect();
+    } catch (e) {
+      debugPrint('disconnect previo a Drive fallo (se continua): $e');
+    }
+
+    var account =
+        _googleSignIn.currentUser ?? await _googleSignIn.signInSilently();
+    account ??= await _googleSignIn.signIn();
 
     if (account == null) {
       return DriveAccessRequestStatus.cancelled;
     }
 
-    var granted = await _googleSignIn.canAccessScopes(_driveScopes);
-    granted = granted || await _requestDriveScope();
+    var granted = false;
+    try {
+      granted = await _googleSignIn.canAccessScopes(_driveScopes);
+    } catch (e) {
+      debugPrint('canAccessScopes inicial fallo: $e');
+    }
+
+    if (!granted) {
+      try {
+        granted = await _googleSignIn.requestScopes(_driveScopes);
+      } catch (e) {
+        debugPrint('requestScopes fallo: $e');
+      }
+    }
+
+    if (!granted) {
+      // Verificacion final por si el consentimiento se completo pero el plugin
+      // devolvio error/false transitorio.
+      granted = await isDriveAccessGranted();
+    }
 
     if (!granted) {
       return DriveAccessRequestStatus.denied;
     }
 
-    final token = (await account.authentication).accessToken;
-    if (token != null && token.isNotEmpty) {
-      _cachedDriveAccessToken = token;
-      _cachedDriveAccessTokenAt = DateTime.now();
-    }
+    await _cacheDriveTokenFromAccount(_googleSignIn.currentUser ?? account);
     return DriveAccessRequestStatus.granted;
   } catch (e) {
     debugPrint('Error en requestDriveAccessInteractive: $e');
+    if (await isDriveAccessGranted()) {
+      return DriveAccessRequestStatus.granted;
+    }
     return DriveAccessRequestStatus.failed;
   }
 }
@@ -176,11 +219,12 @@ Future<String?> getGoogleAccessToken({
     }
   }
 
-  final auth = await account.authentication;
+  final tokenAccount =
+      requestDrive ? (_googleSignIn.currentUser ?? account) : account;
+  final auth = await tokenAccount.authentication;
   final token = auth.accessToken;
   if (requestDrive && token != null && token.isNotEmpty) {
-    _cachedDriveAccessToken = token;
-    _cachedDriveAccessTokenAt = DateTime.now();
+    await _cacheDriveTokenFromAccount(tokenAccount);
   }
   return token;
 }
