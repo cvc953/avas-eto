@@ -647,7 +647,22 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   }
 
   String _buildMetaLabel() {
-    final dateLabel = DateFormat('EEE d MMM', 'es').format(_selectedDate);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
+    final dayDiff = selected.difference(today).inDays;
+
+    final dateLabel =
+        dayDiff == 0
+            ? 'Hoy'
+            : dayDiff == 1
+            ? 'Manana'
+            : DateFormat('EEE d MMM', 'es').format(_selectedDate);
+
     if (_todoElDia) return '$dateLabel · Todo el dia';
     return '$dateLabel · ${_buildScheduleSummary()}';
   }
@@ -707,7 +722,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             TaskDialogMetaTile(
               icon: Icons.event_outlined,
               label: _buildMetaLabel(),
-              onTap: _openScheduleSheet,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -717,7 +731,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 fontWeight: FontWeight.w700,
               ),
               decoration: const InputDecoration(
-                hintText: 'Título',
+                hintText: '¿Que necesitas hacer?',
+                filled: false,
+                fillColor: Colors.transparent,
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -740,7 +756,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
               onChanged: (_) => _markChanged(),
               style: theme.textTheme.bodyLarge,
               decoration: InputDecoration(
-                hintText: 'Notas',
+                hintText: 'Descripcion',
+                filled: false,
+                fillColor: Colors.transparent,
                 hintStyle: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.hintColor,
                 ),
