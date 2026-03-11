@@ -17,14 +17,14 @@ class AuthController {
 
   Stream<User?> authStateChanges() => _auth.authStateChanges();
 
-  Future<void> signOut() async {
-    // Persist the last signed-in user as the "device owner" so tasks remain
-    // visible after logout on this device. This copy will remain until a
-    // different user signs in on the device.
+  /// Sign out and persist the last-signed-in uid on device so local tasks
+  /// remain visible for that device owner. Optionally provide
+  /// [currentUidOverride] for testing.
+  Future<void> signOut({String? currentUidOverride}) async {
     try {
-      final uid = _auth.currentUser?.uid;
+      final uid = currentUidOverride ?? _auth.currentUser?.uid;
       if (_localStorage != null) {
-        await _localStorage.setDeviceOwnerId(uid);
+        await _localStorage!.setDeviceOwnerId(uid);
       }
     } catch (e) {
       // Non-fatal: persist best-effort

@@ -84,6 +84,10 @@ class NotificationService {
     return 'Venció hace ${w == 1 ? '1 semana' : '$w semanas'}';
   }
 
+  // Public wrappers for testability
+  String getColoredQuadrantText(Tarea tarea) => _coloredEisenhowerQuadrantForTask(tarea);
+  String getOverdueText(Tarea tarea) => _overdueTextFor(tarea);
+
   Color _eisenhowerColorForTask(Tarea tarea) {
     final now = DateTime.now();
     final important =
