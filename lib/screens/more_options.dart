@@ -422,6 +422,46 @@ class _MoreOptionsState extends State<MoreOptions> {
               else
                 _buildGuestAccessCard(context),
               const SizedBox(height: 18),
+              _buildSectionHeader(context, 'Apariencia'),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withAlpha(18),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Theme.of(context).primaryColor.withAlpha(55),
+                  ),
+                ),
+                child: ListTile(
+                  leading: Icon(
+                    _settingsController.themeMode == ThemeMode.dark
+                        ? Icons.dark_mode
+                        : _settingsController.themeMode == ThemeMode.light
+                        ? Icons.light_mode
+                        : Icons.brightness_auto,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  title: Text(
+                    'Tema',
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  subtitle: Text(
+                    _getThemeModeLabel(_settingsController.themeMode),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.chevron_right_rounded,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  onTap: _showThemeDialog,
+                ),
+              ),
+              Divider(color: Theme.of(context).dividerColor),
               _buildSectionHeader(context, 'Adjuntos y sincronizacion'),
               ListTile(
                 leading: Icon(
@@ -533,29 +573,6 @@ class _MoreOptionsState extends State<MoreOptions> {
                   },
                   activeThumbColor: Colors.blueAccent,
                 ),
-              ),
-              ListTile(
-                leading: Icon(
-                  _settingsController.themeMode == ThemeMode.dark
-                      ? Icons.dark_mode
-                      : _settingsController.themeMode == ThemeMode.light
-                      ? Icons.light_mode
-                      : Icons.brightness_auto,
-                  color: Theme.of(context).iconTheme.color,
-                ),
-                title: Text(
-                  'Tema',
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-                subtitle: Text(
-                  _getThemeModeLabel(_settingsController.themeMode),
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
-                ),
-                onTap: _showThemeDialog,
               ),
               Divider(color: Theme.of(context).dividerColor),
               _buildSectionHeader(context, 'Informacion'),
