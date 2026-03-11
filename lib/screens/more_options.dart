@@ -99,23 +99,29 @@ class _MoreOptionsState extends State<MoreOptions> {
     if (_authorizingDrive) return;
     setState(() => _authorizingDrive = true);
     try {
-      final granted = await requestDriveAccessInteractive();
+      final status = await requestDriveAccessInteractive();
       if (!mounted) return;
-      if (granted) {
-        AppToast.success(context, 'Google Drive conectado correctamente.');
-      } else {
-        AppToast.warning(
-          context,
-          'No se otorgo acceso a Drive. Seguiras en modo parcial.',
-        );
+      switch (status) {
+        case DriveAccessRequestStatus.granted:
+          AppToast.success(context, 'Google Drive conectado correctamente.');
+          break;
+        case DriveAccessRequestStatus.cancelled:
+          AppToast.info(context, 'Conexion a Drive cancelada por el usuario.');
+          break;
+        case DriveAccessRequestStatus.denied:
+          AppToast.warning(
+            context,
+            'No se otorgo acceso a Drive. Seguiras en modo parcial.',
+          );
+          break;
+        case DriveAccessRequestStatus.failed:
+          AppToast.error(
+            context,
+            'No se pudo completar la autorizacion de Google Drive.',
+          );
+          break;
       }
       await _refreshDriveAuthorizationStatus();
-    } catch (_) {
-      if (!mounted) return;
-      AppToast.error(
-        context,
-        'No se pudo completar la autorizacion de Google Drive.',
-      );
     } finally {
       if (mounted) setState(() => _authorizingDrive = false);
     }

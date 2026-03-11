@@ -2,7 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 
-final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
+final GoogleSignIn _googleSignIn = GoogleSignIn(
+  scopes: ['email', 'https://www.googleapis.com/auth/drive.file'],
+);
 
 const List<String> _driveScopes = [
   'https://www.googleapis.com/auth/drive.file',
@@ -14,6 +16,8 @@ enum GoogleLoginStatus {
   cancelled,
   failed,
 }
+
+enum DriveAccessRequestStatus { granted, cancelled, denied, failed }
 
 class GoogleLoginResult {
   final GoogleLoginStatus status;
@@ -107,18 +111,34 @@ Future<bool> isDriveAccessGranted() async {
   }
 }
 
-Future<bool> requestDriveAccessInteractive() async {
-  final account =
-      _googleSignIn.currentUser ?? await _googleSignIn.signInSilently();
-  if (account == null) return false;
-  final granted = await _requestDriveScope();
-  if (!granted) return false;
-  final token = (await account.authentication).accessToken;
-  if (token != null && token.isNotEmpty) {
-    _cachedDriveAccessToken = token;
-    _cachedDriveAccessTokenAt = DateTime.now();
+Future<DriveAccessRequestStatus> requestDriveAccessInteractive() async {
+  try {
+    // Fuerza un nuevo consentimiento para que Google muestre los scopes
+    // incluyendo Drive incluso si ya existia una sesion activa previa.
+    await _googleSignIn.disconnect();
+    final account = await _googleSignIn.signIn();
+
+    if (account == null) {
+      return DriveAccessRequestStatus.cancelled;
+    }
+
+    var granted = await _googleSignIn.canAccessScopes(_driveScopes);
+    granted = granted || await _requestDriveScope();
+
+    if (!granted) {
+      return DriveAccessRequestStatus.denied;
+    }
+
+    final token = (await account.authentication).accessToken;
+    if (token != null && token.isNotEmpty) {
+      _cachedDriveAccessToken = token;
+      _cachedDriveAccessTokenAt = DateTime.now();
+    }
+    return DriveAccessRequestStatus.granted;
+  } catch (e) {
+    debugPrint('Error en requestDriveAccessInteractive: $e');
+    return DriveAccessRequestStatus.failed;
   }
-  return true;
 }
 
 Future<String?> getGoogleAccessToken({
