@@ -7,6 +7,7 @@ import 'dart:io';
 import '../models/tarea.dart';
 import '../services/attachment_storage_service.dart';
 import '../services/inicia_con_google.dart';
+import '../theme/theme.dart';
 import 'task_dialog_ui.dart';
 import '../utils/app_toast.dart';
 
@@ -277,6 +278,8 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Todo el dia'),
                       value: tempAllDay,
+                      activeColor: AppTheme.primaryColor,
+                      activeTrackColor: AppTheme.primaryColor.withAlpha(110),
                       onChanged: (value) {
                         setSheetState(() => tempAllDay = value);
                       },
@@ -593,13 +596,13 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               borderRadius: BorderRadius.circular(10),
               child: Image.file(
                 File(path),
-                width: 88,
-                height: 88,
+                width: 104,
+                height: 104,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    width: 88,
-                    height: 88,
+                    width: 104,
+                    height: 104,
                     color: Theme.of(context).dividerColor,
                     alignment: Alignment.center,
                     child: const Icon(Icons.broken_image),
@@ -801,6 +804,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               onChanged: (_) => setState(() {}),
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
+                color: theme.textTheme.titleLarge?.color,
               ),
               decoration: const InputDecoration(
                 hintText: '¿Que necesitas hacer?',
@@ -826,7 +830,9 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
             TextFormField(
               controller: _descripcionController,
               onChanged: (_) => setState(() {}),
-              style: theme.textTheme.bodyLarge,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.textTheme.bodyLarge?.color,
+              ),
               decoration: InputDecoration(
                 hintText: 'Descripcion',
                 filled: false,

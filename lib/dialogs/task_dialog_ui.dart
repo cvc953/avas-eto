@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/theme.dart';
 
 class TaskDialogShell extends StatelessWidget {
   final String title;
@@ -34,7 +35,7 @@ class TaskDialogShell extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border.all(color: theme.colorScheme.primary.withAlpha(28)),
+          border: Border.all(color: AppTheme.primaryColor.withAlpha(28)),
         ),
         child: Column(
           children: [
@@ -43,7 +44,7 @@ class TaskDialogShell extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: 14),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withAlpha(130),
+                color: AppTheme.primaryColor.withAlpha(130),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -90,12 +91,12 @@ class TaskDialogToolbarButton extends StatelessWidget {
     return IconButton(
       onPressed: onPressed,
       style: IconButton.styleFrom(
-        backgroundColor: theme.colorScheme.primary.withAlpha(
+        backgroundColor: AppTheme.primaryColor.withAlpha(
           theme.brightness == Brightness.dark ? 42 : 24,
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
-      icon: Icon(icon, color: color ?? theme.colorScheme.primary),
+      icon: Icon(icon, color: color ?? AppTheme.primaryColor),
     );
   }
 }
@@ -123,13 +124,13 @@ class TaskDialogMetaTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: theme.colorScheme.primary.withAlpha(
+          color: AppTheme.primaryColor.withAlpha(
             theme.brightness == Brightness.dark ? 34 : 16,
           ),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: theme.colorScheme.primary),
+            Icon(icon, size: 18, color: AppTheme.primaryColor),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -143,7 +144,7 @@ class TaskDialogMetaTile extends StatelessWidget {
               Icon(
                 Icons.chevron_right_rounded,
                 size: 20,
-                color: theme.colorScheme.primary.withAlpha(170),
+                color: AppTheme.primaryColor.withAlpha(170),
               ),
           ],
         ),
