@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import '../models/tarea.dart';
+import '../services/attachment_storage_service.dart';
 import '../services/inicia_con_google.dart';
 import '../utils/app_toast.dart';
 
@@ -33,6 +34,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   late String _prioridadSeleccionada;
   bool _todoElDia = false;
   final List<Map<String, dynamic>> _adjuntos = [];
+  final AttachmentStorageService _attachmentStorageService =
+      const AttachmentStorageService();
   bool _isSaving = false;
   bool _hasChanges = false;
 
@@ -388,15 +391,13 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
     if (result == null || !mounted) return;
 
+    final pending = await _attachmentStorageService.persistPickedFiles(
+      result.files,
+    );
+    if (!mounted || pending.isEmpty) return;
+
     setState(() {
-      for (final file in result.files) {
-        if (file.path == null) continue;
-        _adjuntos.add({
-          'path': file.path,
-          'name': file.name,
-          'size': file.size,
-        });
-      }
+      _adjuntos.addAll(pending);
       _hasChanges = true;
     });
   }
@@ -410,15 +411,13 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
     if (result == null || !mounted) return;
 
+    final pending = await _attachmentStorageService.persistPickedFiles(
+      result.files,
+    );
+    if (!mounted || pending.isEmpty) return;
+
     setState(() {
-      for (final file in result.files) {
-        if (file.path == null) continue;
-        _adjuntos.add({
-          'path': file.path,
-          'name': file.name,
-          'size': file.size,
-        });
-      }
+      _adjuntos.addAll(pending);
       _hasChanges = true;
     });
   }

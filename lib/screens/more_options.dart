@@ -225,6 +225,29 @@ class _MoreOptionsState extends State<MoreOptions> {
     );
   }
 
+  Widget _buildSettingsBlock(
+    BuildContext context, {
+    required List<Widget> children,
+    bool emphasized = false,
+  }) {
+    final primary = Theme.of(context).primaryColor;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: emphasized ? primary.withAlpha(18) : Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color:
+              emphasized
+                  ? primary.withAlpha(55)
+                  : Theme.of(context).dividerColor,
+        ),
+      ),
+      child: Column(children: children),
+    );
+  }
+
   Widget _buildGuestAccessCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF152338) : const Color(0xFFEAF3FF);
@@ -423,168 +446,200 @@ class _MoreOptionsState extends State<MoreOptions> {
                 _buildGuestAccessCard(context),
               const SizedBox(height: 18),
               _buildSectionHeader(context, 'Apariencia'),
-              ListTile(
-                leading: Icon(
-                  _settingsController.themeMode == ThemeMode.dark
-                      ? Icons.dark_mode
-                      : _settingsController.themeMode == ThemeMode.light
-                      ? Icons.light_mode
-                      : Icons.brightness_auto,
-                  color: Theme.of(context).iconTheme.color,
-                ),
-                title: Text(
-                  'Tema',
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-                subtitle: Text(
-                  _getThemeModeLabel(_settingsController.themeMode),
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
-                ),
-                onTap: _showThemeDialog,
-              ),
-              Divider(color: Theme.of(context).dividerColor),
-              _buildSectionHeader(context, 'Adjuntos y sincronizacion'),
-              ListTile(
-                leading: Icon(
-                  _driveAuthorized
-                      ? Icons.cloud_done_rounded
-                      : Icons.cloud_off_rounded,
-                  color:
-                      _driveAuthorized
-                          ? Colors.green
-                          : Theme.of(context).iconTheme.color,
-                ),
-                title: const Text('Google Drive para adjuntos'),
-                subtitle: Text(
-                  _checkingDrive
-                      ? 'Verificando estado...'
-                      : _driveAuthorized
-                      ? 'Conectado y listo para subir adjuntos'
-                      : 'Modo parcial activo: adjuntos solo locales',
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
-                ),
-                trailing:
-                    _driveAuthorized
-                        ? IconButton(
-                          tooltip: 'Actualizar estado',
-                          onPressed: _refreshDriveAuthorizationStatus,
-                          icon: const Icon(Icons.refresh_rounded),
-                        )
-                        : TextButton(
-                          onPressed:
-                              _authorizingDrive || _checkingDrive
-                                  ? null
-                                  : _connectDrive,
-                          child:
-                              _authorizingDrive
-                                  ? const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                  : const Text('Conectar'),
-                        ),
-              ),
-              ListTile(
-                leading:
-                    mobileDataUploadsEnabled
-                        ? Icon(
-                          Icons.perm_data_setting,
-                          color: Theme.of(context).iconTheme.color,
-                        )
-                        : Icon(
-                          Icons.wifi,
-                          color: Theme.of(context).iconTheme.color,
-                        ),
-                title: Text(
-                  'Subir adjuntos con datos moviles',
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-                subtitle: Text(
-                  mobileDataUploadsEnabled
-                      ? 'Permitido tambien fuera de Wi-Fi'
-                      : 'Solo se subiran con Wi-Fi',
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
-                ),
-                trailing: Switch(
-                  value: mobileDataUploadsEnabled,
-                  onChanged: (bool value) async {
-                    await _settingsController.setMobileDataUploadsEnabled(
-                      value,
-                    );
-                    if (!mounted) return;
-                    setState(() {
-                      mobileDataUploadsEnabled = value;
-                    });
-                  },
-                  activeThumbColor: Colors.blueAccent,
-                ),
-              ),
-              Divider(color: Theme.of(context).dividerColor),
-              _buildSectionHeader(context, 'Preferencias'),
-              ListTile(
-                leading: Icon(
-                  notificationsEnabled
-                      ? Icons.notifications_on
-                      : Icons.notifications_off,
-                  color: Theme.of(context).iconTheme.color,
-                ),
-                title: Text(
-                  'Notificaciones',
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-                trailing: Switch(
-                  value: notificationsEnabled,
-                  onChanged: (bool value) async {
-                    await _settingsController.setEnabled(value);
-                    if (!mounted) return;
-                    setState(() {
-                      notificationsEnabled = value;
-                    });
-                  },
-                  activeThumbColor: Colors.blueAccent,
-                ),
-              ),
-              Divider(color: Theme.of(context).dividerColor),
-              _buildSectionHeader(context, 'Informacion'),
-              ListTile(
-                leading: Icon(
-                  Icons.info,
-                  color: Theme.of(context).iconTheme.color,
-                ),
-                title: Text(
-                  'Acerca de',
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => AboutScreen(
-                            onAddTask: widget.onAddTask,
-                            onToggle: widget.onToggle,
-                          ),
+              _buildSettingsBlock(
+                context,
+                emphasized: true,
+                children: [
+                  ListTile(
+                    leading: Icon(
+                      _settingsController.themeMode == ThemeMode.dark
+                          ? Icons.dark_mode
+                          : _settingsController.themeMode == ThemeMode.light
+                          ? Icons.light_mode
+                          : Icons.brightness_auto,
+                      color: Theme.of(context).primaryColor,
                     ),
-                  );
-                },
+                    title: Text(
+                      'Tema',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    subtitle: Text(
+                      _getThemeModeLabel(_settingsController.themeMode),
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    onTap: _showThemeDialog,
+                  ),
+                ],
               ),
+              const SizedBox(height: 10),
+              _buildSectionHeader(context, 'Preferencias'),
+              _buildSettingsBlock(
+                context,
+                children: [
+                  ListTile(
+                    leading: Icon(
+                      notificationsEnabled
+                          ? Icons.notifications_on
+                          : Icons.notifications_off,
+                      color: Theme.of(context).iconTheme.color,
+                    ),
+                    title: Text(
+                      'Notificaciones',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    trailing: Switch(
+                      value: notificationsEnabled,
+                      onChanged: (bool value) async {
+                        await _settingsController.setEnabled(value);
+                        if (!mounted) return;
+                        setState(() {
+                          notificationsEnabled = value;
+                        });
+                      },
+                      activeThumbColor: Colors.blueAccent,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _buildSectionHeader(context, 'Adjuntos y sincronizacion'),
+              _buildSettingsBlock(
+                context,
+                children: [
+                  ListTile(
+                    leading: Icon(
+                      _driveAuthorized
+                          ? Icons.cloud_done_rounded
+                          : Icons.cloud_off_rounded,
+                      color:
+                          _driveAuthorized
+                              ? Colors.green
+                              : Theme.of(context).iconTheme.color,
+                    ),
+                    title: const Text('Google Drive para adjuntos'),
+                    subtitle: Text(
+                      _checkingDrive
+                          ? 'Verificando estado...'
+                          : _driveAuthorized
+                          ? 'Conectado y listo para subir adjuntos'
+                          : 'Modo parcial activo: adjuntos solo locales',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
+                    ),
+                    trailing:
+                        _driveAuthorized
+                            ? IconButton(
+                              tooltip: 'Actualizar estado',
+                              onPressed: _refreshDriveAuthorizationStatus,
+                              icon: const Icon(Icons.refresh_rounded),
+                            )
+                            : TextButton(
+                              onPressed:
+                                  _authorizingDrive || _checkingDrive
+                                      ? null
+                                      : _connectDrive,
+                              child:
+                                  _authorizingDrive
+                                      ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                      : const Text('Conectar'),
+                            ),
+                  ),
+                  Divider(color: Theme.of(context).dividerColor, height: 1),
+                  ListTile(
+                    leading:
+                        mobileDataUploadsEnabled
+                            ? Icon(
+                              Icons.perm_data_setting,
+                              color: Theme.of(context).iconTheme.color,
+                            )
+                            : Icon(
+                              Icons.wifi,
+                              color: Theme.of(context).iconTheme.color,
+                            ),
+                    title: Text(
+                      'Subir adjuntos con datos moviles',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    subtitle: Text(
+                      mobileDataUploadsEnabled
+                          ? 'Permitido tambien fuera de Wi-Fi'
+                          : 'Solo se subiran con Wi-Fi',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
+                    ),
+                    trailing: Switch(
+                      value: mobileDataUploadsEnabled,
+                      onChanged: (bool value) async {
+                        await _settingsController.setMobileDataUploadsEnabled(
+                          value,
+                        );
+                        if (!mounted) return;
+                        setState(() {
+                          mobileDataUploadsEnabled = value;
+                        });
+                      },
+                      activeThumbColor: Colors.blueAccent,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _buildSectionHeader(context, 'Informacion'),
+              _buildSettingsBlock(
+                context,
+                children: [
+                  ListTile(
+                    leading: Icon(
+                      Icons.info,
+                      color: Theme.of(context).iconTheme.color,
+                    ),
+                    title: Text(
+                      'Acerca de',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      color: Theme.of(context).iconTheme.color,
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => AboutScreen(
+                                onAddTask: widget.onAddTask,
+                                onToggle: widget.onToggle,
+                              ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
             ],
           ),
         );

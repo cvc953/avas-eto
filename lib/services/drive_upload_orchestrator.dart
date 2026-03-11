@@ -93,7 +93,9 @@ class DriveUploadOrchestrator {
           'Se subieron $completed de $total adjuntos.',
         );
       } else {
-        await _notificationService.cancelDriveUploadStatus();
+        await _notificationService.failDriveUploadStatus(
+          'No se pudo subir ningun adjunto. Verifica que los archivos sigan disponibles localmente y que Drive este autorizado.',
+        );
       }
     } finally {
       _isProcessing = false;
@@ -107,13 +109,13 @@ class DriveUploadOrchestrator {
         item.attachmentId,
         'El archivo local ya no existe.',
       );
-      final failedAttachment = await _updateAttachmentStatus(
+      await _updateAttachmentStatus(
         item.taskId,
         item.attachmentId,
         (attachment) =>
             markAttachmentFailed(attachment, 'El archivo local ya no existe.'),
       );
-      return failedAttachment != null;
+      return false;
     }
 
     await _updateAttachmentStatus(
@@ -163,7 +165,7 @@ class DriveUploadOrchestrator {
     String attachmentId,
     Map<String, dynamic> Function(Map<String, dynamic>) transform,
   ) async {
-    final tarea = await _localStorage.getTareaById(taskId);
+    final tarea = await _localStorage.getTareaByIdInternal(taskId);
     if (tarea == null) return null;
 
     Map<String, dynamic>? updatedAttachment;
@@ -186,7 +188,7 @@ class DriveUploadOrchestrator {
   Future<void> _syncTaskToFirestore(String taskId) async {
     if (_firestore == null) return;
 
-    final tarea = await _localStorage.getTareaById(taskId);
+    final tarea = await _localStorage.getTareaByIdInternal(taskId);
     if (tarea == null || tarea.id.isEmpty) return;
 
     try {

@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import '../models/tarea.dart';
+import '../services/attachment_storage_service.dart';
 import '../services/inicia_con_google.dart';
 import '../utils/app_toast.dart';
 
@@ -41,6 +42,8 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   late bool _initialTodoElDia;
   late DateTime _initialFechaInicio;
   late DateTime _initialFechaVencimiento;
+  final AttachmentStorageService _attachmentStorageService =
+      const AttachmentStorageService();
   bool _isSaving = false;
 
   Future<void> _confirmDelete() async {
@@ -448,15 +451,13 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
 
     if (result == null || !mounted) return;
 
+    final pending = await _attachmentStorageService.persistPickedFiles(
+      result.files,
+    );
+    if (!mounted || pending.isEmpty) return;
+
     setState(() {
-      for (final file in result.files) {
-        if (file.path == null) continue;
-        _adjuntos.add({
-          'path': file.path,
-          'name': file.name,
-          'size': file.size,
-        });
-      }
+      _adjuntos.addAll(pending);
     });
   }
 
@@ -469,15 +470,13 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
 
     if (result == null || !mounted) return;
 
+    final pending = await _attachmentStorageService.persistPickedFiles(
+      result.files,
+    );
+    if (!mounted || pending.isEmpty) return;
+
     setState(() {
-      for (final file in result.files) {
-        if (file.path == null) continue;
-        _adjuntos.add({
-          'path': file.path,
-          'name': file.name,
-          'size': file.size,
-        });
-      }
+      _adjuntos.addAll(pending);
     });
   }
 

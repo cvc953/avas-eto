@@ -65,6 +65,21 @@ class LocalStorageService {
     }
   }
 
+  /// Lookup interno para procesos de sincronizacion/upload.
+  /// Ignora el filtro de owner porque puede ejecutarse en background isolate
+  /// sin `FirebaseAuth.currentUser` inicializado.
+  Future<Tarea?> getTareaByIdInternal(String id) async {
+    try {
+      final database = await _localDb.db;
+      final data = await _store.record(id).get(database);
+      if (data == null) return null;
+      return Tarea.fromMap(data);
+    } catch (e) {
+      debugPrint('Error obteniendo tarea interna $id: $e');
+      return null;
+    }
+  }
+
   Future<void> updateAttachment(
     String taskId,
     String attachmentId,
