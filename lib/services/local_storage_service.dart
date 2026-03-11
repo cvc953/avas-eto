@@ -54,7 +54,8 @@ class LocalStorageService {
   }
 
   /// Devuelve el device owner id persistido (usado por tests y diagnósticos).
-  Future<String?> getDeviceOwnerId() async => await _getPersistedDeviceOwnerId();
+  Future<String?> getDeviceOwnerId() async =>
+      await _getPersistedDeviceOwnerId();
 
   Future<void> saveTarea(Tarea tarea) async {
     await saveTareaAndReturn(tarea);

@@ -17,7 +17,11 @@ class TestLocalDb {
   Future<Database> get db async => _db;
 }
 
-Future<Tarea> buildTarea(String id, DateTime fechaVencimiento, {String prioridad = 'Media'}) async {
+Future<Tarea> buildTarea(
+  String id,
+  DateTime fechaVencimiento, {
+  String prioridad = 'Media',
+}) async {
   return Tarea(
     id: id,
     title: 'Tarea $id',
@@ -37,7 +41,11 @@ void main() {
     // Persist device owner A
     await localStorage.setDeviceOwnerId('userA');
 
-    final tarea1 = await buildTarea('1', DateTime.now().add(const Duration(days: 1)), prioridad: 'Alta');
+    final tarea1 = await buildTarea(
+      '1',
+      DateTime.now().add(const Duration(days: 1)),
+      prioridad: 'Alta',
+    );
     await localStorage.saveTarea(tarea1);
 
     final tareasForA = await localStorage.getTareas();

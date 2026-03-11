@@ -85,7 +85,8 @@ class NotificationService {
   }
 
   // Public wrappers for testability
-  String getColoredQuadrantText(Tarea tarea) => _coloredEisenhowerQuadrantForTask(tarea);
+  String getColoredQuadrantText(Tarea tarea) =>
+      _coloredEisenhowerQuadrantForTask(tarea);
   String getOverdueText(Tarea tarea) => _overdueTextFor(tarea);
 
   Color _eisenhowerColorForTask(Tarea tarea) {
