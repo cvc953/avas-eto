@@ -84,6 +84,25 @@ class NotificationService {
     return 'Venció hace ${w == 1 ? '1 semana' : '$w semanas'}';
   }
 
+  String _importanceLabelForTask(Tarea tarea) {
+    final p = tarea.prioridad.toLowerCase();
+    if (p == 'alta') return 'Alta';
+    if (p == 'media') return 'Media';
+    if (p == 'baja') return 'Baja';
+    return tarea.prioridad;
+  }
+
+  String _importanceIconHtml(Tarea tarea) {
+    final color = _eisenhowerColorForTask(tarea);
+    final hex =
+        '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+    return '<font color="$hex">●</font>';
+  }
+
+  String _importanceWithIcon(Tarea tarea) {
+    return '${_importanceIconHtml(tarea)} ${_importanceLabelForTask(tarea)}';
+  }
+
   // Public wrappers for testability
   String getColoredQuadrantText(Tarea tarea) =>
       _coloredEisenhowerQuadrantForTask(tarea);
@@ -170,7 +189,7 @@ class NotificationService {
           id: immediateId,
           channelKey: 'tareas_channel',
           title: 'Tarea vencida: ${tarea.title}',
-          body: overdueBody,
+          body: '${_overdueTextFor(tarea)} — ${_importanceWithIcon(tarea)}',
           color: _eisenhowerColorForTask(tarea),
           notificationLayout: NotificationLayout.Default,
           payload: {'taskId': tarea.id},
