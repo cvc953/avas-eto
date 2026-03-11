@@ -659,8 +659,93 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     );
   }
 
-  Widget _buildActionItem({required Widget icon, required Widget label}) {
-    return Column(children: [icon, const SizedBox(height: 4), label]);
+  Color _priorityColor(String p) {
+    switch (p) {
+      case 'Alta':
+        return const Color(0xFFFF6D00);
+      case 'Media':
+        return const Color(0xFF1565C0);
+      case 'Baja':
+        return const Color(0xFFFBC02D);
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Future<void> _showPriorityPicker(Color sheetColor, Color titleColor) async {
+    final selected = await showDialog<String?>(
+      context: context,
+      builder:
+          (context) => SimpleDialog(
+            backgroundColor: sheetColor,
+            title: Text('Importancia', style: TextStyle(color: titleColor)),
+            children:
+                ['Alta', 'Media', 'Baja', 'Ninguna']
+                    .map(
+                      (p) => SimpleDialogOption(
+                        onPressed: () => Navigator.pop(context, p),
+                        child: Row(
+                          children: [
+                            Icon(Icons.flag, color: _priorityColor(p)),
+                            const SizedBox(width: 12),
+                            Text(p, style: TextStyle(color: titleColor)),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+          ),
+    );
+    if (selected != null && mounted) {
+      setState(() => _prioridadSeleccionada = selected);
+    }
+  }
+
+  Widget _buildQuickActionCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required VoidCallback onTap,
+    Color? iconColor,
+  }) {
+    final theme = Theme.of(context);
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 150),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: theme.dividerColor),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: iconColor ?? theme.iconTheme.color),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: theme.textTheme.bodySmall),
+                    Text(
+                      value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -674,22 +759,6 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     final secondaryTextColor =
         Theme.of(context).textTheme.bodyMedium?.color ??
         (isDark ? Colors.white70 : Colors.black54);
-    final iconColor =
-        Theme.of(context).iconTheme.color ??
-        (isDark ? Colors.white : Colors.black87);
-
-    Color _priorityColor(String p) {
-      switch (p) {
-        case 'Alta':
-          return const Color(0xFFFF6D00);
-        case 'Media':
-          return const Color(0xFF1565C0);
-        case 'Baja':
-          return const Color(0xFFFBC02D);
-        default:
-          return Colors.grey;
-      }
-    }
 
     return Container(
       padding: EdgeInsets.only(
@@ -723,6 +792,14 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                   ),
                 ),
               ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  tooltip: 'Cerrar',
+                  icon: const Icon(Icons.close),
+                ),
+              ),
               Text(
                 'Editar Tarea',
                 textAlign: TextAlign.center,
@@ -732,11 +809,26 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(height: 4),
+              Text(
+                'Ajusta el contenido y la planificacion de la tarea.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: secondaryTextColor, fontSize: 12),
+              ),
               const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Detalles',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+              const SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
                   color: sheetColor,
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
                 child: Column(
                   children: [
@@ -804,123 +896,47 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                 ),
               ],
               const SizedBox(height: 12),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  return Wrap(
-                    spacing: 10,
-                    runSpacing: 12,
-                    children: [
-                      _buildActionItem(
-                        icon: IconButton(
-                          tooltip: 'Seleccionar prioridad',
-                          icon: Icon(
-                            Icons.flag,
-                            color: _priorityColor(_prioridadSeleccionada),
-                          ),
-                          onPressed: () async {
-                            final selected = await showDialog<String?>(
-                              context: context,
-                              builder:
-                                  (context) => SimpleDialog(
-                                    backgroundColor: sheetColor,
-                                    title: Text(
-                                      'Importancia',
-                                      style: TextStyle(color: titleColor),
-                                    ),
-                                    children:
-                                        ['Alta', 'Media', 'Baja', 'Ninguna']
-                                            .map(
-                                              (p) => SimpleDialogOption(
-                                                onPressed:
-                                                    () => Navigator.pop(
-                                                      context,
-                                                      p,
-                                                    ),
-                                                child: Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.flag,
-                                                      color: _priorityColor(p),
-                                                    ),
-                                                    const SizedBox(width: 12),
-                                                    Text(
-                                                      p,
-                                                      style: TextStyle(
-                                                        color: titleColor,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            )
-                                            .toList(),
-                                  ),
-                            );
-                            if (selected != null && mounted) {
-                              setState(() => _prioridadSeleccionada = selected);
-                            }
-                          },
-                        ),
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.flag,
-                              color: _priorityColor(_prioridadSeleccionada),
-                              size: 14,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _prioridadSeleccionada,
-                              style: TextStyle(
-                                color: secondaryTextColor,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      _buildActionItem(
-                        icon: IconButton(
-                          tooltip: 'Horario',
-                          icon: Icon(Icons.access_time, color: iconColor),
-                          onPressed: _openScheduleSheet,
-                        ),
-                        label: Text(
-                          _buildScheduleSummary(),
-                          style: TextStyle(
-                            color: secondaryTextColor,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      _buildActionItem(
-                        icon: IconButton(
-                          tooltip: 'Adjuntar',
-                          icon: Icon(Icons.attach_file, color: iconColor),
-                          onPressed: _showAttachmentOptions,
-                        ),
-                        label: Text(
-                          _adjuntos.isEmpty
-                              ? 'Adjuntar'
-                              : '${_adjuntos.length} archivo(s)',
-                          style: TextStyle(
-                            color: secondaryTextColor,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Acciones rapidas',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _buildQuickActionCard(
+                    icon: Icons.flag,
+                    title: 'Prioridad',
+                    value: _prioridadSeleccionada,
+                    iconColor: _priorityColor(_prioridadSeleccionada),
+                    onTap: () => _showPriorityPicker(sheetColor, titleColor),
+                  ),
+                  _buildQuickActionCard(
+                    icon: Icons.access_time,
+                    title: 'Horario',
+                    value: _buildScheduleSummary(),
+                    onTap: _openScheduleSheet,
+                  ),
+                  _buildQuickActionCard(
+                    icon: Icons.attach_file,
+                    title: 'Adjuntos',
+                    value:
+                        _adjuntos.isEmpty
+                            ? 'Sin archivos'
+                            : '${_adjuntos.length} archivo(s)',
+                    onTap: _showAttachmentOptions,
+                  ),
+                ],
+              ),
               const SizedBox(height: 18),
               if (_hasChanges)
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: _isSaving ? null : _saveTask,
@@ -940,9 +956,11 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: _isSaving ? null : _confirmDelete,
-                  child: const Text(
+                  child: Text(
                     'Eliminar Tarea',
-                    style: TextStyle(color: Colors.red),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ),
               ],

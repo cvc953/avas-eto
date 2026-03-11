@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/tarea.dart';
 
 class TareaCard extends StatelessWidget {
@@ -28,9 +29,21 @@ class TareaCard extends StatelessWidget {
     return const Color(0xFF00D4B5);
   }
 
+  bool _isOverdue(Tarea tarea, DateTime now) {
+    return !tarea.completada && tarea.fechaVencimiento.isBefore(now);
+  }
+
+  String _buildOverdueLabel(Tarea tarea) {
+    final pattern = tarea.todoElDia ? 'd MMM yyyy' : 'd MMM yyyy, HH:mm';
+    final formatted = DateFormat(pattern, 'es').format(tarea.fechaVencimiento);
+    return 'Vencio: $formatted';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
     final quadrantColor = _quadrantColor(tarea);
+    final showOverdue = _isOverdue(tarea, now);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
@@ -95,6 +108,19 @@ class TareaCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            if (showOverdue) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                _buildOverdueLabel(tarea),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 4),
                             AnimatedDefaultTextStyle(
                               duration: const Duration(milliseconds: 180),
