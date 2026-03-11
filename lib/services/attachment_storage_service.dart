@@ -35,7 +35,11 @@ class AttachmentStorageService {
       final source = File(originalPath);
       if (!await source.exists()) return originalPath;
 
-      final appDir = await getApplicationDocumentsDirectory();
+      // Use getApplicationSupportDirectory() which maps to <appDataDir>/files/
+      // on Android — covered by FileProvider's <files-path path="."> entry.
+      // getApplicationDocumentsDirectory() maps to app_flutter/ which is NOT
+      // covered by FileProvider and causes IllegalArgumentException when opening.
+      final appDir = await getApplicationSupportDirectory();
       final attachmentsDir = Directory('${appDir.path}/attachments');
       if (!await attachmentsDir.exists()) {
         await attachmentsDir.create(recursive: true);

@@ -757,6 +757,9 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                           vertical: 12,
                         ),
                       ),
+                      keyboardType: TextInputType.multiline,
+                      minLines: 1,
+                      maxLines: null,
                       maxLength: 50,
                       validator:
                           (value) =>

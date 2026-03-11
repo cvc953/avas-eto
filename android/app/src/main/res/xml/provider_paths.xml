@@ -4,4 +4,8 @@
     <external-files-path name="external_files_app" path="." />
     <cache-path name="cache" path="." />
     <files-path name="files" path="." />
+    <!-- Covers app_flutter/ (getApplicationDocumentsDirectory on Android) and
+         any other sub-directory inside the app's private data dir. Only files
+         explicitly shared via FLAG_GRANT_READ_URI_PERMISSION are accessible. -->
+    <root-path name="root" path="." />
 </paths>

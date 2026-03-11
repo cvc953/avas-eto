@@ -40,6 +40,36 @@ class NotificationService {
     return tarea.id.hashCode & 0x7fffffff;
   }
 
+  String _eisenhowerQuadrantForTask(Tarea tarea) {
+    final now = DateTime.now();
+    final important =
+        tarea.prioridad.toLowerCase() == 'alta' ||
+        tarea.prioridad.toLowerCase() == 'media';
+    final urgent = tarea.fechaVencimiento.isBefore(
+      now.add(const Duration(days: 2)),
+    );
+
+    if (urgent && important) return 'Urgente e importante';
+    if (!urgent && important) return 'No urgente pero importante';
+    if (urgent && !important) return 'Urgente pero no importante';
+    return 'No urgente y no importante';
+  }
+
+  Color _eisenhowerColorForTask(Tarea tarea) {
+    final now = DateTime.now();
+    final important =
+        tarea.prioridad.toLowerCase() == 'alta' ||
+        tarea.prioridad.toLowerCase() == 'media';
+    final urgent = tarea.fechaVencimiento.isBefore(
+      now.add(const Duration(days: 2)),
+    );
+
+    if (urgent && important) return const Color(0xFFFF5F6D);
+    if (!urgent && important) return const Color(0xFFFFBC1F);
+    if (urgent && !important) return const Color(0xFF4E7BFF);
+    return const Color(0xFF00D4B5);
+  }
+
   Future<void> notifyTaskCreated(Tarea tarea) async {
     final enabled = await NotificationSettings.isEnabled();
     if (!enabled) return;
@@ -83,7 +113,8 @@ class NotificationService {
           id: id,
           channelKey: 'tareas_channel',
           title: 'Recordatorio: ${tarea.title}',
-          body: 'Prioridad: ${tarea.prioridad}\n${tarea.descripcion}',
+          body: _eisenhowerQuadrantForTask(tarea),
+          color: _eisenhowerColorForTask(tarea),
           notificationLayout: NotificationLayout.Default,
           payload: {'taskId': tarea.id},
         ),

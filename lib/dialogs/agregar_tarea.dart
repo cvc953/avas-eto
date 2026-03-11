@@ -703,6 +703,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                           vertical: 12,
                         ),
                       ),
+                      keyboardType: TextInputType.multiline,
+                      minLines: 1,
+                      maxLines: null,
                       maxLength: 50,
                       validator:
                           (value) =>

@@ -62,6 +62,20 @@ class DriveUploadOrchestrator {
         return;
       }
 
+      final attachmentsFolderId = await ensureDriveFolder(
+        token,
+        kDriveAttachmentsFolderName,
+      );
+      if (attachmentsFolderId == null) {
+        debugPrint(
+          'DriveUploadOrchestrator: no se pudo resolver carpeta "$kDriveAttachmentsFolderName".',
+        );
+        await _notificationService.failDriveUploadStatus(
+          'No se pudo preparar la carpeta de Drive para los adjuntos.',
+        );
+        return;
+      }
+
       var completed = 0;
       final total = items.length;
       for (final item in items) {
@@ -74,7 +88,11 @@ class DriveUploadOrchestrator {
           total: total,
         );
 
-        final success = await _processSingleItem(item, token);
+        final success = await _processSingleItem(
+          item,
+          token,
+          attachmentsFolderId,
+        );
         if (success) {
           completed++;
         }
@@ -102,7 +120,11 @@ class DriveUploadOrchestrator {
     }
   }
 
-  Future<bool> _processSingleItem(UploadQueueItem item, String token) async {
+  Future<bool> _processSingleItem(
+    UploadQueueItem item,
+    String token,
+    String attachmentsFolderId,
+  ) async {
     final localFile = File(item.localPath);
     if (!await localFile.exists()) {
       await _queueService.markFailed(
@@ -124,7 +146,11 @@ class DriveUploadOrchestrator {
       markAttachmentUploading,
     );
 
-    final driveId = await uploadFileToDrive(localFile, token);
+    final driveId = await uploadFileToDrive(
+      localFile,
+      token,
+      parentFolderId: attachmentsFolderId,
+    );
     if (driveId == null) {
       await _queueService.markFailed(
         item.attachmentId,
