@@ -5,7 +5,9 @@ import '../utils/attachment_utils.dart';
 
 /// Mapper centralizado para conversiones entre Tarea y Firestore
 class TareaMapper {
-  /// Convierte una Tarea a Map para Firestore
+  /// Convierte una Tarea a Map para Firestore.
+  /// Los adjuntos se guardan sin la ruta local del dispositivo (`path`),
+  /// ya que esa ruta no tiene valor fuera del dispositivo donde se creó.
   static Map<String, dynamic> toFirestoreMap(Tarea tarea, String clave) {
     return {
       'titulo': tarea.title,
@@ -20,13 +22,26 @@ class TareaMapper {
       'vencimiento': Timestamp.fromDate(tarea.fechaVencimiento),
       'duracionMinutos': tarea.duracionMinutos,
       'todoElDia': tarea.todoElDia,
-      'adjuntos': normalizeAttachments(tarea.adjuntos),
+      'adjuntos': toFirestoreAdjuntos(tarea.adjuntos),
       'completadaEn':
           tarea.completada
               ? Timestamp.fromDate(tarea.fechaCompletada)
               : Timestamp.fromDate(DateTime.now()),
       'vecesPospuesta': tarea.vecesPospuesta,
     };
+  }
+
+  /// Convierte la lista de adjuntos a formato Firestore (sin `path` local).
+  static List<Map<String, dynamic>> toFirestoreAdjuntos(
+    List<Map<String, dynamic>> adjuntos,
+  ) {
+    return adjuntos
+        .map((a) {
+          final m = normalizeAttachment(a);
+          m.remove('path');
+          return m;
+        })
+        .toList(growable: false);
   }
 
   /// Convierte un DocumentSnapshot de Firestore a Tarea

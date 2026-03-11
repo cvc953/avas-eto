@@ -9,6 +9,10 @@ import 'package:path_provider/path_provider.dart';
 class AttachmentStorageService {
   const AttachmentStorageService();
 
+  Future<String?> persistFilePath(String originalPath, String fileName) {
+    return _persistAttachmentPath(originalPath, fileName);
+  }
+
   Future<List<Map<String, dynamic>>> persistPickedFiles(
     List<PlatformFile> files,
   ) async {

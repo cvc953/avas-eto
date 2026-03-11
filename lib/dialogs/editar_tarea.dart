@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
@@ -27,6 +28,17 @@ class EditTaskDialog extends StatefulWidget {
 }
 
 class _EditTaskDialogState extends State<EditTaskDialog> {
+  static const int _maxAttachmentBytes = 15 * 1024 * 1024;
+  static const Set<String> _blockedCompressedExtensions = {
+    'zip',
+    'rar',
+    '7z',
+    'tar',
+    'gz',
+    'bz2',
+    'xz',
+  };
+
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _tareaController;
   late TextEditingController _descripcionController;
@@ -487,8 +499,11 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
 
     if (result == null || !mounted) return;
 
+    final allowedFiles = _filterAllowedFiles(result.files);
+    if (allowedFiles.isEmpty) return;
+
     final pending = await _attachmentStorageService.persistPickedFiles(
-      result.files,
+      allowedFiles,
     );
     if (!mounted || pending.isEmpty) return;
 
@@ -506,8 +521,11 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
 
     if (result == null || !mounted) return;
 
+    final allowedFiles = _filterAllowedFiles(result.files);
+    if (allowedFiles.isEmpty) return;
+
     final pending = await _attachmentStorageService.persistPickedFiles(
-      result.files,
+      allowedFiles,
     );
     if (!mounted || pending.isEmpty) return;
 
@@ -516,11 +534,94 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     });
   }
 
-  void _showCameraUnavailableMessage() {
-    AppToast.info(
-      context,
-      'Tomar foto requiere el plugin de camara. Activalo cuando haya conexion para instalar dependencias.',
-    );
+  Future<void> _takePhoto() async {
+    if (!Platform.isAndroid) {
+      if (mounted) {
+        AppToast.info(context, 'Tomar foto nativo esta disponible en Android.');
+      }
+      return;
+    }
+
+    final status = await Permission.camera.request();
+    if (!status.isGranted) {
+      if (mounted) {
+        AppToast.warning(context, 'Permiso de camara denegado.');
+      }
+      return;
+    }
+
+    try {
+      const channel = MethodChannel('com.cvc.avas_eto/open_file');
+      final path = await channel.invokeMethod<String>('takePhoto');
+      if (path == null || path.isEmpty || !mounted) return;
+
+      final rawFile = File(path);
+      final size = await rawFile.length();
+      if (size > _maxAttachmentBytes) {
+        if (mounted) {
+          AppToast.warning(
+            context,
+            'La foto supera 15 MB y no se puede adjuntar.',
+          );
+        }
+        return;
+      }
+
+      final fileName = 'foto_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final stablePath = await _attachmentStorageService.persistFilePath(
+        path,
+        fileName,
+      );
+
+      if (!mounted || stablePath == null || stablePath.isEmpty) return;
+
+      setState(() {
+        _adjuntos.add({'path': stablePath, 'name': fileName, 'size': size});
+      });
+    } catch (e) {
+      if (mounted) {
+        AppToast.error(context, 'No se pudo tomar la foto: $e');
+      }
+    }
+  }
+
+  List<PlatformFile> _filterAllowedFiles(List<PlatformFile> files) {
+    int blockedCompressed = 0;
+    int blockedLarge = 0;
+    final allowed = <PlatformFile>[];
+
+    for (final file in files) {
+      final ext = (file.extension ?? '').toLowerCase();
+      final isCompressed = _blockedCompressedExtensions.contains(ext);
+      final isTooLarge = file.size > _maxAttachmentBytes;
+
+      if (isCompressed) {
+        blockedCompressed++;
+        continue;
+      }
+      if (isTooLarge) {
+        blockedLarge++;
+        continue;
+      }
+      allowed.add(file);
+    }
+
+    if (!mounted) return allowed;
+
+    if (blockedCompressed > 0) {
+      AppToast.warning(
+        context,
+        'Se omitieron $blockedCompressed archivo(s) comprimido(s).',
+      );
+    }
+    if (blockedLarge > 0) {
+      AppToast.warning(
+        context,
+        'Se omitieron $blockedLarge archivo(s) por superar 15 MB.',
+      );
+    }
+
+    return allowed;
   }
 
   Future<void> _showAttachmentOptions() async {
@@ -546,7 +647,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                 title: const Text('Tomar foto'),
                 onTap: () {
                   Navigator.pop(context);
-                  _showCameraUnavailableMessage();
+                  _takePhoto();
                 },
               ),
               ListTile(
@@ -581,6 +682,46 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
         raw.endsWith('.gif') ||
         raw.endsWith('.webp') ||
         raw.endsWith('.bmp');
+  }
+
+  IconData _attachmentIconFor(String name) {
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.pdf')) return Icons.picture_as_pdf_rounded;
+    if (lower.endsWith('.doc') || lower.endsWith('.docx')) {
+      return Icons.description_rounded;
+    }
+    if (lower.endsWith('.xls') ||
+        lower.endsWith('.xlsx') ||
+        lower.endsWith('.csv')) {
+      return Icons.table_chart_rounded;
+    }
+    if (lower.endsWith('.ppt') || lower.endsWith('.pptx')) {
+      return Icons.slideshow_rounded;
+    }
+    if (lower.endsWith('.zip') ||
+        lower.endsWith('.rar') ||
+        lower.endsWith('.7z') ||
+        lower.endsWith('.tar') ||
+        lower.endsWith('.gz')) {
+      return Icons.folder_zip_rounded;
+    }
+    if (lower.endsWith('.mp3') ||
+        lower.endsWith('.wav') ||
+        lower.endsWith('.ogg') ||
+        lower.endsWith('.m4a')) {
+      return Icons.audio_file_rounded;
+    }
+    if (lower.endsWith('.mp4') ||
+        lower.endsWith('.mov') ||
+        lower.endsWith('.mkv') ||
+        lower.endsWith('.avi') ||
+        lower.endsWith('.webm')) {
+      return Icons.video_file_rounded;
+    }
+    if (lower.endsWith('.txt') || lower.endsWith('.md')) {
+      return Icons.text_snippet_rounded;
+    }
+    return Icons.insert_drive_file_rounded;
   }
 
   Widget _buildAttachmentWidget(Map<String, dynamic> item, int index) {
@@ -631,7 +772,12 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
       );
     }
 
+    final icon = _attachmentIconFor(name);
     return InputChip(
+      avatar: CircleAvatar(
+        backgroundColor: AppTheme.primaryColor.withAlpha(28),
+        child: Icon(icon, size: 16, color: AppTheme.primaryColor),
+      ),
       label: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 180),
         child: Text(name, overflow: TextOverflow.ellipsis),
@@ -802,6 +948,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
             TextFormField(
               controller: _tareaController,
               onChanged: (_) => setState(() {}),
+              cursorColor: AppTheme.primaryColor,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: theme.textTheme.titleLarge?.color,
@@ -830,6 +977,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
             TextFormField(
               controller: _descripcionController,
               onChanged: (_) => setState(() {}),
+              cursorColor: AppTheme.primaryColor,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.textTheme.bodyLarge?.color,
               ),
@@ -866,7 +1014,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
         footer: Row(
           children: [
             TaskDialogToolbarButton(
-              icon: Icons.flag_outlined,
+              icon: Icons.flag,
               color: _priorityColor(_prioridadSeleccionada),
               onPressed: () => _showPriorityPicker(theme.cardColor, titleColor),
             ),
@@ -913,6 +1061,9 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               child: FilledButton(
                 onPressed: (_hasChanges && !_isSaving) ? _saveTask : null,
                 style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: AppTheme.primaryColor.withAlpha(90),
                   shape: const CircleBorder(),
                   padding: EdgeInsets.zero,
                 ),

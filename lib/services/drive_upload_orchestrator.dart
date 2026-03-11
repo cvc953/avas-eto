@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 
 import '../mappers/tarea_mapper.dart';
 import '../models/upload_queue_item.dart';
-import '../utils/task_key_generator.dart';
 import '../utils/attachment_utils.dart';
 import 'conectividad_service.dart';
 import 'drive_service.dart';
@@ -218,11 +217,12 @@ class DriveUploadOrchestrator {
     if (tarea == null || tarea.id.isEmpty) return;
 
     try {
-      final clave = TaskKeyGenerator.generateKeyFromDateTime(
-        tarea.fechaVencimiento,
-      );
-      final data = TareaMapper.toFirestoreMap(tarea, clave);
-      await _firestore.collection('tareas').doc(tarea.id).set(data);
+      // Actualiza solo el campo adjuntos para no sobrescribir userId ni otros campos.
+      // Los adjuntos van sin la ruta local del dispositivo.
+      final firestoreAdjuntos = TareaMapper.toFirestoreAdjuntos(tarea.adjuntos);
+      await _firestore.collection('tareas').doc(tarea.id).update({
+        'adjuntos': firestoreAdjuntos,
+      });
     } catch (error) {
       debugPrint('Error sincronizando upload a Firestore: $error');
     }

@@ -100,8 +100,22 @@ class TareasRepository {
               .get();
 
       for (final doc in snapshot.docs) {
-        final tarea = TareaMapper.fromFirestoreQueryDocument(doc);
-        await localStorage.saveTarea(tarea);
+        final tareaFirestore = TareaMapper.fromFirestoreQueryDocument(doc);
+
+        // Firestore no guarda la ruta local del dispositivo. Si la tarea ya
+        // existe localmente con adjuntos pendientes de subir, restauramos el
+        // path para que la subida diferida pueda continuar.
+        final tareaLocal = await localStorage.getTareaByIdInternal(
+          tareaFirestore.id,
+        );
+        final adjuntosMerged = _mergeAdjuntosConLocal(
+          tareaFirestore.adjuntos,
+          tareaLocal?.adjuntos ?? const [],
+        );
+
+        await localStorage.saveTarea(
+          tareaFirestore.copyWith(adjuntos: adjuntosMerged),
+        );
       }
 
       return snapshot.docs.length;
@@ -109,6 +123,37 @@ class TareasRepository {
       print('Error sincronizando tareas desde Firestore: $e');
       return 0;
     }
+  }
+
+  /// Combina los adjuntos descargados de Firestore con los locales.
+  ///
+  /// Firestore no almacena el `path` local, por lo que si un adjunto
+  /// pendiente de subir ya existe en la BD local (con su ruta), se le
+  /// devuelve esa ruta para que el proceso de subida pueda continuar.
+  static List<Map<String, dynamic>> _mergeAdjuntosConLocal(
+    List<Map<String, dynamic>> fromFirestore,
+    List<Map<String, dynamic>> fromLocal,
+  ) {
+    if (fromLocal.isEmpty) return fromFirestore;
+
+    return fromFirestore
+        .map((firestoreAdj) {
+          // Si ya tiene driveId no necesitamos la ruta local.
+          if (attachmentDriveIdOf(firestoreAdj) != null) return firestoreAdj;
+
+          final id = attachmentIdOf(firestoreAdj);
+          if (id == null) return firestoreAdj;
+
+          final localAdj = fromLocal.firstWhere(
+            (a) => attachmentIdOf(a) == id,
+            orElse: () => <String, dynamic>{},
+          );
+          final localPath = attachmentPathOf(localAdj);
+          if (localPath == null) return firestoreAdj;
+
+          return <String, dynamic>{...firestoreAdj, 'path': localPath};
+        })
+        .toList(growable: false);
   }
 
   Future<void> processPendingUploads() async {
