@@ -9,6 +9,8 @@ import 'package:avas_eto/controller/auth_controller.dart';
 import 'package:avas_eto/controller/settings_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:avas_eto/controller/tareas_controller.dart';
+import 'package:avas_eto/services/inicia_con_google.dart';
+import 'package:avas_eto/utils/app_toast.dart';
 
 class MoreOptions extends StatefulWidget {
   final Future<void> Function(dynamic tarea)? onAddTask;
@@ -41,6 +43,9 @@ class _MoreOptionsState extends State<MoreOptions> {
   late final SettingsController _settingsController;
   bool notificationsEnabled = true;
   bool mobileDataUploadsEnabled = false;
+  bool _driveAuthorized = false;
+  bool _checkingDrive = true;
+  bool _authorizingDrive = false;
   DateTime? _lastBackPressedAt;
 
   Future<bool> _onWillPop() async {
@@ -48,14 +53,11 @@ class _MoreOptionsState extends State<MoreOptions> {
     if (_lastBackPressedAt == null ||
         now.difference(_lastBackPressedAt!) > const Duration(seconds: 1)) {
       _lastBackPressedAt = now;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('Presiona nuevamente para salir'),
-            duration: Duration(seconds: 1),
-          ),
-        );
+      AppToast.info(
+        context,
+        'Presiona nuevamente para salir',
+        duration: const Duration(seconds: 1),
+      );
       return false;
     }
     return true;
@@ -74,6 +76,7 @@ class _MoreOptionsState extends State<MoreOptions> {
     controller = Provider.of<TareasController>(context, listen: false);
 
     enableNotifications();
+    _refreshDriveAuthorizationStatus();
   }
 
   void enableNotifications() async {
@@ -81,6 +84,41 @@ class _MoreOptionsState extends State<MoreOptions> {
     notificationsEnabled = await _settingsController.isEnabled();
     mobileDataUploadsEnabled = _settingsController.mobileDataUploadsEnabled;
     setState(() {});
+  }
+
+  Future<void> _refreshDriveAuthorizationStatus() async {
+    final authorized = await isDriveAccessGranted();
+    if (!mounted) return;
+    setState(() {
+      _driveAuthorized = authorized;
+      _checkingDrive = false;
+    });
+  }
+
+  Future<void> _connectDrive() async {
+    if (_authorizingDrive) return;
+    setState(() => _authorizingDrive = true);
+    try {
+      final granted = await requestDriveAccessInteractive();
+      if (!mounted) return;
+      if (granted) {
+        AppToast.success(context, 'Google Drive conectado correctamente.');
+      } else {
+        AppToast.warning(
+          context,
+          'No se otorgo acceso a Drive. Seguiras en modo parcial.',
+        );
+      }
+      await _refreshDriveAuthorizationStatus();
+    } catch (_) {
+      if (!mounted) return;
+      AppToast.error(
+        context,
+        'No se pudo completar la autorizacion de Google Drive.',
+      );
+    } finally {
+      if (mounted) setState(() => _authorizingDrive = false);
+    }
   }
 
   String _getThemeModeLabel(ThemeMode mode) {
@@ -326,6 +364,51 @@ class _MoreOptionsState extends State<MoreOptions> {
                   ),
                 ),
                 onTap: () => _showThemeDialog(),
+              ),
+              ListTile(
+                leading: Icon(
+                  _driveAuthorized
+                      ? Icons.cloud_done_rounded
+                      : Icons.cloud_off_rounded,
+                  color:
+                      _driveAuthorized
+                          ? Colors.green
+                          : Theme.of(context).iconTheme.color,
+                ),
+                title: const Text('Google Drive para adjuntos'),
+                subtitle: Text(
+                  _checkingDrive
+                      ? 'Verificando estado...'
+                      : _driveAuthorized
+                      ? 'Conectado'
+                      : 'Modo parcial activo: adjuntos solo locales',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                ),
+                trailing:
+                    _driveAuthorized
+                        ? IconButton(
+                          tooltip: 'Actualizar estado',
+                          onPressed: _refreshDriveAuthorizationStatus,
+                          icon: const Icon(Icons.refresh_rounded),
+                        )
+                        : TextButton(
+                          onPressed:
+                              _authorizingDrive || _checkingDrive
+                                  ? null
+                                  : _connectDrive,
+                          child:
+                              _authorizingDrive
+                                  ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : const Text('Conectar'),
+                        ),
               ),
               Divider(color: Theme.of(context).dividerColor),
               ListTile(

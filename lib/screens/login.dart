@@ -2,6 +2,7 @@ import 'package:avas_eto/screens/tareas_inicio.dart';
 import 'package:avas_eto/services/password_reset.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../utils/app_toast.dart';
 import '../widgets/login_input.dart';
 import '../widgets/google.dart';
 import '../widgets/boton_inicio.dart';
@@ -69,6 +70,9 @@ class _LoginState extends State<Login> {
                   Text('o', style: TextStyle(color: Colors.grey[600])),
                   const SizedBox(height: 20),
 
+                  _buildDriveExplanationCard(context),
+                  const SizedBox(height: 14),
+
                   Google(
                     onStart: () => setState(() => isLoading = true),
                     onFinish: () {
@@ -121,9 +125,7 @@ class _LoginState extends State<Login> {
     final pass = password.text.trim();
 
     if (email.isEmpty || pass.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, completa todos los campos')),
-      );
+      AppToast.warning(context, 'Por favor, completa todos los campos.');
       return;
     }
 
@@ -148,9 +150,7 @@ class _LoginState extends State<Login> {
         mensaje = 'Contraseña incorrecta';
       }
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(mensaje)));
+      AppToast.error(context, mensaje);
     } finally {
       if (mounted) {
         setState(() {
@@ -158,5 +158,47 @@ class _LoginState extends State<Login> {
         });
       }
     }
+  }
+
+  Widget _buildDriveExplanationCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF152338) : const Color(0xFFEAF3FF);
+    final border = isDark ? const Color(0xFF2F4F77) : const Color(0xFFA2C4EE);
+    final title = isDark ? const Color(0xFFE8F2FF) : const Color(0xFF15314F);
+    final body = isDark ? const Color(0xFFBDD1EC) : const Color(0xFF2A496C);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.cloud_sync_rounded, color: title),
+              const SizedBox(width: 8),
+              Text(
+                'Sincronizacion segura con Google',
+                style: TextStyle(
+                  color: title,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Usamos tu cuenta para sincronizar tareas en la nube (Firestore) y guardar adjuntos en tu Google Drive.\n\nSi no autorizas Drive, podras usar la app en modo parcial y reactivarlo luego desde Mas opciones.',
+            style: TextStyle(color: body, height: 1.35),
+          ),
+        ],
+      ),
+    );
   }
 }

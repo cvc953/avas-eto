@@ -8,6 +8,7 @@ import '../models/tarea.dart';
 import '../dialogs/editar_tarea.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import '../widgets/eisenhower_matrix.dart';
+import '../utils/app_toast.dart';
 import 'tareas_tab_view.dart';
 import 'quadrant_detail_screen.dart';
 
@@ -31,14 +32,11 @@ class _TareasInicioState extends State<TareasInicio> {
     if (_lastBackPressedAt == null ||
         now.difference(_lastBackPressedAt!) > const Duration(seconds: 1)) {
       _lastBackPressedAt = now;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('Presiona nuevamente para salir'),
-            duration: Duration(seconds: 1),
-          ),
-        );
+      AppToast.info(
+        context,
+        'Presiona nuevamente para salir',
+        duration: const Duration(seconds: 1),
+      );
       return false;
     }
     return true;
@@ -189,9 +187,7 @@ class _TareasInicioState extends State<TareasInicio> {
     if (!mounted) return;
 
     try {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(mensaje)));
+      AppToast.error(context, mensaje);
     } catch (e) {
       debugPrint('Error mostrando snackbar: $e');
     }

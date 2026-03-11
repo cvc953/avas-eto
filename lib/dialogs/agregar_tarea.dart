@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 import '../models/tarea.dart';
 import '../services/inicia_con_google.dart';
+import '../utils/app_toast.dart';
 
 class AddTaskDialog extends StatefulWidget {
   final Function(Tarea, String) onSave;
@@ -237,12 +238,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                           );
                           final end = _dateTimeFromTimeOfDay(tempDate, tempEnd);
                           if (!tempAllDay && !end.isAfter(start)) {
-                            ScaffoldMessenger.of(sheetContext).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'La hora final debe ser posterior a la hora de inicio.',
-                                ),
-                              ),
+                            AppToast.warning(
+                              sheetContext,
+                              'La hora final debe ser posterior a la hora de inicio.',
                             );
                             return;
                           }
@@ -303,12 +301,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
       if (!_todoElDia && !fechaVencimiento.isAfter(fechaInicio)) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'La hora final debe ser posterior a la hora de inicio.',
-              ),
-            ),
+          AppToast.warning(
+            context,
+            'La hora final debe ser posterior a la hora de inicio.',
           );
         }
         setState(() => _isSaving = false);
@@ -323,14 +318,14 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       );
       String? driveToken;
       if (hasLocalAttachments) {
-        driveToken = await getGoogleAccessToken(requestDrive: true);
+        driveToken = await getGoogleAccessToken(
+          requestDrive: true,
+          interactiveScopePrompt: false,
+        );
         if (mounted && driveToken == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Los adjuntos se guardaron localmente. La subida a Drive quedara pendiente hasta autorizar el acceso.',
-              ),
-            ),
+          AppToast.warning(
+            context,
+            'Los adjuntos se guardaron localmente. La subida a Drive quedara pendiente hasta autorizar el acceso desde Mas opciones.',
           );
         }
       }
@@ -358,21 +353,16 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       widget.onSave(nuevaTarea, clave);
 
       if (mounted && hasLocalAttachments && driveToken != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'La tarea se guardo y los adjuntos se subiran en segundo plano.',
-            ),
-          ),
+        AppToast.success(
+          context,
+          'La tarea se guardo y los adjuntos se subiran en segundo plano.',
         );
       }
 
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al guardar: ${e.toString()}')),
-        );
+        AppToast.error(context, 'Error al guardar: ${e.toString()}');
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -434,12 +424,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   }
 
   void _showCameraUnavailableMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Tomar foto requiere el plugin de camara. Activalo cuando haya conexion para instalar dependencias.',
-        ),
-      ),
+    AppToast.info(
+      context,
+      'Tomar foto requiere el plugin de camara. Activalo cuando haya conexion para instalar dependencias.',
     );
   }
 
@@ -588,9 +575,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
 
     if (!opened && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo abrir el archivo adjunto.')),
-      );
+      AppToast.error(context, 'No se pudo abrir el archivo adjunto.');
     }
   }
 

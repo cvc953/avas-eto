@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:avas_eto/utils/app_toast.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   final _emailController = TextEditingController();
@@ -32,18 +33,13 @@ class ForgotPasswordScreen extends StatelessWidget {
                   await FirebaseAuth.instance.sendPasswordResetEmail(
                     email: _emailController.text.trim(),
                   );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Correo de restablecimiento enviado. Revisa tu bandeja de entrada.',
-                      ),
-                    ),
+                  AppToast.success(
+                    context,
+                    'Correo de restablecimiento enviado. Revisa tu bandeja de entrada.',
                   );
                   Navigator.pop(context);
                 } on FirebaseAuthException catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: ${e.message}')),
-                  );
+                  AppToast.error(context, 'Error: ${e.message}');
                 }
               },
               child: Text('Enviar enlace'),
