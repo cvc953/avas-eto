@@ -44,8 +44,7 @@ class LocalStorageService {
       final database = await _localDb.db;
       final data = await _store.record(_deviceOwnerIdKey).get(database);
       if (data == null) return null;
-      if (data is Map && data['value'] is String)
-        return data['value'] as String;
+      if (data['value'] is String) return data['value'] as String;
       return null;
     } catch (e) {
       debugPrint('Error leyendo deviceOwnerId: $e');

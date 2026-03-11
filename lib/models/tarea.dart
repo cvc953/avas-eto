@@ -91,6 +91,7 @@ class Tarea {
   // Actualiza toMap
   Map<String, dynamic> toMap() {
     return {
+      'id': localId,
       'localId': localId,
       'firestoreId': firestoreId,
       'title': title,
