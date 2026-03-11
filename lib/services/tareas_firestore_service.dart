@@ -28,6 +28,7 @@ class TareasFirestoreService {
 
     final docRef = await _firestore.collection('tareas').add({
       ...TareaMapper.toFirestoreMap(tarea, fecha),
+      'localId': tarea.localId,
       'creadoEn': FieldValue.serverTimestamp(),
       'userId': userId,
     });
@@ -37,11 +38,12 @@ class TareasFirestoreService {
 
   /// Actualiza una tarea existente
   Future<void> actualizarTarea(Tarea tarea, String fecha) async {
-    if (tarea.id.isEmpty || tarea.id.startsWith('local_')) return;
+    final remoteId = tarea.firestoreId;
+    if (remoteId == null || remoteId.isEmpty) return;
 
     await _firestore
         .collection('tareas')
-        .doc(tarea.id)
+        .doc(remoteId)
         .update(TareaMapper.toFirestoreMap(tarea, fecha));
   }
 

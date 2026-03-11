@@ -124,3 +124,5 @@ android/app/.classpath
 scripts/download_pub_packages.sh
 scripts/download_pub_packages.sh
 agents.md
+.gga
+AGENTS.md

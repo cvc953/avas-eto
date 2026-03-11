@@ -65,19 +65,19 @@ class LocalStorageService {
     try {
       final database = await _localDb.db;
 
-      // Genera un ID único si no existe
+      // Genera un ID local único si no existe.
       final tareaConId =
-          tarea.id.isEmpty
+          tarea.localId.isEmpty
               ? tarea.copyWith(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                localId: DateTime.now().millisecondsSinceEpoch.toString(),
               )
               : tarea;
 
       final map = tareaConId.toMap();
       map[_ownerUserIdKey] = await _activeOwnerId();
 
-      await _store.record(tareaConId.id).put(database, map);
-      debugPrint('Tarea guardada LOCALMENTE: ${tareaConId.id}');
+      await _store.record(tareaConId.localId).put(database, map);
+      debugPrint('Tarea guardada LOCALMENTE: ${tareaConId.localId}');
       return tareaConId;
     } catch (e) {
       debugPrint('Error guardando localmente: $e');
@@ -88,7 +88,16 @@ class LocalStorageService {
   Future<Tarea?> getTareaById(String id) async {
     try {
       final database = await _localDb.db;
-      final data = await _store.record(id).get(database);
+      Map<String, dynamic>? data = await _store.record(id).get(database);
+      if (data == null) {
+        final records = await _store.find(
+          database,
+          finder: Finder(filter: Filter.equals('id', id)),
+        );
+        if (records.isNotEmpty) {
+          data = records.first.value;
+        }
+      }
       if (data == null) return null;
 
       final storedOwner = data[_ownerUserIdKey] as String?;
@@ -110,7 +119,16 @@ class LocalStorageService {
   Future<Tarea?> getTareaByIdInternal(String id) async {
     try {
       final database = await _localDb.db;
-      final data = await _store.record(id).get(database);
+      Map<String, dynamic>? data = await _store.record(id).get(database);
+      if (data == null) {
+        final records = await _store.find(
+          database,
+          finder: Finder(filter: Filter.equals('id', id)),
+        );
+        if (records.isNotEmpty) {
+          data = records.first.value;
+        }
+      }
       if (data == null) return null;
       return Tarea.fromMap(data);
     } catch (e) {

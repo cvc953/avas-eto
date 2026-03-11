@@ -7,7 +7,8 @@ Tarea tareaFromFirestore(QueryDocumentSnapshot doc) {
   final data = doc.data() as Map<String, dynamic>;
 
   return Tarea(
-    id: doc.id,
+    localId: (data['localId'] ?? doc.id).toString(),
+    firestoreId: doc.id,
     title: data['titulo'] ?? '',
     descripcion: data['descripcion'] ?? '',
     prioridad: data['prioridad'] ?? 'Media',

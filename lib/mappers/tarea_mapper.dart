@@ -10,6 +10,7 @@ class TareaMapper {
   /// ya que esa ruta no tiene valor fuera del dispositivo donde se creó.
   static Map<String, dynamic> toFirestoreMap(Tarea tarea, String clave) {
     return {
+      'localId': tarea.localId,
       'titulo': tarea.title,
       'descripcion': tarea.descripcion,
       'prioridad': tarea.prioridad,
@@ -59,7 +60,8 @@ class TareaMapper {
   /// Lógica interna de conversión desde data de Firestore
   static Tarea _fromFirestoreData(String id, Map<String, dynamic> data) {
     return Tarea(
-      id: id,
+      localId: (data['localId'] ?? id).toString(),
+      firestoreId: id,
       title: data['titulo'] ?? '',
       descripcion: data['descripcion'] ?? '',
       prioridad: data['prioridad'] ?? 'Media',

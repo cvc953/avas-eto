@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../utils/attachment_utils.dart';
 
 class Tarea {
-  final String id;
+  final String localId;
+  final String? firestoreId;
+  String get id => localId;
   final String title;
   final String descripcion;
   final String prioridad;
@@ -18,7 +20,9 @@ class Tarea {
   final int vecesPospuesta;
 
   Tarea({
-    required this.id,
+    String? id,
+    String? localId,
+    this.firestoreId,
     required this.title,
     this.descripcion = '',
     this.prioridad = 'Media',
@@ -32,7 +36,8 @@ class Tarea {
     List<Map<String, dynamic>>? adjuntos,
     required this.fechaCompletada,
     this.vecesPospuesta = 0,
-  }) : fechaInicio =
+  }) : localId = (localId ?? id ?? ''),
+       fechaInicio =
            fechaInicio ??
            fechaVencimiento.subtract(Duration(minutes: duracionMinutos ?? 60)),
        duracionMinutos =
@@ -48,6 +53,8 @@ class Tarea {
   // Actualiza copyWith
   Tarea copyWith({
     String? id,
+    String? localId,
+    String? firestoreId,
     String? title,
     String? descripcion,
     String? prioridad,
@@ -63,7 +70,8 @@ class Tarea {
     int? vecesPospuesta,
   }) {
     return Tarea(
-      id: id ?? this.id,
+      localId: localId ?? id ?? this.localId,
+      firestoreId: firestoreId ?? this.firestoreId,
       title: title ?? this.title,
       descripcion: descripcion ?? this.descripcion,
       prioridad: prioridad ?? this.prioridad,
@@ -83,7 +91,8 @@ class Tarea {
   // Actualiza toMap
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
+      'localId': localId,
+      'firestoreId': firestoreId,
       'title': title,
       'descripcion': descripcion,
       'prioridad': prioridad,
@@ -102,8 +111,15 @@ class Tarea {
 
   // Actualiza fromMap
   factory Tarea.fromMap(Map<String, dynamic> map) {
+    final parsedLocalId = (map['localId'] ?? map['id'] ?? '').toString();
+    final parsedFirestoreId =
+        map['firestoreId'] != null && map['firestoreId'].toString().isNotEmpty
+            ? map['firestoreId'].toString()
+            : null;
+
     return Tarea(
-      id: map['id'],
+      localId: parsedLocalId,
+      firestoreId: parsedFirestoreId,
       title: map['title'],
       descripcion: map['descripcion'] ?? '',
       prioridad: map['prioridad'] ?? 'Media',

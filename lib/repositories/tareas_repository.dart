@@ -21,11 +21,24 @@ class TareaRepository {
   TareaRepository(this._firestore, this._localStorage);
 
   Future<void> saveTarea(Tarea tarea) async {
-    await _localStorage.saveTarea(tarea);
+    final persisted = await _localStorage.saveTareaAndReturn(tarea);
 
     if (_firestore != null) {
       try {
-        await _firestore.collection('tareas').doc(tarea.id).set(tarea.toMap());
+        final remoteId = persisted.firestoreId;
+        if (remoteId != null && remoteId.isNotEmpty) {
+          await _firestore
+              .collection('tareas')
+              .doc(remoteId)
+              .set(persisted.toMap(), SetOptions(merge: true));
+        } else {
+          final docRef = await _firestore
+              .collection('tareas')
+              .add(persisted.toMap());
+          await _localStorage.saveTarea(
+            persisted.copyWith(firestoreId: docRef.id),
+          );
+        }
       } catch (e) {
         print('Error al sincronizar con Firestore: $e');
       }
@@ -61,11 +74,15 @@ class TareaRepository {
   }
 
   Future<void> deleteTarea(String id) async {
+    final local = await _localStorage.getTareaByIdInternal(id);
     await _localStorage.deleteTarea(id);
 
     if (_firestore != null) {
       try {
-        await _firestore.collection('tareas').doc(id).delete();
+        final remoteId = local?.firestoreId;
+        if (remoteId != null && remoteId.isNotEmpty) {
+          await _firestore.collection('tareas').doc(remoteId).delete();
+        }
       } catch (e) {
         print('Error eliminando tarea de Firestore: $e');
       }
@@ -186,10 +203,20 @@ class TareasRepository {
         data['userId'] = user.uid;
 
         try {
-          await FirebaseFirestore.instance
-              .collection('tareas')
-              .doc(tareaPersistida.id)
-              .set(data);
+          final remoteId = tareaPersistida.firestoreId;
+          if (remoteId != null && remoteId.isNotEmpty) {
+            await FirebaseFirestore.instance
+                .collection('tareas')
+                .doc(remoteId)
+                .set(data, SetOptions(merge: true));
+          } else {
+            final docRef = await FirebaseFirestore.instance
+                .collection('tareas')
+                .add(data);
+            await localStorage.saveTarea(
+              tareaPersistida.copyWith(firestoreId: docRef.id),
+            );
+          }
         } catch (e) {
           print('Error actualizando tarea en Firestore: $e');
         }
@@ -207,16 +234,17 @@ class TareasRepository {
   }
 
   Future<void> eliminar(Tarea tarea, bool online) async {
-    if (online && tarea.id.isNotEmpty) {
+    final remoteId = tarea.firestoreId;
+    if (online && remoteId != null && remoteId.isNotEmpty) {
       try {
         await FirebaseFirestore.instance
             .collection('tareas')
-            .doc(tarea.id)
+            .doc(remoteId)
             .delete();
       } catch (_) {}
     }
-    await localStorage.deleteTarea(tarea.id);
-    await _uploadQueueService.deleteByTaskId(tarea.id);
+    await localStorage.deleteTarea(tarea.localId);
+    await _uploadQueueService.deleteByTaskId(tarea.localId);
     await NotificationService().cancelNotifications(tarea);
   }
 
@@ -227,11 +255,12 @@ class TareasRepository {
   ) async {
     final actualizada = tarea.copyWith(completada: completada);
 
-    if (online && tarea.id.isNotEmpty) {
+    final remoteId = tarea.firestoreId;
+    if (online && remoteId != null && remoteId.isNotEmpty) {
       try {
         await FirebaseFirestore.instance
             .collection('tareas')
-            .doc(tarea.id)
+            .doc(remoteId)
             .update({'completada': completada});
       } catch (_) {}
     }

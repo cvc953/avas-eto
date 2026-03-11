@@ -214,13 +214,14 @@ class DriveUploadOrchestrator {
     if (_firestore == null) return;
 
     final tarea = await _localStorage.getTareaByIdInternal(taskId);
-    if (tarea == null || tarea.id.isEmpty) return;
+    final remoteId = tarea?.firestoreId;
+    if (tarea == null || remoteId == null || remoteId.isEmpty) return;
 
     try {
       // Actualiza solo el campo adjuntos para no sobrescribir userId ni otros campos.
       // Los adjuntos van sin la ruta local del dispositivo.
       final firestoreAdjuntos = TareaMapper.toFirestoreAdjuntos(tarea.adjuntos);
-      await _firestore.collection('tareas').doc(tarea.id).update({
+      await _firestore.collection('tareas').doc(remoteId).update({
         'adjuntos': firestoreAdjuntos,
       });
     } catch (error) {
