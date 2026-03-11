@@ -97,13 +97,21 @@ class TareasRepository {
   final UploadQueueService _uploadQueueService;
   final DriveUploadOrchestrator _driveUploadOrchestrator;
   final DriveDownloadOrchestrator _driveDownloadOrchestrator;
+  final Future<void> Function(Tarea tarea)? _cancelNotificationsOverride;
+  final Future<void> Function(Tarea tarea)? _notifyTaskCreatedOverride;
+  final Future<void> Function(Tarea tarea, String clave)? _syncTaskOverride;
 
   TareasRepository(
     this.localStorage,
     this._uploadQueueService,
     this._driveUploadOrchestrator,
-    this._driveDownloadOrchestrator,
-  );
+    this._driveDownloadOrchestrator, {
+    Future<void> Function(Tarea tarea)? cancelNotificationsOverride,
+    Future<void> Function(Tarea tarea)? notifyTaskCreatedOverride,
+    Future<void> Function(Tarea tarea, String clave)? syncTaskOverride,
+  }) : _cancelNotificationsOverride = cancelNotificationsOverride,
+       _notifyTaskCreatedOverride = notifyTaskCreatedOverride,
+       _syncTaskOverride = syncTaskOverride;
 
   /// Descarga las tareas del usuario autenticado y las persiste en local.
   ///
@@ -197,12 +205,16 @@ class TareasRepository {
     final tareaPersistida = await localStorage.saveTareaAndReturn(tarea);
 
     if (online) {
-      unawaited(_syncTaskToFirestore(tareaPersistida, clave));
+      unawaited(
+        (_syncTaskOverride ?? _syncTaskToFirestore)(tareaPersistida, clave),
+      );
     }
 
     await _uploadQueueService.enqueueAttachmentsForTask(tareaPersistida);
-    await NotificationService().cancelNotifications(tareaPersistida);
-    await NotificationService().notifyTaskCreated(tareaPersistida);
+    await (_cancelNotificationsOverride ??
+        NotificationService().cancelNotifications)(tareaPersistida);
+    await (_notifyTaskCreatedOverride ??
+        NotificationService().notifyTaskCreated)(tareaPersistida);
 
     if (tareaPersistida.adjuntos.any(attachmentNeedsUpload)) {
       unawaited(_driveUploadOrchestrator.processPendingUploads());
@@ -247,7 +259,8 @@ class TareasRepository {
     }
     await localStorage.deleteTarea(tarea.localId);
     await _uploadQueueService.deleteByTaskId(tarea.localId);
-    await NotificationService().cancelNotifications(tarea);
+    await (_cancelNotificationsOverride ??
+        NotificationService().cancelNotifications)(tarea);
   }
 
   Future<void> marcarCompletada(
@@ -270,7 +283,8 @@ class TareasRepository {
     await localStorage.saveTarea(actualizada);
     if (completada) {
       // Use the updated tarea (same id) to cancel any scheduled notifications.
-      await NotificationService().cancelNotifications(actualizada);
+      await (_cancelNotificationsOverride ??
+          NotificationService().cancelNotifications)(actualizada);
     }
   }
 }
