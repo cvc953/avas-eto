@@ -63,17 +63,20 @@ void main() {
     expect(t3.contains('día') || t3.contains('días'), isTrue);
   });
 
-  test('high priority reminders follow 3d, 1d and 3h before due date', () async {
-    final ns = NotificationService();
-    final due = DateTime(2026, 3, 15, 12, 0);
-    final tarea = await buildTarea('sched-high', due, prioridad: 'Alta');
+  test(
+    'high priority reminders follow 3d, 1d and 3h before due date',
+    () async {
+      final ns = NotificationService();
+      final due = DateTime(2026, 3, 15, 12, 0);
+      final tarea = await buildTarea('sched-high', due, prioridad: 'Alta');
 
-    final reminders = ns.getPreDueReminderMoments(tarea);
-    expect(reminders.length, 3);
-    expect(reminders[0], due.subtract(const Duration(days: 3)));
-    expect(reminders[1], due.subtract(const Duration(days: 1)));
-    expect(reminders[2], due.subtract(const Duration(hours: 3)));
-  });
+      final reminders = ns.getPreDueReminderMoments(tarea);
+      expect(reminders.length, 3);
+      expect(reminders[0], due.subtract(const Duration(days: 3)));
+      expect(reminders[1], due.subtract(const Duration(days: 1)));
+      expect(reminders[2], due.subtract(const Duration(hours: 3)));
+    },
+  );
 
   test('medium priority reminders follow 2d and 1d before due date', () async {
     final ns = NotificationService();
