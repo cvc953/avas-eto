@@ -14,8 +14,8 @@ void main() {
     return MaterialApp(
       home: Scaffold(
         body: Center(
-          child: SizedBox(
-            width: 400,
+          child: OverflowBox(
+            maxWidth: 400,
             child: Builder(
               builder:
                   (context) => Google(
