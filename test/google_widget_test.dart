@@ -30,6 +30,9 @@ void main() {
   testWidgets(
     'requests Drive access when login is authenticated without Drive',
     (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
       var started = false;
       var finished = false;
       var ensureCalled = 0;
@@ -67,6 +70,9 @@ void main() {
   testWidgets('does not request Drive access when already granted in login', (
     tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     var ensureCalled = 0;
     var finished = false;
 
