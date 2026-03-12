@@ -4,10 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized();
-  });
-
   Widget _buildTestable({
     required Future<GoogleLoginResult> Function({bool requestDriveAccess})
     signInWithGoogleFn,
@@ -17,15 +13,14 @@ void main() {
   }) {
     return MaterialApp(
       home: Scaffold(
-        body: Center(
-          child: IntrinsicWidth(
-            child: Google(
-              onStart: onStart,
-              onFinish: onFinish,
-              signInWithGoogleFn: signInWithGoogleFn,
-              ensureDriveAccessFn: ensureDriveAccessFn,
-              onAuthenticated: (ctx) async {},
-            ),
+        body: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Google(
+            onStart: onStart,
+            onFinish: onFinish,
+            signInWithGoogleFn: signInWithGoogleFn,
+            ensureDriveAccessFn: ensureDriveAccessFn,
+            onAuthenticated: (ctx) async {},
           ),
         ),
       ),
@@ -35,9 +30,6 @@ void main() {
   testWidgets(
     'requests Drive access when login is authenticated without Drive',
     (tester) async {
-      await tester.binding.setSurfaceSize(const Size(800, 600));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
       var started = false;
       var finished = false;
       var ensureCalled = 0;
@@ -75,9 +67,6 @@ void main() {
   testWidgets('does not request Drive access when already granted in login', (
     tester,
   ) async {
-    await tester.binding.setSurfaceSize(const Size(800, 600));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
     var ensureCalled = 0;
     var finished = false;
 
