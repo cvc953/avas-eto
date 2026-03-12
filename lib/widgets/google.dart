@@ -34,73 +34,84 @@ class Google extends StatelessWidget {
     show(context, message);
   }
 
+  Widget _buildButton(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isCompact = screenWidth < 250;
+
+    if (isCompact) {
+      return IconButton(
+        key: const Key('google-sign-in-button'),
+        icon: const ImageIcon(AssetImage('assets/google_logo.png'), size: 24),
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.white,
+          padding: const EdgeInsets.all(12),
+        ),
+        onPressed: () => _handleLogin(context),
+      );
+    }
+
+    return SignInButton(
+      key: const Key('google-sign-in-button'),
+      Buttons.GoogleDark,
+      text: 'Inicia con Google',
+      onPressed: () => _handleLogin(context),
+    );
+  }
+
+  Future<void> _handleLogin(BuildContext context) async {
+    onStart();
+    try {
+      final result = await signInWithGoogleFn(requestDriveAccess: true);
+      if (!context.mounted) return;
+
+      if (result.isAuthenticated) {
+        var driveGranted = result.driveGranted;
+        if (!driveGranted) {
+          final status = await ensureDriveAccessFn();
+          driveGranted = status == DriveAccessRequestStatus.granted;
+        }
+
+        if (driveGranted) {
+          _showToast(
+            context,
+            AppToast.success,
+            'Sesion iniciada. Drive esta conectado para tus adjuntos.',
+          );
+        } else {
+          _showToast(
+            context,
+            AppToast.warning,
+            'Sesion iniciada en modo parcial. Puedes reautorizar Drive en Mas opciones.',
+          );
+        }
+        if (onAuthenticated != null) {
+          await onAuthenticated!(context);
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => TareasInicio()),
+          );
+        }
+      } else if (result.status == GoogleLoginStatus.cancelled) {
+        _showToast(context, AppToast.info, 'Inicio de sesion cancelado.');
+      } else {
+        _showToast(
+          context,
+          AppToast.error,
+          result.message ?? 'Error al iniciar sesion con Google.',
+        );
+      }
+    } finally {
+      onFinish();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: SignInButton(
-              key: const Key('google-sign-in-button'),
-              Buttons.GoogleDark,
-              text: 'Inicia con Google',
-              onPressed: () async {
-                onStart();
-                try {
-                  final result = await signInWithGoogleFn(
-                    requestDriveAccess: true,
-                  );
-                  if (!context.mounted) return;
-
-                  if (result.isAuthenticated) {
-                    var driveGranted = result.driveGranted;
-                    if (!driveGranted) {
-                      final status = await ensureDriveAccessFn();
-                      driveGranted = status == DriveAccessRequestStatus.granted;
-                    }
-
-                    if (driveGranted) {
-                      _showToast(
-                        context,
-                        AppToast.success,
-                        'Sesion iniciada. Drive esta conectado para tus adjuntos.',
-                      );
-                    } else {
-                      _showToast(
-                        context,
-                        AppToast.warning,
-                        'Sesion iniciada en modo parcial. Puedes reautorizar Drive en Mas opciones.',
-                      );
-                    }
-                    if (onAuthenticated != null) {
-                      await onAuthenticated!(context);
-                    } else {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => TareasInicio()),
-                    );
-                  }
-                } else if (result.status == GoogleLoginStatus.cancelled) {
-                  _showToast(
-                    context,
-                    AppToast.info,
-                    'Inicio de sesion cancelado.',
-                  );
-                } else {
-                  _showToast(
-                    context,
-                    AppToast.error,
-                    result.message ?? 'Error al iniciar sesion con Google.',
-                  );
-                }
-              } finally {
-                onFinish();
-              }
-            },
-          ),
-          )
-        ],
+        children: [_buildButton(context)],
       ),
     );
   }
