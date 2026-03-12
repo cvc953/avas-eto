@@ -118,4 +118,81 @@ void main() {
       expect(persisted.single.fechaCompletada.isAfter(DateTime(2020)), isTrue);
     },
   );
+
+  test(
+    'guardar emite digest cuando hay 6 o más tareas pendientes el mismo día',
+    () async {
+      final testDb = await TestLocalDb.create();
+      final localStorage = LocalStorageService(testDb as dynamic);
+      final uploadQueue = UploadQueueService(testDb as dynamic);
+      final conectividad = ConectividadService();
+
+      final digestDays = <DateTime>[];
+      final digestTaskCounts = <int>[];
+      final individualNotifications = <String>[];
+
+      final repository = TareasRepository(
+        localStorage,
+        uploadQueue,
+        DriveUploadOrchestrator(
+          uploadQueue,
+          localStorage,
+          conectividad,
+          NotificationService(),
+          null,
+        ),
+        DriveDownloadOrchestrator(localStorage, conectividad),
+        cancelNotificationsOverride: (_) async {},
+        notifyTaskCreatedOverride: (t) async {
+          individualNotifications.add(t.id);
+        },
+        syncTaskOverride: (_, __) async {},
+        notifyDigestOverride: (day, tasks) async {
+          digestDays.add(day);
+          digestTaskCounts.add(tasks.length);
+        },
+        cancelPreDueNotificationsOverride: (_) async {},
+      );
+
+      final now = DateTime(2026, 3, 20, 9, 0);
+      final due = DateTime(2026, 3, 20, 18, 0);
+
+      // Guard up to (threshold - 1) tasks without triggering digest.
+      for (var i = 0; i < 5; i++) {
+        final t = Tarea(
+          id: '',
+          title: 'Tarea $i',
+          prioridad: 'Media',
+          color: Colors.blue,
+          fechaCreacion: now,
+          fechaInicio: due.subtract(const Duration(hours: 2)),
+          fechaVencimiento: due,
+          fechaCompletada: DateTime(0),
+          adjuntos: const [],
+        );
+        await repository.guardar(t, '2026-03-20-09-00', false);
+      }
+      expect(digestDays, isEmpty);
+      expect(individualNotifications.length, 5);
+
+      // 6th task triggers digest.
+      individualNotifications.clear();
+      final t6 = Tarea(
+        id: '',
+        title: 'Tarea 5',
+        prioridad: 'Alta',
+        color: Colors.blue,
+        fechaCreacion: now,
+        fechaInicio: due.subtract(const Duration(hours: 2)),
+        fechaVencimiento: due,
+        fechaCompletada: DateTime(0),
+        adjuntos: const [],
+      );
+      await repository.guardar(t6, '2026-03-20-09-00', false);
+
+      expect(digestDays.length, 1);
+      expect(digestTaskCounts.single, 6);
+      expect(individualNotifications, isEmpty);
+    },
+  );
 }

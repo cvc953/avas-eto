@@ -104,6 +104,10 @@ class TareasRepository {
   final Future<void> Function(Tarea tarea, String clave)? _syncTaskOverride;
   final Future<void> Function(Tarea tarea, {DateTime? completedAt})?
   _recordCompletionOverride;
+  final Future<void> Function(DateTime day, List<Tarea> tasks)?
+  _notifyDigestOverride;
+  final Future<void> Function(List<Tarea> tasks)?
+  _cancelPreDueNotificationsOverride;
 
   TareasRepository(
     this.localStorage,
@@ -116,12 +120,17 @@ class TareasRepository {
     Future<void> Function(Tarea tarea, String clave)? syncTaskOverride,
     Future<void> Function(Tarea tarea, {DateTime? completedAt})?
     recordCompletionOverride,
+    Future<void> Function(DateTime day, List<Tarea> tasks)?
+    notifyDigestOverride,
+    Future<void> Function(List<Tarea> tasks)? cancelPreDueNotificationsOverride,
   }) : _cancelNotificationsOverride = cancelNotificationsOverride,
        _completionBehaviorService =
            completionBehaviorService ?? CompletionBehaviorService(),
        _notifyTaskCreatedOverride = notifyTaskCreatedOverride,
        _syncTaskOverride = syncTaskOverride,
-       _recordCompletionOverride = recordCompletionOverride;
+       _recordCompletionOverride = recordCompletionOverride,
+       _notifyDigestOverride = notifyDigestOverride,
+       _cancelPreDueNotificationsOverride = cancelPreDueNotificationsOverride;
 
   /// Descarga las tareas del usuario autenticado y las persiste en local.
   ///
@@ -223,8 +232,39 @@ class TareasRepository {
     await _uploadQueueService.enqueueAttachmentsForTask(tareaPersistida);
     await (_cancelNotificationsOverride ??
         NotificationService().cancelNotifications)(tareaPersistida);
-    await (_notifyTaskCreatedOverride ??
-        NotificationService().notifyTaskCreated)(tareaPersistida);
+
+    // Saturation check: count non-completed tasks due on the same calendar day.
+    final ns = NotificationService();
+    final dueDay = DateTime(
+      tareaPersistida.fechaVencimiento.year,
+      tareaPersistida.fechaVencimiento.month,
+      tareaPersistida.fechaVencimiento.day,
+    );
+    final allTareas = await localStorage.getTareas();
+    final sameDayTareas =
+        allTareas
+            .where(
+              (t) =>
+                  !t.completada &&
+                  t.fechaVencimiento.year == dueDay.year &&
+                  t.fechaVencimiento.month == dueDay.month &&
+                  t.fechaVencimiento.day == dueDay.day,
+            )
+            .toList(growable: false);
+
+    if (sameDayTareas.length >= NotificationService.saturationThreshold) {
+      // Cancel individual pre-due reminders for every task on that day and
+      // emit a single digest notification.
+      await (_cancelPreDueNotificationsOverride ??
+          ns.cancelPreDueNotificationsForDay)(sameDayTareas);
+      await (_notifyDigestOverride ?? ns.notifyDigestForDay)(
+        dueDay,
+        sameDayTareas,
+      );
+    } else {
+      await (_notifyTaskCreatedOverride ??
+          NotificationService().notifyTaskCreated)(tareaPersistida);
+    }
 
     if (tareaPersistida.adjuntos.any(attachmentNeedsUpload)) {
       unawaited(_driveUploadOrchestrator.processPendingUploads());

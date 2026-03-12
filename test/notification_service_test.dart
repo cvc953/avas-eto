@@ -185,4 +185,15 @@ void main() {
       expect(reminders.last.isBefore(due), isTrue);
     },
   );
+
+  test('digestIdForDate returns same id for same day regardless of time',
+      () async {
+    final ns = NotificationService();
+    final morning = DateTime(2026, 3, 15, 8, 0);
+    final evening = DateTime(2026, 3, 15, 22, 30);
+    final nextDay = DateTime(2026, 3, 16, 8, 0);
+
+    expect(ns.digestIdForDate(morning), ns.digestIdForDate(evening));
+    expect(ns.digestIdForDate(morning), isNot(ns.digestIdForDate(nextDay)));
+  });
 }

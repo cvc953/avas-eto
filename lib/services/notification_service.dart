@@ -8,6 +8,7 @@ import 'notifications_settings.dart';
 
 class NotificationService {
   static const int _driveUploadNotificationId = 9042;
+  static const int saturationThreshold = 6;
   static final NotificationService _instance = NotificationService._internal();
   final CompletionBehaviorService _completionBehaviorService;
   final AdaptiveScheduler _adaptiveScheduler;
@@ -446,6 +447,63 @@ class NotificationService {
         body: message,
         category: NotificationCategory.Status,
         notificationLayout: NotificationLayout.Default,
+      ),
+    );
+  }
+
+  /// Returns the stable digest notification ID for a given calendar date.
+  int digestIdForDate(DateTime date) {
+    final day = DateTime(date.year, date.month, date.day);
+    return day.hashCode & 0x7fffffff;
+  }
+
+  /// Cancels pre-due reminder notifications (IDs +1000, +2000, +3000) for
+  /// every task in [tasks].
+  Future<void> cancelPreDueNotificationsForDay(List<Tarea> tasks) async {
+    for (final tarea in tasks) {
+      final base = _baseIdFromTask(tarea);
+      for (final offset in const [1000, 2000, 3000]) {
+        final id = base + offset;
+        try {
+          await AwesomeNotifications().cancelSchedule(id);
+        } catch (_) {}
+        try {
+          await AwesomeNotifications().cancel(id);
+        } catch (_) {}
+      }
+    }
+  }
+
+  /// Emits a digest notification for [day] summarising [tasks] (already
+  /// ranked by caller).  Top-2 task titles are shown in the body.
+  Future<void> notifyDigestForDay(
+    DateTime day,
+    List<Tarea> tasks,
+  ) async {
+    final enabled = await NotificationSettings.isEnabled();
+    if (!enabled) return;
+
+    final sorted = [...tasks]
+      ..sort(
+        (a, b) => _focusScoreForTask(b, day).compareTo(
+          _focusScoreForTask(a, day),
+        ),
+      );
+    final top2 = sorted.take(2).map((t) => t.title).join(', ');
+    final count = tasks.length;
+
+    await _scheduleNotification(
+      id: digestIdForDate(day),
+      title: 'Hoy tenés $count tareas pendientes',
+      body: 'Las más importantes: $top2',
+      color: const Color(0xFF4E7BFF),
+      taskId: 'digest_${day.year}_${day.month}_${day.day}',
+      schedule: NotificationCalendar(
+        hour: 8,
+        minute: 0,
+        second: 0,
+        repeats: false,
+        preciseAlarm: true,
       ),
     );
   }
