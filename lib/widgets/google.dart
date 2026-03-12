@@ -99,6 +99,7 @@ class Google extends StatelessWidget {
               }
             },
           ),
+          )
         ],
       ),
     );
