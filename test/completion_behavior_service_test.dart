@@ -19,10 +19,7 @@ class TestLocalDb {
   Future<Database> get db async => _db;
 }
 
-Tarea buildTarea({
-  String id = 'task-1',
-  DateTime? dueAt,
-}) {
+Tarea buildTarea({String id = 'task-1', DateTime? dueAt}) {
   final now = DateTime(2026, 3, 12, 9, 0);
   return Tarea(
     id: id,
@@ -40,23 +37,28 @@ Tarea buildTarea({
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('recordCompletion stores hour, weekday and hours from deadline', () async {
-    final testDb = await TestLocalDb.create();
-    final service = CompletionBehaviorService(localDatabase: testDb as dynamic);
-    final dueAt = DateTime(2026, 3, 12, 14, 0);
-    final completedAt = DateTime(2026, 3, 12, 9, 30);
+  test(
+    'recordCompletion stores hour, weekday and hours from deadline',
+    () async {
+      final testDb = await TestLocalDb.create();
+      final service = CompletionBehaviorService(
+        localDatabase: testDb as dynamic,
+      );
+      final dueAt = DateTime(2026, 3, 12, 14, 0);
+      final completedAt = DateTime(2026, 3, 12, 9, 30);
 
-    await service.recordCompletion(
-      buildTarea(dueAt: dueAt),
-      completedAt: completedAt,
-    );
+      await service.recordCompletion(
+        buildTarea(dueAt: dueAt),
+        completedAt: completedAt,
+      );
 
-    final events = await service.getRecentEvents(referenceNow: completedAt);
-    expect(events.length, 1);
-    expect(events.single.hourOfDay, 9);
-    expect(events.single.dayOfWeek, DateTime.thursday);
-    expect(events.single.hoursFromDeadline, 4);
-  });
+      final events = await service.getRecentEvents(referenceNow: completedAt);
+      expect(events.length, 1);
+      expect(events.single.hourOfDay, 9);
+      expect(events.single.dayOfWeek, DateTime.thursday);
+      expect(events.single.hoursFromDeadline, 4);
+    },
+  );
 
   test('getRecentEvents purges local records older than 30 days', () async {
     final testDb = await TestLocalDb.create();
