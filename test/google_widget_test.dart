@@ -36,6 +36,7 @@ void main() {
           signInWithGoogleFn: ({requestDriveAccess = true}) async {
             return const GoogleLoginResult(
               status: GoogleLoginStatus.authenticatedWithoutDrive,
+              driveGrantedOverride: false,
             );
           },
           ensureDriveAccessFn: () async {
@@ -66,6 +67,7 @@ void main() {
         signInWithGoogleFn: ({requestDriveAccess = true}) async {
           return const GoogleLoginResult(
             status: GoogleLoginStatus.authenticatedWithDrive,
+            driveGrantedOverride: true,
           );
         },
         ensureDriveAccessFn: () async {
