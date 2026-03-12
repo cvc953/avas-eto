@@ -40,7 +40,8 @@ class GoogleLoginResult {
       status == GoogleLoginStatus.authenticatedWithoutDrive;
 
   bool get driveGranted =>
-      driveGrantedOverride ?? status == GoogleLoginStatus.authenticatedWithDrive;
+      driveGrantedOverride ??
+      status == GoogleLoginStatus.authenticatedWithDrive;
 }
 
 String? _cachedDriveAccessToken;
