@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:avas_eto/models/tarea.dart';
 import 'package:avas_eto/repositories/tareas_repository.dart';
@@ -10,7 +9,6 @@ import 'package:avas_eto/services/notification_service.dart';
 import 'package:avas_eto/services/upload_queue_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_memory.dart';
 
 class TestLocalDb {

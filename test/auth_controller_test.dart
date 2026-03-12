@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_memory.dart';
 import 'package:avas_eto/services/local_storage_service.dart';
 import 'package:avas_eto/controller/auth_controller.dart';

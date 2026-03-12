@@ -67,7 +67,7 @@ class NotificationService {
   String _importanceIconHtml(Tarea tarea) {
     final color = _eisenhowerColorForTask(tarea);
     final hex =
-        '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+        '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
     return '<font color="$hex">●</font>';
   }
 

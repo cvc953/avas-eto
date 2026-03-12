@@ -2,7 +2,6 @@ import 'package:avas_eto/models/tarea.dart';
 import 'package:avas_eto/services/completion_behavior_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_memory.dart';
 
 class TestLocalDb {

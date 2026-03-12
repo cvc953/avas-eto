@@ -24,7 +24,7 @@ class AuthController {
     try {
       final uid = currentUidOverride ?? _auth.currentUser?.uid;
       if (_localStorage != null) {
-        await _localStorage!.setDeviceOwnerId(uid);
+        await _localStorage.setDeviceOwnerId(uid);
       }
     } catch (e) {
       // Non-fatal: persist best-effort
