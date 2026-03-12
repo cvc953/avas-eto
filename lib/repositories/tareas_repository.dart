@@ -6,6 +6,7 @@ import '../models/tarea.dart';
 import '../services/local_storage_service.dart';
 import '../mappers/tarea_mapper.dart';
 import '../services/notification_service.dart';
+import '../services/completion_behavior_service.dart';
 import '../services/drive_download_orchestrator.dart';
 import '../services/drive_upload_orchestrator.dart';
 import '../services/background_upload_scheduler.dart';
@@ -97,21 +98,30 @@ class TareasRepository {
   final UploadQueueService _uploadQueueService;
   final DriveUploadOrchestrator _driveUploadOrchestrator;
   final DriveDownloadOrchestrator _driveDownloadOrchestrator;
+  final CompletionBehaviorService _completionBehaviorService;
   final Future<void> Function(Tarea tarea)? _cancelNotificationsOverride;
   final Future<void> Function(Tarea tarea)? _notifyTaskCreatedOverride;
   final Future<void> Function(Tarea tarea, String clave)? _syncTaskOverride;
+  final Future<void> Function(Tarea tarea, {DateTime? completedAt})?
+  _recordCompletionOverride;
 
   TareasRepository(
     this.localStorage,
     this._uploadQueueService,
     this._driveUploadOrchestrator,
     this._driveDownloadOrchestrator, {
+    CompletionBehaviorService? completionBehaviorService,
     Future<void> Function(Tarea tarea)? cancelNotificationsOverride,
     Future<void> Function(Tarea tarea)? notifyTaskCreatedOverride,
     Future<void> Function(Tarea tarea, String clave)? syncTaskOverride,
+    Future<void> Function(Tarea tarea, {DateTime? completedAt})?
+    recordCompletionOverride,
   }) : _cancelNotificationsOverride = cancelNotificationsOverride,
+       _completionBehaviorService =
+           completionBehaviorService ?? CompletionBehaviorService(),
        _notifyTaskCreatedOverride = notifyTaskCreatedOverride,
-       _syncTaskOverride = syncTaskOverride;
+       _syncTaskOverride = syncTaskOverride,
+       _recordCompletionOverride = recordCompletionOverride;
 
   /// Descarga las tareas del usuario autenticado y las persiste en local.
   ///
@@ -268,7 +278,11 @@ class TareasRepository {
     bool completada,
     bool online,
   ) async {
-    final actualizada = tarea.copyWith(completada: completada);
+    final completionTime = completada ? DateTime.now() : DateTime(0);
+    final actualizada = tarea.copyWith(
+      completada: completada,
+      fechaCompletada: completionTime,
+    );
 
     final remoteId = tarea.firestoreId;
     if (online && remoteId != null && remoteId.isNotEmpty) {
@@ -276,12 +290,21 @@ class TareasRepository {
         await FirebaseFirestore.instance
             .collection('tareas')
             .doc(remoteId)
-            .update({'completada': completada});
+            .update({
+              'completada': completada,
+              'completadaEn':
+                  completada ? Timestamp.fromDate(completionTime) : null,
+            });
       } catch (_) {}
     }
 
     await localStorage.saveTarea(actualizada);
     if (completada) {
+      await (_recordCompletionOverride ??
+          _completionBehaviorService.recordCompletion)(
+        actualizada,
+        completedAt: completionTime,
+      );
       // Use the updated tarea (same id) to cancel any scheduled notifications.
       await (_cancelNotificationsOverride ??
           NotificationService().cancelNotifications)(actualizada);

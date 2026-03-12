@@ -1,15 +1,25 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
+import '../models/completion_behavior_event.dart';
 import '../models/tarea.dart';
+import 'adaptive_scheduler.dart';
+import 'completion_behavior_service.dart';
 import 'notifications_settings.dart';
 
 class NotificationService {
   static const int _driveUploadNotificationId = 9042;
   static final NotificationService _instance = NotificationService._internal();
+  final CompletionBehaviorService _completionBehaviorService;
+  final AdaptiveScheduler _adaptiveScheduler;
 
   factory NotificationService() => _instance;
 
-  NotificationService._internal() {
+  NotificationService._internal({
+    CompletionBehaviorService? completionBehaviorService,
+    AdaptiveScheduler? adaptiveScheduler,
+  }) : _completionBehaviorService =
+           completionBehaviorService ?? CompletionBehaviorService(),
+       _adaptiveScheduler = adaptiveScheduler ?? AdaptiveScheduler() {
     _initialize();
   }
 
@@ -158,6 +168,61 @@ class NotificationService {
     return [due.subtract(const Duration(days: 1))];
   }
 
+  List<DateTime> _applyAdaptiveWindows({
+    required List<DateTime> reminderMoments,
+    required DateTime due,
+    required List<CompletionBehaviorEvent> events,
+    required DateTime referenceNow,
+  }) {
+    return reminderMoments.map((scheduled) {
+      return _adaptiveScheduler.alignReminder(
+        scheduled: scheduled,
+        due: due,
+        events: events,
+        referenceNow: referenceNow,
+      );
+    }).toList(growable: false);
+  }
+
+  List<DateTime> _preDueReminderMomentsForTaskWithHistory(
+    Tarea tarea,
+    List<CompletionBehaviorEvent> events, {
+    DateTime? referenceNow,
+  }) {
+    final now = referenceNow ?? DateTime.now();
+    final baseMoments = _preDueReminderMomentsForTask(tarea);
+    final normalizedPriority = tarea.prioridad.toLowerCase();
+
+    if (events.isEmpty) {
+      return baseMoments;
+    }
+
+    List<int> baseLeadHours;
+    if (normalizedPriority == 'alta') {
+      baseLeadHours = const [72, 24, 3];
+    } else if (normalizedPriority == 'media') {
+      baseLeadHours = const [48, 24];
+    } else {
+      baseLeadHours = const [24];
+    }
+
+    final adjustedBaseMoments = baseLeadHours.map((leadHours) {
+      final adjustedLead = _adaptiveScheduler.adjustedLeadHours(
+        events: events,
+        baseLeadHours: leadHours,
+        referenceNow: now,
+      );
+      return tarea.fechaVencimiento.subtract(Duration(hours: adjustedLead));
+    }).toList(growable: false);
+
+    return _applyAdaptiveWindows(
+      reminderMoments: adjustedBaseMoments,
+      due: tarea.fechaVencimiento,
+      events: events,
+      referenceNow: now,
+    );
+  }
+
   // Public wrappers for testability
   String getImportanceText(Tarea tarea) => _importanceWithIcon(tarea);
   String getOverdueText(Tarea tarea) => _overdueTextFor(tarea);
@@ -167,6 +232,15 @@ class NotificationService {
       _reminderCadenceForTask(tarea, referenceNow ?? DateTime.now());
   List<DateTime> getPreDueReminderMoments(Tarea tarea) =>
       _preDueReminderMomentsForTask(tarea);
+  List<DateTime> getPreDueReminderMomentsWithHistory(
+    Tarea tarea,
+    List<CompletionBehaviorEvent> events, {
+    DateTime? referenceNow,
+  }) => _preDueReminderMomentsForTaskWithHistory(
+    tarea,
+    events,
+    referenceNow: referenceNow,
+  );
 
   Color _eisenhowerColorForTask(Tarea tarea) {
     final now = DateTime.now();
@@ -231,7 +305,14 @@ class NotificationService {
 
     final base = _baseIdFromTask(tarea);
     final now = DateTime.now();
-    final reminderMoments = _preDueReminderMomentsForTask(tarea);
+    final behaviorEvents = await _completionBehaviorService.getRecentEvents(
+      referenceNow: now,
+    );
+    final reminderMoments = _preDueReminderMomentsForTaskWithHistory(
+      tarea,
+      behaviorEvents,
+      referenceNow: now,
+    );
     final reminderIds = [1000, 2000, 3000];
 
     for (var index = 0; index < reminderMoments.length; index++) {

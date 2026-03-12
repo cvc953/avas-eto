@@ -53,6 +53,7 @@ class TareasFirestoreService {
 
     await _firestore.collection('tareas').doc(tareaId).update({
       'completada': completada,
+      'completadaEn': completada ? FieldValue.serverTimestamp() : null,
     });
   }
 

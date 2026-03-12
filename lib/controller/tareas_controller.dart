@@ -246,7 +246,10 @@ class TareasController {
     bool completada,
     bool online,
   ) async {
-    final actualizada = tarea.copyWith(completada: completada);
+    final actualizada = tarea.copyWith(
+      completada: completada,
+      fechaCompletada: completada ? DateTime.now() : DateTime(0),
+    );
 
     // Try to update remote; don't reload everything afterwards to keep UI snappy.
     try {
@@ -269,7 +272,10 @@ class TareasController {
   /// Apply a local, optimistic completed toggle immediately.
   /// Fires a background save to local storage (not awaited) so the UI can update instantly.
   void markCompletadaLocal(Tarea tarea, bool completada) {
-    final actualizada = tarea.copyWith(completada: completada);
+    final actualizada = tarea.copyWith(
+      completada: completada,
+      fechaCompletada: completada ? DateTime.now() : DateTime(0),
+    );
 
     for (final entry in tareas.entries) {
       for (var i = 0; i < entry.value.length; i++) {

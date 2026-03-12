@@ -27,7 +27,7 @@ class TareaMapper {
       'completadaEn':
           tarea.completada
               ? Timestamp.fromDate(tarea.fechaCompletada)
-              : Timestamp.fromDate(DateTime.now()),
+            : null,
       'vecesPospuesta': tarea.vecesPospuesta,
     };
   }
@@ -85,7 +85,7 @@ class TareaMapper {
       todoElDia: data['todoElDia'] ?? false,
       adjuntos: _parseAdjuntos(data['adjuntos']),
       fechaCompletada:
-          (data['completadaEn'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          (data['completadaEn'] as Timestamp?)?.toDate() ?? DateTime(0),
       vecesPospuesta: data['vecesPospuesta'] ?? 0,
     );
   }
