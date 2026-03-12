@@ -13,8 +13,8 @@ void main() {
   }) {
     return MaterialApp(
       home: Scaffold(
-        body: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
+        body: SizedBox(
+          width: 400,
           child: Google(
             onStart: onStart,
             onFinish: onFinish,

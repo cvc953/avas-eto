@@ -34,9 +34,8 @@ class Google extends StatelessWidget {
     show(context, message);
   }
 
-  Widget _buildButton(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isCompact = screenWidth < 250;
+  Widget _buildButton(BuildContext context, double availableWidth) {
+    final isCompact = availableWidth < 250;
 
     if (isCompact) {
       return IconButton(
@@ -109,9 +108,10 @@ class Google extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [_buildButton(context)],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return _buildButton(context, constraints.maxWidth);
+        },
       ),
     );
   }
