@@ -13,20 +13,12 @@ void main() {
   }) {
     return MaterialApp(
       home: Scaffold(
-        body: Center(
-          child: OverflowBox(
-            maxWidth: 400,
-            child: Builder(
-              builder:
-                  (context) => Google(
-                    onStart: onStart,
-                    onFinish: onFinish,
-                    signInWithGoogleFn: signInWithGoogleFn,
-                    ensureDriveAccessFn: ensureDriveAccessFn,
-                    onAuthenticated: (ctx) async {},
-                  ),
-            ),
-          ),
+        body: Google(
+          onStart: onStart,
+          onFinish: onFinish,
+          signInWithGoogleFn: signInWithGoogleFn,
+          ensureDriveAccessFn: ensureDriveAccessFn,
+          onAuthenticated: (ctx) async {},
         ),
       ),
     );
@@ -35,6 +27,11 @@ void main() {
   testWidgets(
     'requests Drive access when login is authenticated without Drive',
     (tester) async {
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       var started = false;
       var finished = false;
       var ensureCalled = 0;
@@ -72,6 +69,11 @@ void main() {
   testWidgets('does not request Drive access when already granted in login', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(1080, 1920);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     var ensureCalled = 0;
     var finished = false;
 
