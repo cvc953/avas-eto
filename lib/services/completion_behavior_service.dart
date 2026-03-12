@@ -11,19 +11,27 @@ class CompletionBehaviorService {
   static const Duration retention = Duration(days: 30);
   static const String _ownerUserIdKey = '_ownerUserId';
 
-  final DatabaseProvider _localDatabase;
+  final Object _localDatabase;
   final FirebaseFirestore? _firestore;
-  final FirebaseAuth _auth;
+  final FirebaseAuth? _auth;
   final StoreRef<String, Map<String, dynamic>> _store =
       StoreRef<String, Map<String, dynamic>>('completion_behavior');
 
   CompletionBehaviorService({
-    DatabaseProvider? localDatabase,
+    Object? localDatabase,
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
   }) : _localDatabase = localDatabase ?? LocalDatabase(),
        _firestore = firestore,
-       _auth = auth ?? FirebaseAuth.instance;
+       _auth = auth ?? _resolveFirebaseAuth();
+
+  static FirebaseAuth? _resolveFirebaseAuth() {
+    try {
+      return FirebaseAuth.instance;
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<void> recordCompletion(Tarea tarea, {DateTime? completedAt}) async {
     final completionTime = completedAt ?? DateTime.now();
@@ -61,8 +69,8 @@ class CompletionBehaviorService {
 
   Future<void> _saveLocalEvent(CompletionBehaviorEvent event) async {
     try {
-      final database = await _localDatabase.db;
-      final ownerId = _auth.currentUser?.uid;
+      final database = await resolveDatabase(_localDatabase);
+      final ownerId = _auth?.currentUser?.uid;
       final map = event.toMap();
       if (ownerId != null && ownerId.isNotEmpty) {
         map[_ownerUserIdKey] = ownerId;
@@ -75,7 +83,7 @@ class CompletionBehaviorService {
 
   Future<void> _saveRemoteEvent(CompletionBehaviorEvent event) async {
     final firestore = _firestore ?? FirebaseFirestore.instance;
-    final user = _auth.currentUser;
+    final user = _auth?.currentUser;
     if (user == null) return;
 
     try {
@@ -98,8 +106,8 @@ class CompletionBehaviorService {
     required DateTime referenceNow,
   }) async {
     try {
-      final database = await _localDatabase.db;
-      final ownerId = _auth.currentUser?.uid;
+      final database = await resolveDatabase(_localDatabase);
+      final ownerId = _auth?.currentUser?.uid;
       final records = await _store.find(database);
 
       return records
@@ -123,7 +131,7 @@ class CompletionBehaviorService {
     required DateTime referenceNow,
   }) async {
     final firestore = _firestore ?? FirebaseFirestore.instance;
-    final user = _auth.currentUser;
+    final user = _auth?.currentUser;
     if (user == null) return const [];
 
     try {
@@ -159,7 +167,7 @@ class CompletionBehaviorService {
   Future<void> _purgeExpiredLocal({DateTime? referenceNow}) async {
     try {
       final now = referenceNow ?? DateTime.now();
-      final database = await _localDatabase.db;
+      final database = await resolveDatabase(_localDatabase);
       final records = await _store.find(database);
       for (final record in records) {
         final event = CompletionBehaviorEvent.fromMap(record.value);
@@ -174,7 +182,7 @@ class CompletionBehaviorService {
 
   Future<void> _purgeExpiredRemote({DateTime? referenceNow}) async {
     final firestore = _firestore ?? FirebaseFirestore.instance;
-    final user = _auth.currentUser;
+    final user = _auth?.currentUser;
     if (user == null) return;
 
     try {

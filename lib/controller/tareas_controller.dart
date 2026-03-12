@@ -120,7 +120,7 @@ class TareasController {
   }
 
   /// Calcula el score de foco para una tarea
-  /// scoreUrgencia = max(0, 7 - dias_restantes)
+  /// scoreUrgencia = max(0, 5 - dias_restantes)
   /// scoreImportancia = prioridad_usuario * 3
   /// scoreProcrastinacion = veces_pospuesta * 2
   /// scoreFocoHoy = scoreImportancia + scoreUrgencia + scoreProcrastinacion
@@ -133,9 +133,8 @@ class TareasController {
     final importancia = prioridadValor[tarea.prioridad.toLowerCase()] ?? 1;
     final scoreImportancia = importancia * 3;
 
-    // Urgencia basada en días restantes (ventana de 7 días)
-    final scoreUrgencia =
-        (7 - diasRestantes).clamp(0, double.infinity).toDouble();
+    // Urgencia basada en días restantes dentro de una ventana corta.
+    final scoreUrgencia = (5 - diasRestantes).clamp(0, 5).toDouble();
 
     // Procrastinación: número de veces que se pospuso la tarea
     final scoreProcrastinacion = tarea.vecesPospuesta * 2.0;

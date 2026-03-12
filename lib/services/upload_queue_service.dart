@@ -10,14 +10,14 @@ class UploadQueueService {
   static const String uploadingStatus = AttachmentSyncState.uploading;
   static const String failedStatus = AttachmentSyncState.failed;
 
-  final DatabaseProvider _localDb;
+  final Object _localDb;
   final StoreRef<String, Map<String, dynamic>> _store = stringMapStoreFactory
       .store('drive_upload_queue');
 
   UploadQueueService(this._localDb);
 
   Future<void> enqueueAttachmentsForTask(Tarea tarea) async {
-    final database = await _localDb.db;
+    final database = await resolveDatabase(_localDb);
 
     for (final attachment in tarea.adjuntos) {
       if (!attachmentNeedsUpload(attachment)) continue;
@@ -57,7 +57,7 @@ class UploadQueueService {
   Future<List<UploadQueueItem>> getProcessableItems({
     int maxRetries = 5,
   }) async {
-    final database = await _localDb.db;
+    final database = await resolveDatabase(_localDb);
     final finder = Finder(sortOrders: [SortOrder('createdAt')]);
     final records = await _store.find(database, finder: finder);
 
@@ -82,12 +82,12 @@ class UploadQueueService {
   }
 
   Future<void> markUploaded(String attachmentId) async {
-    final database = await _localDb.db;
+    final database = await resolveDatabase(_localDb);
     await _store.record(attachmentId).delete(database);
   }
 
   Future<void> markFailed(String attachmentId, String error) async {
-    final database = await _localDb.db;
+    final database = await resolveDatabase(_localDb);
     final record = await _store.record(attachmentId).get(database);
     if (record == null) return;
 
@@ -102,7 +102,7 @@ class UploadQueueService {
   }
 
   Future<void> deleteByTaskId(String taskId) async {
-    final database = await _localDb.db;
+    final database = await resolveDatabase(_localDb);
     final finder = Finder(filter: Filter.equals('taskId', taskId));
     await _store.delete(database, finder: finder);
   }
@@ -117,7 +117,7 @@ class UploadQueueService {
     String status, {
     bool clearError = false,
   }) async {
-    final database = await _localDb.db;
+    final database = await resolveDatabase(_localDb);
     final record = await _store.record(attachmentId).get(database);
     if (record == null) return;
 

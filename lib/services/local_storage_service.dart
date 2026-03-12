@@ -12,12 +12,20 @@ class LocalStorageService {
 
   final StoreRef<String, Map<String, dynamic>> _store =
       StoreRef<String, Map<String, dynamic>>.main();
-  final DatabaseProvider _localDb;
+  final Object _localDb;
 
   LocalStorageService(this._localDb);
 
+  String? _currentUserUid() {
+    try {
+      return FirebaseAuth.instance.currentUser?.uid;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<String> _activeOwnerId() async {
-    final current = FirebaseAuth.instance.currentUser?.uid;
+    final current = _currentUserUid();
     if (current != null) return current;
 
     final persisted = await _getPersistedDeviceOwnerId();
@@ -28,7 +36,7 @@ class LocalStorageService {
 
   Future<void> setDeviceOwnerId(String? uid) async {
     try {
-      final database = await _localDb.db;
+      final database = await resolveDatabase(_localDb);
       if (uid == null) {
         await _store.record(_deviceOwnerIdKey).delete(database);
       } else {
@@ -41,7 +49,7 @@ class LocalStorageService {
 
   Future<String?> _getPersistedDeviceOwnerId() async {
     try {
-      final database = await _localDb.db;
+      final database = await resolveDatabase(_localDb);
       final data = await _store.record(_deviceOwnerIdKey).get(database);
       if (data == null) return null;
       if (data['value'] is String) return data['value'] as String;
@@ -62,7 +70,7 @@ class LocalStorageService {
 
   Future<Tarea> saveTareaAndReturn(Tarea tarea) async {
     try {
-      final database = await _localDb.db;
+      final database = await resolveDatabase(_localDb);
 
       // Genera un ID local único si no existe.
       final tareaConId =
@@ -86,7 +94,7 @@ class LocalStorageService {
 
   Future<Tarea?> getTareaById(String id) async {
     try {
-      final database = await _localDb.db;
+      final database = await resolveDatabase(_localDb);
       Map<String, dynamic>? data = await _store.record(id).get(database);
       if (data == null) {
         final records = await _store.find(
@@ -117,7 +125,7 @@ class LocalStorageService {
   /// sin `FirebaseAuth.currentUser` inicializado.
   Future<Tarea?> getTareaByIdInternal(String id) async {
     try {
-      final database = await _localDb.db;
+      final database = await resolveDatabase(_localDb);
       Map<String, dynamic>? data = await _store.record(id).get(database);
       if (data == null) {
         final records = await _store.find(
@@ -158,7 +166,7 @@ class LocalStorageService {
 
   Future<List<Tarea>> getTareas() async {
     try {
-      final database = await _localDb.db;
+      final database = await resolveDatabase(_localDb);
       final records = await _store.find(database);
       final ownerId = await _activeOwnerId();
 
@@ -200,7 +208,7 @@ class LocalStorageService {
 
   Future<void> deleteTarea(String id) async {
     try {
-      final database = await _localDb.db;
+      final database = await resolveDatabase(_localDb);
       await _store.record(id).delete(database);
       debugPrint('Tarea eliminada: $id');
     } catch (e) {

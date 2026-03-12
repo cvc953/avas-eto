@@ -8,6 +8,19 @@ abstract class DatabaseProvider {
   Future<Database> get db;
 }
 
+Future<Database> resolveDatabase(dynamic source) async {
+  if (source is DatabaseProvider) {
+    return source.db;
+  }
+
+  final database = await (source as dynamic).db;
+  if (database is Database) {
+    return database;
+  }
+
+  throw StateError('Unsupported database provider: ${source.runtimeType}');
+}
+
 class LocalDatabase implements DatabaseProvider {
   Database? _db;
   final Completer<Database> _dbCompleter = Completer<Database>();
