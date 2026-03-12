@@ -40,44 +40,45 @@ class Google extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SignInButton(
-            key: const Key('google-sign-in-button'),
-            Buttons.GoogleDark,
-            text: 'Inicia con Google',
-            onPressed: () async {
-              onStart();
-              try {
-                final result = await signInWithGoogleFn(
-                  requestDriveAccess: true,
-                );
-                if (!context.mounted) return;
+          Expanded(
+            child: SignInButton(
+              key: const Key('google-sign-in-button'),
+              Buttons.GoogleDark,
+              text: 'Inicia con Google',
+              onPressed: () async {
+                onStart();
+                try {
+                  final result = await signInWithGoogleFn(
+                    requestDriveAccess: true,
+                  );
+                  if (!context.mounted) return;
 
-                if (result.isAuthenticated) {
-                  var driveGranted = result.driveGranted;
-                  if (!driveGranted) {
-                    final status = await ensureDriveAccessFn();
-                    driveGranted = status == DriveAccessRequestStatus.granted;
-                  }
+                  if (result.isAuthenticated) {
+                    var driveGranted = result.driveGranted;
+                    if (!driveGranted) {
+                      final status = await ensureDriveAccessFn();
+                      driveGranted = status == DriveAccessRequestStatus.granted;
+                    }
 
-                  if (driveGranted) {
-                    _showToast(
-                      context,
-                      AppToast.success,
-                      'Sesion iniciada. Drive esta conectado para tus adjuntos.',
-                    );
-                  } else {
-                    _showToast(
-                      context,
-                      AppToast.warning,
-                      'Sesion iniciada en modo parcial. Puedes reautorizar Drive en Mas opciones.',
-                    );
-                  }
-                  if (onAuthenticated != null) {
-                    await onAuthenticated!(context);
-                  } else {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => TareasInicio()),
+                    if (driveGranted) {
+                      _showToast(
+                        context,
+                        AppToast.success,
+                        'Sesion iniciada. Drive esta conectado para tus adjuntos.',
+                      );
+                    } else {
+                      _showToast(
+                        context,
+                        AppToast.warning,
+                        'Sesion iniciada en modo parcial. Puedes reautorizar Drive en Mas opciones.',
+                      );
+                    }
+                    if (onAuthenticated != null) {
+                      await onAuthenticated!(context);
+                    } else {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => TareasInicio()),
                     );
                   }
                 } else if (result.status == GoogleLoginStatus.cancelled) {
