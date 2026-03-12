@@ -9,7 +9,7 @@ abstract class DatabaseProvider {
 
 Future<Database> resolveDatabase(dynamic source) async {
   if (source is DatabaseProvider) {
-    return source.db;
+    return await source.db;
   }
 
   final database = await (source as dynamic).db;

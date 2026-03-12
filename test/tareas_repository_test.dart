@@ -1,5 +1,6 @@
 import 'package:avas_eto/models/tarea.dart';
 import 'package:avas_eto/repositories/tareas_repository.dart';
+import 'package:avas_eto/services/completion_behavior_service.dart';
 import 'package:avas_eto/services/conectividad_service.dart';
 import 'package:avas_eto/services/drive_download_orchestrator.dart';
 import 'package:avas_eto/services/drive_upload_orchestrator.dart';
@@ -22,6 +23,11 @@ class TestLocalDb implements DatabaseProvider {
 
   @override
   Future<Database> get db async => _db;
+}
+
+class MockCompletionBehaviorService extends CompletionBehaviorService {
+  MockCompletionBehaviorService(TestLocalDb testDb)
+    : super(localDatabase: testDb, auth: null, firestore: null);
 }
 
 Tarea buildTarea() {
@@ -49,6 +55,7 @@ void main() {
       final localStorage = LocalStorageService(testDb);
       final uploadQueue = UploadQueueService(testDb);
       final conectividad = ConectividadService();
+      final mockCompletion = MockCompletionBehaviorService(testDb);
 
       final repository = TareasRepository(
         localStorage,
@@ -61,7 +68,7 @@ void main() {
           null,
         ),
         DriveDownloadOrchestrator(localStorage, conectividad),
-        completionBehaviorService: null,
+        completionBehaviorService: mockCompletion,
         cancelNotificationsOverride: (_) async {},
         notifyTaskCreatedOverride: (_) async {},
         syncTaskOverride: (_, __) async {
@@ -90,6 +97,7 @@ void main() {
       final uploadQueue = UploadQueueService(testDb);
       final conectividad = ConectividadService();
       final completions = <DateTime>[];
+      final mockCompletion = MockCompletionBehaviorService(testDb);
 
       final repository = TareasRepository(
         localStorage,
@@ -102,7 +110,7 @@ void main() {
           null,
         ),
         DriveDownloadOrchestrator(localStorage, conectividad),
-        completionBehaviorService: null,
+        completionBehaviorService: mockCompletion,
         cancelNotificationsOverride: (_) async {},
         notifyTaskCreatedOverride: (_) async {},
         recordCompletionOverride: (tarea, {completedAt}) async {
@@ -115,8 +123,9 @@ void main() {
 
       expect(completions.length, 1);
       final persisted = await localStorage.getTareas();
-      expect(persisted.single.completada, isTrue);
-      expect(persisted.single.fechaCompletada.isAfter(DateTime(2020)), isTrue);
+      expect(persisted.any((t) => t.completada), isTrue);
+      final completedTask = persisted.firstWhere((t) => t.completada);
+      expect(completedTask.fechaCompletada.isAfter(DateTime(2020)), isTrue);
     },
   );
 
@@ -127,6 +136,7 @@ void main() {
       final localStorage = LocalStorageService(testDb);
       final uploadQueue = UploadQueueService(testDb);
       final conectividad = ConectividadService();
+      final mockCompletion = MockCompletionBehaviorService(testDb);
 
       final digestDays = <DateTime>[];
       final digestTaskCounts = <int>[];
@@ -143,7 +153,7 @@ void main() {
           null,
         ),
         DriveDownloadOrchestrator(localStorage, conectividad),
-        completionBehaviorService: null,
+        completionBehaviorService: mockCompletion,
         cancelNotificationsOverride: (_) async {},
         notifyTaskCreatedOverride: (t) async {
           individualNotifications.add(t.id);

@@ -9,18 +9,18 @@ import 'notifications_settings.dart';
 class NotificationService {
   static const int _driveUploadNotificationId = 9042;
   static const int saturationThreshold = 6;
-  static final NotificationService _instance = NotificationService._internal();
-  final CompletionBehaviorService _completionBehaviorService;
+  static NotificationService? _instance;
+  final CompletionBehaviorService? _completionBehaviorService;
   final AdaptiveScheduler _adaptiveScheduler;
   Future<void>? _initializationFuture;
 
-  factory NotificationService() => _instance;
+  factory NotificationService() =>
+      _instance ??= NotificationService._internal();
 
   NotificationService._internal({
     CompletionBehaviorService? completionBehaviorService,
     AdaptiveScheduler? adaptiveScheduler,
-  }) : _completionBehaviorService =
-           completionBehaviorService ?? CompletionBehaviorService(),
+  }) : _completionBehaviorService = completionBehaviorService,
        _adaptiveScheduler = adaptiveScheduler ?? AdaptiveScheduler();
 
   Future<void> _initialize() async {
@@ -310,9 +310,12 @@ class NotificationService {
 
     final base = _baseIdFromTask(tarea);
     final now = DateTime.now();
-    final behaviorEvents = await _completionBehaviorService.getRecentEvents(
-      referenceNow: now,
-    );
+    final behaviorEvents =
+        _completionBehaviorService != null
+            ? await _completionBehaviorService.getRecentEvents(
+              referenceNow: now,
+            )
+            : <CompletionBehaviorEvent>[];
     final reminderMoments = _preDueReminderMomentsForTaskWithHistory(
       tarea,
       behaviorEvents,

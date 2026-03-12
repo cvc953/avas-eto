@@ -12,13 +12,19 @@ void main() {
     required VoidCallback onFinish,
   }) {
     return MaterialApp(
-      home: Scaffold(
-        body: Google(
-          onStart: onStart,
-          onFinish: onFinish,
-          signInWithGoogleFn: signInWithGoogleFn,
-          ensureDriveAccessFn: ensureDriveAccessFn,
-          onAuthenticated: (_) async {},
+      home: MediaQuery(
+        data: const MediaQueryData(size: Size(800, 600)),
+        child: Scaffold(
+          body: Builder(
+            builder:
+                (context) => Google(
+                  onStart: onStart,
+                  onFinish: onFinish,
+                  signInWithGoogleFn: signInWithGoogleFn,
+                  ensureDriveAccessFn: ensureDriveAccessFn,
+                  onAuthenticated: (ctx) async {},
+                ),
+          ),
         ),
       ),
     );
@@ -49,11 +55,14 @@ void main() {
       );
 
       await tester.tap(find.text('Inicia con Google'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
 
+      await tester.pump();
       expect(started, isTrue);
+
+      await tester.pump(const Duration(milliseconds: 50));
       expect(ensureCalled, 1);
+
+      await tester.pump(const Duration(milliseconds: 50));
       expect(finished, isTrue);
     },
   );
@@ -62,6 +71,7 @@ void main() {
     tester,
   ) async {
     var ensureCalled = 0;
+    var finished = false;
 
     await tester.pumpWidget(
       _buildTestable(
@@ -76,14 +86,16 @@ void main() {
           return DriveAccessRequestStatus.granted;
         },
         onStart: () {},
-        onFinish: () {},
+        onFinish: () => finished = true,
       ),
     );
 
     await tester.tap(find.text('Inicia con Google'));
+
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(ensureCalled, 0);
+    expect(finished, isTrue);
   });
 }

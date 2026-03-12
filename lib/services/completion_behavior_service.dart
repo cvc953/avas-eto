@@ -82,7 +82,8 @@ class CompletionBehaviorService {
   }
 
   Future<void> _saveRemoteEvent(CompletionBehaviorEvent event) async {
-    final firestore = _firestore ?? FirebaseFirestore.instance;
+    final firestore = _firestore;
+    if (firestore == null) return;
     final user = _auth?.currentUser;
     if (user == null) return;
 
@@ -130,7 +131,8 @@ class CompletionBehaviorService {
   Future<List<CompletionBehaviorEvent>> _readRemoteEvents({
     required DateTime referenceNow,
   }) async {
-    final firestore = _firestore ?? FirebaseFirestore.instance;
+    final firestore = _firestore;
+    if (firestore == null) return const [];
     final user = _auth?.currentUser;
     if (user == null) return const [];
 
@@ -181,7 +183,8 @@ class CompletionBehaviorService {
   }
 
   Future<void> _purgeExpiredRemote({DateTime? referenceNow}) async {
-    final firestore = _firestore ?? FirebaseFirestore.instance;
+    final firestore = _firestore;
+    if (firestore == null) return;
     final user = _auth?.currentUser;
     if (user == null) return;
 
