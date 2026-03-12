@@ -26,14 +26,21 @@ class GoogleLoginResult {
   final GoogleLoginStatus status;
   final User? user;
   final String? message;
+  final bool? driveGrantedOverride;
 
-  const GoogleLoginResult({required this.status, this.user, this.message});
+  const GoogleLoginResult({
+    required this.status,
+    this.user,
+    this.message,
+    this.driveGrantedOverride,
+  });
 
   bool get isAuthenticated =>
       status == GoogleLoginStatus.authenticatedWithDrive ||
       status == GoogleLoginStatus.authenticatedWithoutDrive;
 
-  bool get driveGranted => status == GoogleLoginStatus.authenticatedWithDrive;
+  bool get driveGranted =>
+      driveGrantedOverride ?? status == GoogleLoginStatus.authenticatedWithDrive;
 }
 
 String? _cachedDriveAccessToken;
