@@ -1,10 +1,11 @@
 import 'package:avas_eto/models/tarea.dart';
 import 'package:avas_eto/services/completion_behavior_service.dart';
+import 'package:avas_eto/services/local_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sembast/sembast_memory.dart';
 
-class TestLocalDb {
+class TestLocalDb implements DatabaseProvider {
   final Database _db;
   TestLocalDb._(this._db);
 
@@ -15,6 +16,7 @@ class TestLocalDb {
     return TestLocalDb._(db);
   }
 
+  @override
   Future<Database> get db async => _db;
 }
 
@@ -41,7 +43,9 @@ void main() {
     () async {
       final testDb = await TestLocalDb.create();
       final service = CompletionBehaviorService(
-        localDatabase: testDb as dynamic,
+        localDatabase: testDb,
+        auth: null,
+        firestore: null,
       );
       final dueAt = DateTime(2026, 3, 12, 14, 0);
       final completedAt = DateTime(2026, 3, 12, 9, 30);
@@ -61,7 +65,11 @@ void main() {
 
   test('getRecentEvents purges local records older than 30 days', () async {
     final testDb = await TestLocalDb.create();
-    final service = CompletionBehaviorService(localDatabase: testDb as dynamic);
+    final service = CompletionBehaviorService(
+      localDatabase: testDb,
+      auth: null,
+      firestore: null,
+    );
     final now = DateTime(2026, 3, 12, 9, 0);
 
     await service.recordCompletion(

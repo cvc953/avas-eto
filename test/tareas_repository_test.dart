@@ -1,9 +1,9 @@
-
 import 'package:avas_eto/models/tarea.dart';
 import 'package:avas_eto/repositories/tareas_repository.dart';
 import 'package:avas_eto/services/conectividad_service.dart';
 import 'package:avas_eto/services/drive_download_orchestrator.dart';
 import 'package:avas_eto/services/drive_upload_orchestrator.dart';
+import 'package:avas_eto/services/local_database.dart';
 import 'package:avas_eto/services/local_storage_service.dart';
 import 'package:avas_eto/services/notification_service.dart';
 import 'package:avas_eto/services/upload_queue_service.dart';
@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sembast/sembast_memory.dart';
 
-class TestLocalDb {
+class TestLocalDb implements DatabaseProvider {
   final Database _db;
   TestLocalDb._(this._db);
 
@@ -20,6 +20,7 @@ class TestLocalDb {
     return TestLocalDb._(db);
   }
 
+  @override
   Future<Database> get db async => _db;
 }
 
@@ -45,8 +46,8 @@ void main() {
     'guardar no espera sync remoto y persiste local inmediatamente',
     () async {
       final testDb = await TestLocalDb.create();
-      final localStorage = LocalStorageService(testDb as dynamic);
-      final uploadQueue = UploadQueueService(testDb as dynamic);
+      final localStorage = LocalStorageService(testDb);
+      final uploadQueue = UploadQueueService(testDb);
       final conectividad = ConectividadService();
 
       final repository = TareasRepository(
@@ -60,6 +61,7 @@ void main() {
           null,
         ),
         DriveDownloadOrchestrator(localStorage, conectividad),
+        completionBehaviorService: null,
         cancelNotificationsOverride: (_) async {},
         notifyTaskCreatedOverride: (_) async {},
         syncTaskOverride: (_, __) async {
@@ -84,8 +86,8 @@ void main() {
     'marcarCompletada registra evento de comportamiento al completar',
     () async {
       final testDb = await TestLocalDb.create();
-      final localStorage = LocalStorageService(testDb as dynamic);
-      final uploadQueue = UploadQueueService(testDb as dynamic);
+      final localStorage = LocalStorageService(testDb);
+      final uploadQueue = UploadQueueService(testDb);
       final conectividad = ConectividadService();
       final completions = <DateTime>[];
 
@@ -100,6 +102,7 @@ void main() {
           null,
         ),
         DriveDownloadOrchestrator(localStorage, conectividad),
+        completionBehaviorService: null,
         cancelNotificationsOverride: (_) async {},
         notifyTaskCreatedOverride: (_) async {},
         recordCompletionOverride: (tarea, {completedAt}) async {
@@ -121,8 +124,8 @@ void main() {
     'guardar emite digest cuando hay 6 o más tareas pendientes el mismo día',
     () async {
       final testDb = await TestLocalDb.create();
-      final localStorage = LocalStorageService(testDb as dynamic);
-      final uploadQueue = UploadQueueService(testDb as dynamic);
+      final localStorage = LocalStorageService(testDb);
+      final uploadQueue = UploadQueueService(testDb);
       final conectividad = ConectividadService();
 
       final digestDays = <DateTime>[];
@@ -140,6 +143,7 @@ void main() {
           null,
         ),
         DriveDownloadOrchestrator(localStorage, conectividad),
+        completionBehaviorService: null,
         cancelNotificationsOverride: (_) async {},
         notifyTaskCreatedOverride: (t) async {
           individualNotifications.add(t.id);

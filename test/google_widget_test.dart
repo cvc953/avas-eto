@@ -49,11 +49,12 @@ void main() {
       );
 
       await tester.tap(find.text('Inicia con Google'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(started, isTrue);
-      expect(finished, isTrue);
       expect(ensureCalled, 1);
+      expect(finished, isTrue);
     },
   );
 
@@ -80,7 +81,8 @@ void main() {
     );
 
     await tester.tap(find.text('Inicia con Google'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(ensureCalled, 0);
   });
