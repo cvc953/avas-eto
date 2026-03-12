@@ -115,7 +115,8 @@ class NotificationService {
   }
 
   int _urgencyDaysRemainingWeightForTask(Tarea tarea, DateTime referenceNow) {
-    final daysRemaining = tarea.fechaVencimiento.difference(referenceNow).inDays;
+    final daysRemaining =
+        tarea.fechaVencimiento.difference(referenceNow).inDays;
     return (5 - daysRemaining).clamp(0, 5);
   }
 
