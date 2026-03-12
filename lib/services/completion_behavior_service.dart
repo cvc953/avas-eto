@@ -33,7 +33,8 @@ class CompletionBehaviorService {
       dueAt: tarea.fechaVencimiento,
     );
 
-    await _purgeExpiredLocal();
+    await _purgeExpiredLocal(referenceNow: completionTime);
+    await _purgeExpiredRemote(referenceNow: completionTime);
     await _saveLocalEvent(event);
     await _saveRemoteEvent(event);
   }
@@ -43,6 +44,7 @@ class CompletionBehaviorService {
   }) async {
     final now = referenceNow ?? DateTime.now();
     await _purgeExpiredLocal(referenceNow: now);
+    await _purgeExpiredRemote(referenceNow: now);
 
     final localEvents = await _readLocalEvents(referenceNow: now);
     final remoteEvents = await _readRemoteEvents(referenceNow: now);
@@ -167,6 +169,33 @@ class CompletionBehaviorService {
       }
     } catch (e) {
       debugPrint('Error purgando eventos de comportamiento local: $e');
+    }
+  }
+
+  Future<void> _purgeExpiredRemote({DateTime? referenceNow}) async {
+    final firestore = _firestore ?? FirebaseFirestore.instance;
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final now = referenceNow ?? DateTime.now();
+      final cutoff = now.subtract(retention);
+      final snapshot =
+          await firestore
+              .collection('users')
+              .doc(user.uid)
+              .collection('completion_behavior')
+              .where('completedAt', isLessThan: Timestamp.fromDate(cutoff))
+              .get();
+      if (snapshot.docs.isEmpty) return;
+
+      final batch = firestore.batch();
+      for (final doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint('Error purgando eventos de comportamiento remotos: $e');
     }
   }
 
