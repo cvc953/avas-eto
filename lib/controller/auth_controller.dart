@@ -27,7 +27,8 @@ class AuthController {
 
   User? get currentUser => _auth?.currentUser;
 
-  Stream<User?> authStateChanges() => _auth?.authStateChanges() ?? const Stream.empty();
+  Stream<User?> authStateChanges() =>
+      _auth?.authStateChanges() ?? const Stream.empty();
 
   /// Sign out and persist the last-signed-in uid on device so local tasks
   /// remain visible for that device owner. Optionally provide
