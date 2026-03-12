@@ -63,25 +63,37 @@ void main() {
     expect(t3.contains('día') || t3.contains('días'), isTrue);
   });
 
-  test('start reminder moments are calculated from fechaInicio', () async {
+  test('high priority reminders follow 3d, 1d and 3h before due date', () async {
     final ns = NotificationService();
-    final start = DateTime(2026, 3, 15, 9, 0);
-    final end = DateTime(2026, 3, 15, 10, 0);
-    final tarea = await buildTarea(
-      'sched1',
-      end,
-      fechaInicio: start,
-      duracionMinutos: 60,
-      prioridad: 'Media',
-    );
+    final due = DateTime(2026, 3, 15, 12, 0);
+    final tarea = await buildTarea('sched-high', due, prioridad: 'Alta');
 
-    final reminders = ns.getStartReminderMoments(tarea);
-    expect(reminders.length, 5);
-    expect(reminders[0], start.subtract(const Duration(days: 1)));
-    expect(reminders[1], start.subtract(const Duration(hours: 1)));
-    expect(reminders[2], start.subtract(const Duration(minutes: 30)));
-    expect(reminders[3], start.subtract(const Duration(minutes: 10)));
-    expect(reminders[4], start);
+    final reminders = ns.getPreDueReminderMoments(tarea);
+    expect(reminders.length, 3);
+    expect(reminders[0], due.subtract(const Duration(days: 3)));
+    expect(reminders[1], due.subtract(const Duration(days: 1)));
+    expect(reminders[2], due.subtract(const Duration(hours: 3)));
+  });
+
+  test('medium priority reminders follow 2d and 1d before due date', () async {
+    final ns = NotificationService();
+    final due = DateTime(2026, 3, 15, 12, 0);
+    final tarea = await buildTarea('sched-medium', due, prioridad: 'Media');
+
+    final reminders = ns.getPreDueReminderMoments(tarea);
+    expect(reminders.length, 2);
+    expect(reminders[0], due.subtract(const Duration(days: 2)));
+    expect(reminders[1], due.subtract(const Duration(days: 1)));
+  });
+
+  test('low priority reminders follow 1d before due date', () async {
+    final ns = NotificationService();
+    final due = DateTime(2026, 3, 15, 12, 0);
+    final tarea = await buildTarea('sched-low', due, prioridad: 'Baja');
+
+    final reminders = ns.getPreDueReminderMoments(tarea);
+    expect(reminders.length, 1);
+    expect(reminders[0], due.subtract(const Duration(days: 1)));
   });
 
   test('focus score follows the provided formula', () async {
@@ -98,5 +110,37 @@ void main() {
 
     final score = ns.getFocusScore(tarea, referenceNow: now);
     expect(score, 18);
+  });
+
+  test('reminder cadence is derived from focus score', () async {
+    final ns = NotificationService();
+    final now = DateTime(2026, 3, 11, 8, 0);
+
+    final urgentHighFocus = await buildTarea(
+      'cad1',
+      now.add(const Duration(hours: 2)),
+      fechaInicio: now.add(const Duration(hours: 1)),
+      duracionMinutos: 30,
+      prioridad: 'Alta',
+      vecesPospuesta: 2,
+    );
+
+    final lowFocus = await buildTarea(
+      'cad2',
+      now.add(const Duration(days: 10)),
+      fechaInicio: now.add(const Duration(days: 8)),
+      duracionMinutos: 90,
+      prioridad: 'Baja',
+      vecesPospuesta: 0,
+    );
+
+    expect(
+      ns.getReminderCadence(urgentHighFocus, referenceNow: now),
+      const Duration(hours: 2),
+    );
+    expect(
+      ns.getReminderCadence(lowFocus, referenceNow: now),
+      const Duration(days: 1),
+    );
   });
 }

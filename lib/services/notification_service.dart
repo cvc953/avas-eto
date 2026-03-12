@@ -1,7 +1,4 @@
-import 'dart:io' show Platform;
-
 import 'package:awesome_notifications/awesome_notifications.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../models/tarea.dart';
 import 'notifications_settings.dart';
@@ -130,15 +127,35 @@ class NotificationService {
         duracionCortaBonus;
   }
 
-  List<DateTime> _startReminderMomentsForTask(Tarea tarea) {
-    final inicio = tarea.fechaInicio;
-    return [
-      inicio.subtract(const Duration(days: 1)),
-      inicio.subtract(const Duration(hours: 1)),
-      inicio.subtract(const Duration(minutes: 30)),
-      inicio.subtract(const Duration(minutes: 10)),
-      inicio,
-    ];
+  Duration _reminderCadenceForTask(Tarea tarea, DateTime referenceNow) {
+    final score = _focusScoreForTask(tarea, referenceNow);
+    if (score >= 18) return const Duration(hours: 2);
+    if (score >= 14) return const Duration(hours: 4);
+    if (score >= 10) return const Duration(hours: 8);
+    if (score >= 6) return const Duration(hours: 12);
+    return const Duration(days: 1);
+  }
+
+  List<DateTime> _preDueReminderMomentsForTask(Tarea tarea) {
+    final due = tarea.fechaVencimiento;
+    final normalizedPriority = tarea.prioridad.toLowerCase();
+
+    if (normalizedPriority == 'alta') {
+      return [
+        due.subtract(const Duration(days: 3)),
+        due.subtract(const Duration(days: 1)),
+        due.subtract(const Duration(hours: 3)),
+      ];
+    }
+
+    if (normalizedPriority == 'media') {
+      return [
+        due.subtract(const Duration(days: 2)),
+        due.subtract(const Duration(days: 1)),
+      ];
+    }
+
+    return [due.subtract(const Duration(days: 1))];
   }
 
   // Public wrappers for testability
@@ -146,8 +163,10 @@ class NotificationService {
   String getOverdueText(Tarea tarea) => _overdueTextFor(tarea);
   int getFocusScore(Tarea tarea, {DateTime? referenceNow}) =>
       _focusScoreForTask(tarea, referenceNow ?? DateTime.now());
-  List<DateTime> getStartReminderMoments(Tarea tarea) =>
-      _startReminderMomentsForTask(tarea);
+  Duration getReminderCadence(Tarea tarea, {DateTime? referenceNow}) =>
+      _reminderCadenceForTask(tarea, referenceNow ?? DateTime.now());
+  List<DateTime> getPreDueReminderMoments(Tarea tarea) =>
+      _preDueReminderMomentsForTask(tarea);
 
   Color _eisenhowerColorForTask(Tarea tarea) {
     final now = DateTime.now();
@@ -186,33 +205,11 @@ class NotificationService {
     );
   }
 
-  Future<void> _scheduleDailyOverdueReminder(
-    Tarea tarea,
-    DateTime firstDate,
-  ) async {
+  Future<void> _scheduleRecurringOverdueReminder(Tarea tarea) async {
     final id = _baseIdFromTask(tarea) + 7000;
     final color = _eisenhowerColorForTask(tarea);
-    final body =
-        '${_importanceWithIcon(tarea)} · Foco hoy: ${_focusScoreForTask(tarea, DateTime.now())}';
-
-    if (!kIsWeb && Platform.isAndroid) {
-      final expression =
-          '${firstDate.second} ${firstDate.minute} ${firstDate.hour} * * ? *';
-      await _scheduleNotification(
-        id: id,
-        title: 'Sigue pendiente: ${tarea.title}',
-        body: body,
-        color: color,
-        taskId: tarea.id,
-        schedule: NotificationAndroidCrontab(
-          initialDateTime: firstDate,
-          crontabExpression: expression,
-          repeats: true,
-          preciseAlarm: true,
-        ),
-      );
-      return;
-    }
+    final body = _importanceWithIcon(tarea);
+    final cadence = _reminderCadenceForTask(tarea, DateTime.now());
 
     await _scheduleNotification(
       id: id,
@@ -220,10 +217,8 @@ class NotificationService {
       body: body,
       color: color,
       taskId: tarea.id,
-      schedule: NotificationCalendar(
-        hour: firstDate.hour,
-        minute: firstDate.minute,
-        second: firstDate.second,
+      schedule: NotificationInterval(
+        interval: cadence,
         repeats: true,
         preciseAlarm: true,
       ),
@@ -236,8 +231,8 @@ class NotificationService {
 
     final base = _baseIdFromTask(tarea);
     final now = DateTime.now();
-    final reminderMoments = _startReminderMomentsForTask(tarea);
-    final reminderIds = [1000, 2000, 3000, 4000, 5000];
+    final reminderMoments = _preDueReminderMomentsForTask(tarea);
+    final reminderIds = [1000, 2000, 3000];
 
     for (var index = 0; index < reminderMoments.length; index++) {
       final scheduled = reminderMoments[index];
@@ -264,8 +259,7 @@ class NotificationService {
         await _scheduleNotification(
           id: base + 6000,
           title: 'Tarea vencida: ${tarea.title}',
-          body:
-              '${_importanceWithIcon(tarea)} · Foco hoy: ${_focusScoreForTask(tarea, now)}',
+          body: _importanceWithIcon(tarea),
           color: _eisenhowerColorForTask(tarea),
           taskId: tarea.id,
           schedule: NotificationCalendar.fromDate(
@@ -277,18 +271,13 @@ class NotificationService {
         await _scheduleNotification(
           id: base + 8000,
           title: 'Tarea vencida: ${tarea.title}',
-          body:
-              '${_overdueTextFor(tarea)} · ${_importanceWithIcon(tarea)} · Foco hoy: ${_focusScoreForTask(tarea, now)}',
+          body: '${_overdueTextFor(tarea)} · ${_importanceWithIcon(tarea)}',
           color: _eisenhowerColorForTask(tarea),
           taskId: tarea.id,
         );
       }
 
-      final firstDailyFollowUp =
-          oneHourAfterEnd.isAfter(now)
-              ? oneHourAfterEnd.add(const Duration(days: 1))
-              : now.add(const Duration(days: 1));
-      await _scheduleDailyOverdueReminder(tarea, firstDailyFollowUp);
+      await _scheduleRecurringOverdueReminder(tarea);
     }
   }
 
