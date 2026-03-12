@@ -476,19 +476,14 @@ class NotificationService {
 
   /// Emits a digest notification for [day] summarising [tasks] (already
   /// ranked by caller).  Top-2 task titles are shown in the body.
-  Future<void> notifyDigestForDay(
-    DateTime day,
-    List<Tarea> tasks,
-  ) async {
+  Future<void> notifyDigestForDay(DateTime day, List<Tarea> tasks) async {
     final enabled = await NotificationSettings.isEnabled();
     if (!enabled) return;
 
-    final sorted = [...tasks]
-      ..sort(
-        (a, b) => _focusScoreForTask(b, day).compareTo(
-          _focusScoreForTask(a, day),
-        ),
-      );
+    final sorted = [...tasks]..sort(
+      (a, b) =>
+          _focusScoreForTask(b, day).compareTo(_focusScoreForTask(a, day)),
+    );
     final top2 = sorted.take(2).map((t) => t.title).join(', ');
     final count = tasks.length;
 

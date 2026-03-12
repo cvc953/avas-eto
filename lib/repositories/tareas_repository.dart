@@ -241,16 +241,15 @@ class TareasRepository {
       tareaPersistida.fechaVencimiento.day,
     );
     final allTareas = await localStorage.getTareas();
-    final sameDayTareas =
-        allTareas
-            .where(
-              (t) =>
-                  !t.completada &&
-                  t.fechaVencimiento.year == dueDay.year &&
-                  t.fechaVencimiento.month == dueDay.month &&
-                  t.fechaVencimiento.day == dueDay.day,
-            )
-            .toList(growable: false);
+    final sameDayTareas = allTareas
+        .where(
+          (t) =>
+              !t.completada &&
+              t.fechaVencimiento.year == dueDay.year &&
+              t.fechaVencimiento.month == dueDay.month &&
+              t.fechaVencimiento.day == dueDay.day,
+        )
+        .toList(growable: false);
 
     if (sameDayTareas.length >= NotificationService.saturationThreshold) {
       // Cancel individual pre-due reminders for every task on that day and
