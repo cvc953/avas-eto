@@ -11,14 +11,14 @@ class CompletionBehaviorService {
   static const Duration retention = Duration(days: 30);
   static const String _ownerUserIdKey = '_ownerUserId';
 
-  final LocalDatabase _localDatabase;
+  final DatabaseProvider _localDatabase;
   final FirebaseFirestore? _firestore;
   final FirebaseAuth _auth;
   final StoreRef<String, Map<String, dynamic>> _store =
       StoreRef<String, Map<String, dynamic>>('completion_behavior');
 
   CompletionBehaviorService({
-    LocalDatabase? localDatabase,
+    DatabaseProvider? localDatabase,
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
   }) : _localDatabase = localDatabase ?? LocalDatabase(),

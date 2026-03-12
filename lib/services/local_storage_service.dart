@@ -12,7 +12,7 @@ class LocalStorageService {
 
   final StoreRef<String, Map<String, dynamic>> _store =
       StoreRef<String, Map<String, dynamic>>.main();
-  final LocalDatabase _localDb;
+  final DatabaseProvider _localDb;
 
   LocalStorageService(this._localDb);
 

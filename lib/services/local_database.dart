@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_io.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 
-class LocalDatabase {
+abstract class DatabaseProvider {
+  Future<Database> get db;
+}
+
+class LocalDatabase implements DatabaseProvider {
   Database? _db;
   final Completer<Database> _dbCompleter = Completer<Database>();
 

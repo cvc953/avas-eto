@@ -6,12 +6,16 @@ import 'package:avas_eto/services/local_storage_service.dart';
 class AuthController {
   final FirebaseAuth _auth;
   final LocalStorageService? _localStorage;
+  final Future<void> Function() _clearDriveGrantedPersistedFn;
 
   AuthController({
     FirebaseAuth? firebaseAuth,
     LocalStorageService? localStorage,
+    Future<void> Function()? clearDriveGrantedPersistedFn,
   }) : _auth = firebaseAuth ?? FirebaseAuth.instance,
-       _localStorage = localStorage;
+       _localStorage = localStorage,
+       _clearDriveGrantedPersistedFn =
+           clearDriveGrantedPersistedFn ?? clearDriveGrantedPersisted;
 
   User? get currentUser => _auth.currentUser;
 
@@ -31,6 +35,11 @@ class AuthController {
     }
 
     await _auth.signOut();
-    await clearDriveGrantedPersisted();
+    try {
+      await _clearDriveGrantedPersistedFn();
+    } catch (_) {
+      // Non-fatal: local sign-out should still succeed in tests and fallback
+      // environments where SharedPreferences is not wired.
+    }
   }
 }

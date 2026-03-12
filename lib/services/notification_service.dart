@@ -12,6 +12,7 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   final CompletionBehaviorService _completionBehaviorService;
   final AdaptiveScheduler _adaptiveScheduler;
+  Future<void>? _initializationFuture;
 
   factory NotificationService() => _instance;
 
@@ -20,31 +21,37 @@ class NotificationService {
     AdaptiveScheduler? adaptiveScheduler,
   }) : _completionBehaviorService =
            completionBehaviorService ?? CompletionBehaviorService(),
-       _adaptiveScheduler = adaptiveScheduler ?? AdaptiveScheduler() {
-    _initialize();
-  }
+       _adaptiveScheduler = adaptiveScheduler ?? AdaptiveScheduler();
 
   Future<void> _initialize() async {
-    await AwesomeNotifications().initialize(null, [
-      NotificationChannel(
-        channelKey: 'tareas_channel',
-        channelName: 'Notificaciones de Tareas',
-        channelDescription: 'Canal para notificaciones de tareas',
-        defaultColor: Colors.deepPurple,
-        importance: NotificationImportance.Max,
-        playSound: true,
-        enableVibration: true,
-      ),
-      NotificationChannel(
-        channelKey: 'drive_upload_channel',
-        channelName: 'Subidas a Google Drive',
-        channelDescription: 'Estado y progreso de archivos en subida',
-        defaultColor: Colors.blue,
-        importance: NotificationImportance.High,
-        playSound: false,
-        enableVibration: false,
-      ),
-    ], debug: false);
+    try {
+      await AwesomeNotifications().initialize(null, [
+        NotificationChannel(
+          channelKey: 'tareas_channel',
+          channelName: 'Notificaciones de Tareas',
+          channelDescription: 'Canal para notificaciones de tareas',
+          defaultColor: Colors.deepPurple,
+          importance: NotificationImportance.Max,
+          playSound: true,
+          enableVibration: true,
+        ),
+        NotificationChannel(
+          channelKey: 'drive_upload_channel',
+          channelName: 'Subidas a Google Drive',
+          channelDescription: 'Estado y progreso de archivos en subida',
+          defaultColor: Colors.blue,
+          importance: NotificationImportance.High,
+          playSound: false,
+          enableVibration: false,
+        ),
+      ], debug: false);
+    } catch (e) {
+      debugPrint('NotificationService init skipped: $e');
+    }
+  }
+
+  Future<void> _ensureInitialized() {
+    return _initializationFuture ??= _initialize();
   }
 
   int _baseIdFromTask(Tarea tarea) {
@@ -108,19 +115,12 @@ class NotificationService {
   }
 
   int _urgencyDaysRemainingWeightForTask(Tarea tarea, DateTime referenceNow) {
-    final daysRemaining = tarea.fechaInicio.difference(referenceNow).inDays;
-    if (daysRemaining <= 0) return 3;
-    if (daysRemaining == 1) return 2;
-    if (daysRemaining <= 3) return 1;
-    return 0;
+    final daysRemaining = tarea.fechaVencimiento.difference(referenceNow).inDays;
+    return (5 - daysRemaining).clamp(0, 5);
   }
 
   int _procrastinationWeightForTask(Tarea tarea) {
     return tarea.vecesPospuesta.clamp(0, 3);
-  }
-
-  int _shortDurationBonusForTask(Tarea tarea) {
-    return tarea.duracionMinutos <= 30 ? 1 : 0;
   }
 
   int _focusScoreForTask(Tarea tarea, DateTime referenceNow) {
@@ -130,12 +130,10 @@ class NotificationService {
       referenceNow,
     );
     final procrastinacion = _procrastinationWeightForTask(tarea);
-    final duracionCortaBonus = _shortDurationBonusForTask(tarea);
 
     return (importanciaUsuario * 3) +
-        (urgenciaDiasRestantes * 2) +
-        (procrastinacion * 2) +
-        duracionCortaBonus;
+        urgenciaDiasRestantes +
+        (procrastinacion * 2);
   }
 
   Duration _reminderCadenceForTask(Tarea tarea, DateTime referenceNow) {
@@ -270,6 +268,7 @@ class NotificationService {
     required String taskId,
     NotificationSchedule? schedule,
   }) async {
+    await _ensureInitialized();
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
         id: id,
@@ -368,6 +367,7 @@ class NotificationService {
   }
 
   Future<void> cancelNotifications(Tarea tarea) async {
+    await _ensureInitialized();
     final base = _baseIdFromTask(tarea);
     final ids =
         [
@@ -392,6 +392,7 @@ class NotificationService {
   }
 
   Future<void> cancelAllNotifications() async {
+    await _ensureInitialized();
     await AwesomeNotifications().cancelAllSchedules();
     await AwesomeNotifications().cancelAll();
   }
@@ -405,6 +406,7 @@ class NotificationService {
     if (!enabled || total <= 0) return;
 
     final progress = ((completed / total) * 100).clamp(0, 100).toDouble();
+    await _ensureInitialized();
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
         id: _driveUploadNotificationId,
@@ -423,6 +425,7 @@ class NotificationService {
     final enabled = await NotificationSettings.isEnabled();
     if (!enabled) return;
 
+    await _ensureInitialized();
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
         id: _driveUploadNotificationId,
@@ -439,6 +442,7 @@ class NotificationService {
     final enabled = await NotificationSettings.isEnabled();
     if (!enabled) return;
 
+    await _ensureInitialized();
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
         id: _driveUploadNotificationId,
@@ -460,6 +464,7 @@ class NotificationService {
   /// Cancels pre-due reminder notifications (IDs +1000, +2000, +3000) for
   /// every task in [tasks].
   Future<void> cancelPreDueNotificationsForDay(List<Tarea> tasks) async {
+    await _ensureInitialized();
     for (final tarea in tasks) {
       final base = _baseIdFromTask(tarea);
       for (final offset in const [1000, 2000, 3000]) {
@@ -504,6 +509,7 @@ class NotificationService {
   }
 
   Future<void> cancelDriveUploadStatus() async {
+    await _ensureInitialized();
     await AwesomeNotifications().cancel(_driveUploadNotificationId);
   }
 }

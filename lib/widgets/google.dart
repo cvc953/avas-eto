@@ -11,6 +11,7 @@ class Google extends StatelessWidget {
   signInWithGoogleFn;
   final Future<DriveAccessRequestStatus> Function() ensureDriveAccessFn;
   final Future<void> Function(BuildContext context)? onAuthenticated;
+  final bool? showStatusToast;
 
   const Google({
     super.key,
@@ -19,7 +20,19 @@ class Google extends StatelessWidget {
     this.signInWithGoogleFn = signInWithGoogle,
     this.ensureDriveAccessFn = ensureDriveAccessAfterLogin,
     this.onAuthenticated,
+    this.showStatusToast,
   });
+
+  bool _shouldShowToast() => showStatusToast ?? onAuthenticated == null;
+
+  void _showToast(
+    BuildContext context,
+    void Function(BuildContext context, String message) show,
+    String message,
+  ) {
+    if (!_shouldShowToast()) return;
+    show(context, message);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +41,7 @@ class Google extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           SignInButton(
+            key: const Key('google-sign-in-button'),
             Buttons.GoogleDark,
             text: 'Inicia con Google',
             onPressed: () async {
@@ -46,13 +60,15 @@ class Google extends StatelessWidget {
                   }
 
                   if (driveGranted) {
-                    AppToast.success(
+                    _showToast(
                       context,
+                      AppToast.success,
                       'Sesion iniciada. Drive esta conectado para tus adjuntos.',
                     );
                   } else {
-                    AppToast.warning(
+                    _showToast(
                       context,
+                      AppToast.warning,
                       'Sesion iniciada en modo parcial. Puedes reautorizar Drive en Mas opciones.',
                     );
                   }
@@ -65,10 +81,15 @@ class Google extends StatelessWidget {
                     );
                   }
                 } else if (result.status == GoogleLoginStatus.cancelled) {
-                  AppToast.info(context, 'Inicio de sesion cancelado.');
-                } else {
-                  AppToast.error(
+                  _showToast(
                     context,
+                    AppToast.info,
+                    'Inicio de sesion cancelado.',
+                  );
+                } else {
+                  _showToast(
+                    context,
+                    AppToast.error,
                     result.message ?? 'Error al iniciar sesion con Google.',
                   );
                 }

@@ -19,7 +19,7 @@ void main() {
         });
       }
 
-      if (request.method == 'PUT' && request.url.path.startsWith('/upload/drive/v3/files/')) {
+      if ((request.method == 'PATCH' || request.method == 'PUT') && request.url.path.startsWith('/upload/drive/v3/files/')) {
         return http.Response('', 200);
       }
 

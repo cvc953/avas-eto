@@ -10,7 +10,7 @@ class UploadQueueService {
   static const String uploadingStatus = AttachmentSyncState.uploading;
   static const String failedStatus = AttachmentSyncState.failed;
 
-  final LocalDatabase _localDb;
+  final DatabaseProvider _localDb;
   final StoreRef<String, Map<String, dynamic>> _store = stringMapStoreFactory
       .store('drive_upload_queue');
 
