@@ -12,18 +12,20 @@ void main() {
     required VoidCallback onFinish,
   }) {
     return MaterialApp(
-      home: MediaQuery(
-        data: const MediaQueryData(size: Size(800, 600)),
-        child: Scaffold(
-          body: Builder(
-            builder:
-                (context) => Google(
-                  onStart: onStart,
-                  onFinish: onFinish,
-                  signInWithGoogleFn: signInWithGoogleFn,
-                  ensureDriveAccessFn: ensureDriveAccessFn,
-                  onAuthenticated: (ctx) async {},
-                ),
+      home: Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: 400,
+            child: Builder(
+              builder:
+                  (context) => Google(
+                    onStart: onStart,
+                    onFinish: onFinish,
+                    signInWithGoogleFn: signInWithGoogleFn,
+                    ensureDriveAccessFn: ensureDriveAccessFn,
+                    onAuthenticated: (ctx) async {},
+                  ),
+            ),
           ),
         ),
       ),
