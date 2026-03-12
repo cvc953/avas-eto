@@ -51,8 +51,9 @@ class CompletionBehaviorService {
       for (final event in remoteEvents) event.id: event,
     };
 
-    final result = merged.values.toList()
-      ..sort((a, b) => b.completedAt.compareTo(a.completedAt));
+    final result =
+        merged.values.toList()
+          ..sort((a, b) => b.completedAt.compareTo(a.completedAt));
     return result;
   }
 
@@ -130,16 +131,23 @@ class CompletionBehaviorService {
               .collection('users')
               .doc(user.uid)
               .collection('completion_behavior')
-              .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(cutoff))
+              .where(
+                'completedAt',
+                isGreaterThanOrEqualTo: Timestamp.fromDate(cutoff),
+              )
               .get();
 
-      return snapshot.docs.map((doc) {
-        final map = Map<String, dynamic>.from(doc.data());
-        map['completedAt'] =
-            (map['completedAt'] as Timestamp).toDate().toIso8601String();
-        map['dueAt'] = (map['dueAt'] as Timestamp).toDate().toIso8601String();
-        return CompletionBehaviorEvent.fromMap(map);
-      }).where((event) => !_isExpired(event, referenceNow)).toList(growable: false);
+      return snapshot.docs
+          .map((doc) {
+            final map = Map<String, dynamic>.from(doc.data());
+            map['completedAt'] =
+                (map['completedAt'] as Timestamp).toDate().toIso8601String();
+            map['dueAt'] =
+                (map['dueAt'] as Timestamp).toDate().toIso8601String();
+            return CompletionBehaviorEvent.fromMap(map);
+          })
+          .where((event) => !_isExpired(event, referenceNow))
+          .toList(growable: false);
     } catch (e) {
       debugPrint('Error leyendo eventos de comportamiento remoto: $e');
       return const [];

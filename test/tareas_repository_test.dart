@@ -82,37 +82,40 @@ void main() {
     },
   );
 
-  test('marcarCompletada registra evento de comportamiento al completar', () async {
-    final testDb = await TestLocalDb.create();
-    final localStorage = LocalStorageService(testDb as dynamic);
-    final uploadQueue = UploadQueueService(testDb as dynamic);
-    final conectividad = ConectividadService();
-    final completions = <DateTime>[];
+  test(
+    'marcarCompletada registra evento de comportamiento al completar',
+    () async {
+      final testDb = await TestLocalDb.create();
+      final localStorage = LocalStorageService(testDb as dynamic);
+      final uploadQueue = UploadQueueService(testDb as dynamic);
+      final conectividad = ConectividadService();
+      final completions = <DateTime>[];
 
-    final repository = TareasRepository(
-      localStorage,
-      uploadQueue,
-      DriveUploadOrchestrator(
-        uploadQueue,
+      final repository = TareasRepository(
         localStorage,
-        conectividad,
-        NotificationService(),
-        null,
-      ),
-      DriveDownloadOrchestrator(localStorage, conectividad),
-      cancelNotificationsOverride: (_) async {},
-      notifyTaskCreatedOverride: (_) async {},
-      recordCompletionOverride: (tarea, {completedAt}) async {
-        completions.add(completedAt!);
-      },
-    );
+        uploadQueue,
+        DriveUploadOrchestrator(
+          uploadQueue,
+          localStorage,
+          conectividad,
+          NotificationService(),
+          null,
+        ),
+        DriveDownloadOrchestrator(localStorage, conectividad),
+        cancelNotificationsOverride: (_) async {},
+        notifyTaskCreatedOverride: (_) async {},
+        recordCompletionOverride: (tarea, {completedAt}) async {
+          completions.add(completedAt!);
+        },
+      );
 
-    final tarea = buildTarea();
-    await repository.marcarCompletada(tarea, true, false);
+      final tarea = buildTarea();
+      await repository.marcarCompletada(tarea, true, false);
 
-    expect(completions.length, 1);
-    final persisted = await localStorage.getTareas();
-    expect(persisted.single.completada, isTrue);
-    expect(persisted.single.fechaCompletada.isAfter(DateTime(2020)), isTrue);
-  });
+      expect(completions.length, 1);
+      final persisted = await localStorage.getTareas();
+      expect(persisted.single.completada, isTrue);
+      expect(persisted.single.fechaCompletada.isAfter(DateTime(2020)), isTrue);
+    },
+  );
 }

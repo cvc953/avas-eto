@@ -30,9 +30,7 @@ class AdaptiveScheduler {
       final windowStart = (event.hourOfDay ~/ 2) * 2;
       final recencyWeight = 1 + ((historyRetention.inDays - ageInDays) / 30);
       final weekdayWeight =
-          weekday == null
-              ? 1.0
-              : (event.dayOfWeek == weekday ? 1.8 : 0.7);
+          weekday == null ? 1.0 : (event.dayOfWeek == weekday ? 1.8 : 0.7);
       scores.update(
         windowStart,
         (value) => value + (recencyWeight * weekdayWeight),
@@ -40,16 +38,19 @@ class AdaptiveScheduler {
       );
     }
 
-    final ranked = scores.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final ranked =
+        scores.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
 
-    return ranked.take(2).map((entry) {
-      return AdaptiveTimeWindow(
-        startHour: entry.key,
-        endHour: entry.key + 2,
-        score: entry.value,
-      );
-    }).toList(growable: false);
+    return ranked
+        .take(2)
+        .map((entry) {
+          return AdaptiveTimeWindow(
+            startHour: entry.key,
+            endHour: entry.key + 2,
+            score: entry.value,
+          );
+        })
+        .toList(growable: false);
   }
 
   DateTime alignReminder({
@@ -88,17 +89,16 @@ class AdaptiveScheduler {
   }) {
     if (events.isEmpty) return baseLeadHours;
 
-    final recent =
-        events.where((event) {
+    final recent = events
+        .where((event) {
           final ageInDays = referenceNow.difference(event.completedAt).inDays;
           return ageInDays >= 0 && ageInDays <= historyRetention.inDays;
-        }).toList(growable: false);
+        })
+        .toList(growable: false);
     if (recent.isEmpty) return baseLeadHours;
 
     final averageHoursFromDeadline =
-        recent
-            .map((event) => event.hoursFromDeadline)
-            .reduce((a, b) => a + b) /
+        recent.map((event) => event.hoursFromDeadline).reduce((a, b) => a + b) /
         recent.length;
 
     if (averageHoursFromDeadline < -6) {

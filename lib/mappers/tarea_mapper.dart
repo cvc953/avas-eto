@@ -25,9 +25,7 @@ class TareaMapper {
       'todoElDia': tarea.todoElDia,
       'adjuntos': toFirestoreAdjuntos(tarea.adjuntos),
       'completadaEn':
-          tarea.completada
-              ? Timestamp.fromDate(tarea.fechaCompletada)
-            : null,
+          tarea.completada ? Timestamp.fromDate(tarea.fechaCompletada) : null,
       'vecesPospuesta': tarea.vecesPospuesta,
     };
   }

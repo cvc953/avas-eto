@@ -174,14 +174,16 @@ class NotificationService {
     required List<CompletionBehaviorEvent> events,
     required DateTime referenceNow,
   }) {
-    return reminderMoments.map((scheduled) {
-      return _adaptiveScheduler.alignReminder(
-        scheduled: scheduled,
-        due: due,
-        events: events,
-        referenceNow: referenceNow,
-      );
-    }).toList(growable: false);
+    return reminderMoments
+        .map((scheduled) {
+          return _adaptiveScheduler.alignReminder(
+            scheduled: scheduled,
+            due: due,
+            events: events,
+            referenceNow: referenceNow,
+          );
+        })
+        .toList(growable: false);
   }
 
   List<DateTime> _preDueReminderMomentsForTaskWithHistory(
@@ -206,14 +208,16 @@ class NotificationService {
       baseLeadHours = const [24];
     }
 
-    final adjustedBaseMoments = baseLeadHours.map((leadHours) {
-      final adjustedLead = _adaptiveScheduler.adjustedLeadHours(
-        events: events,
-        baseLeadHours: leadHours,
-        referenceNow: now,
-      );
-      return tarea.fechaVencimiento.subtract(Duration(hours: adjustedLead));
-    }).toList(growable: false);
+    final adjustedBaseMoments = baseLeadHours
+        .map((leadHours) {
+          final adjustedLead = _adaptiveScheduler.adjustedLeadHours(
+            events: events,
+            baseLeadHours: leadHours,
+            referenceNow: now,
+          );
+          return tarea.fechaVencimiento.subtract(Duration(hours: adjustedLead));
+        })
+        .toList(growable: false);
 
     return _applyAdaptiveWindows(
       reminderMoments: adjustedBaseMoments,

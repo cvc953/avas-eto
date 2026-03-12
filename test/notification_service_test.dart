@@ -148,38 +148,41 @@ void main() {
     );
   });
 
-  test('pre-due reminders align to productive windows when history exists', () async {
-    final ns = NotificationService();
-    final due = DateTime(2026, 3, 15, 21, 0);
-    final tarea = await buildTarea('adaptive1', due, prioridad: 'Media');
-    final history = [
-      CompletionBehaviorEvent.fromTask(
-        taskId: 'h1',
-        completedAt: DateTime(2026, 3, 8, 8, 15),
-        dueAt: DateTime(2026, 3, 8, 12, 0),
-      ),
-      CompletionBehaviorEvent.fromTask(
-        taskId: 'h2',
-        completedAt: DateTime(2026, 3, 10, 19, 10),
-        dueAt: DateTime(2026, 3, 10, 22, 0),
-      ),
-      CompletionBehaviorEvent.fromTask(
-        taskId: 'h3',
-        completedAt: DateTime(2026, 3, 12, 8, 45),
-        dueAt: DateTime(2026, 3, 12, 12, 0),
-      ),
-    ];
+  test(
+    'pre-due reminders align to productive windows when history exists',
+    () async {
+      final ns = NotificationService();
+      final due = DateTime(2026, 3, 15, 21, 0);
+      final tarea = await buildTarea('adaptive1', due, prioridad: 'Media');
+      final history = [
+        CompletionBehaviorEvent.fromTask(
+          taskId: 'h1',
+          completedAt: DateTime(2026, 3, 8, 8, 15),
+          dueAt: DateTime(2026, 3, 8, 12, 0),
+        ),
+        CompletionBehaviorEvent.fromTask(
+          taskId: 'h2',
+          completedAt: DateTime(2026, 3, 10, 19, 10),
+          dueAt: DateTime(2026, 3, 10, 22, 0),
+        ),
+        CompletionBehaviorEvent.fromTask(
+          taskId: 'h3',
+          completedAt: DateTime(2026, 3, 12, 8, 45),
+          dueAt: DateTime(2026, 3, 12, 12, 0),
+        ),
+      ];
 
-    final reminders = ns.getPreDueReminderMomentsWithHistory(
-      tarea,
-      history,
-      referenceNow: DateTime(2026, 3, 12, 9, 0),
-    );
+      final reminders = ns.getPreDueReminderMomentsWithHistory(
+        tarea,
+        history,
+        referenceNow: DateTime(2026, 3, 12, 9, 0),
+      );
 
-    expect(reminders.length, 2);
-    expect(reminders.first.hour, anyOf(8, 18));
-    expect(reminders.last.hour, anyOf(8, 18));
-    expect(reminders.first.isBefore(due), isTrue);
-    expect(reminders.last.isBefore(due), isTrue);
-  });
+      expect(reminders.length, 2);
+      expect(reminders.first.hour, anyOf(8, 18));
+      expect(reminders.last.hour, anyOf(8, 18));
+      expect(reminders.first.isBefore(due), isTrue);
+      expect(reminders.last.isBefore(due), isTrue);
+    },
+  );
 }
